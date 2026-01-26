@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 2watcharr
 
-## Getting Started
+A YouTube "Watch Later" management application that allows you to save, organize, and manage videos you want to watch later with tags, priorities, and comprehensive metadata.
 
-First, run the development server:
+## Features
+
+- 📝 **Save YouTube Videos**: Add videos via URL with automatic metadata extraction
+- 🏷️ **Tag Organization**: Categorize videos with custom tags
+- ⭐ **Favorites & Priorities**: Mark videos as favorites and set priority levels
+- ✅ **Watch Status**: Track which videos you've watched
+- 🔍 **Search & Filter**: Find videos by title, description, channel, or tags
+- 📱 **iOS Integration**: Add videos directly from iOS via Shortcuts app
+- 🎨 **Modern UI**: Beautiful, responsive interface built with shadcn/ui
+- 🐳 **Docker Ready**: Production-ready Docker Compose setup
+
+## Tech Stack
+
+- **Framework**: Next.js v16 with TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Database**: SQLite with promise-based API
+- **Metadata**: yt-dlp for YouTube video information
+- **Deployment**: Docker & Docker Compose
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+- Docker & Docker Compose
+- Python 3 (for yt-dlp)
+
+### Installation
 
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Docker Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Build and start
+docker-compose up -d
 
-## Learn More
+# View logs
+docker-compose logs -f
 
-To learn more about Next.js, take a look at the following resources:
+# Stop
+docker-compose down
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/              # Next.js App Router pages
+├── lib/
+│   ├── domain/       # Domain models and business logic
+│   ├── services/     # Application services
+│   ├── repositories/ # Data access layer
+│   ├── utils/        # Utility functions
+│   └── db/          # Database configuration
+└── components/       # React components
+    ├── ui/          # shadcn/ui components
+    └── features/    # Feature-specific components
+```
 
-## Deploy on Vercel
+## Documentation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [Setup Guide](docs/setup.md)
+- [API Documentation](docs/api.md)
+- [Development Guide](docs/development.md)
+- [Architecture Overview](docs/architecture.md)
+- [iOS Shortcut Setup](docs/ios-shortcut-setup.md)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT
+
