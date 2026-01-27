@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Video } from '@/lib/domain/models';
+import { Video, Tag } from '@/lib/domain/models';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,22 @@ import {
     GripVertical,
     ArrowUp,
     ArrowDown,
+    Tag as TagIcon,
+    Plus,
 } from 'lucide-react';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from '@/components/ui/command';
 import { toast } from 'sonner';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -33,6 +48,11 @@ interface VideoListRowProps {
 }
 
 export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
+    const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
+    const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isUpdatingTags, setIsUpdatingTags] = useState(false);
+
     const {
         attributes,
         listeners,
@@ -113,6 +133,78 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
             onUpdate?.();
         } catch (error) {
             toast.error('Failed to reorder video');
+        }
+    };
+
+    const fetchTags = async () => {
+        try {
+            const response = await fetch('/api/tags');
+            const data = await response.json();
+            if (data.tags) {
+                setAvailableTags(data.tags);
+            }
+        } catch (error) {
+            console.error('Error fetching tags:', error);
+        }
+    };
+
+    const handleToggleTag = async (tagId: string) => {
+        setIsUpdatingTags(true);
+        try {
+            const currentTagIds = video.tags?.map(t => t.id) || [];
+            const isTagSelected = currentTagIds.includes(tagId);
+            const newTagIds = isTagSelected
+                ? currentTagIds.filter(id => id !== tagId)
+                : [...currentTagIds, tagId];
+
+            const response = await fetch(`/api/videos/${video.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tagIds: newTagIds }),
+            });
+
+            if (!response.ok) throw new Error('Failed to update tags');
+
+            toast.success('Tags updated');
+            onUpdate?.();
+        } catch (error) {
+            toast.error('Failed to update tags');
+        } finally {
+            setIsUpdatingTags(false);
+        }
+    };
+
+    const getRandomColor = () => {
+        const colors = [
+            '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4',
+            '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899'
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+    };
+
+    const handleCreateTag = async (name: string) => {
+        setIsUpdatingTags(true);
+        try {
+            const createResponse = await fetch('/api/tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, color: getRandomColor() }),
+            });
+
+            if (!createResponse.ok) {
+                const error = await createResponse.json();
+                throw new Error(error.error || 'Failed to create tag');
+            }
+
+            const newTag = await createResponse.json();
+            await handleToggleTag(newTag.id);
+
+            setSearchQuery('');
+            fetchTags();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to create tag');
+        } finally {
+            setIsUpdatingTags(false);
         }
     };
 
@@ -215,6 +307,26 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
                             <span>{formatPublishedDate(video.publishedDate)}</span>
                         </div>
 
+                        {/* Tags Badges */}
+                        {video.tags && video.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {video.tags.map((tag) => (
+                                    <Badge
+                                        key={tag.id}
+                                        variant="outline"
+                                        style={{
+                                            backgroundColor: `${tag.color}15`,
+                                            color: tag.color || 'inherit',
+                                            borderColor: `${tag.color}40`,
+                                        }}
+                                        className="text-[10px] px-1.5 py-0 h-4 font-medium"
+                                    >
+                                        {tag.name}
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
+
                         {/* Status Icons */}
                         <div className="flex items-center gap-2 mt-0.5">
                             {video.favorite && (
@@ -255,6 +367,69 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
                     >
                         <Star className={`h-4 w-4 ${video.favorite ? 'fill-primary text-primary' : ''}`} />
                     </Button>
+
+                    <Popover open={isTagPopoverOpen} onOpenChange={(open) => {
+                        setIsTagPopoverOpen(open);
+                        if (open) fetchTags();
+                    }}>
+                        <PopoverTrigger asChild>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 hidden group-hover:flex"
+                                onClick={(e) => e.stopPropagation()}
+                                title="Manage Tags"
+                            >
+                                <TagIcon className="h-4 w-4" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-0" align="end" onClick={(e) => e.stopPropagation()}>
+                            <Command>
+                                <CommandInput
+                                    placeholder="Search or create tag..."
+                                    value={searchQuery}
+                                    onValueChange={setSearchQuery}
+                                />
+                                <CommandList>
+                                    <CommandEmpty>
+                                        {searchQuery.trim() && (
+                                            <Button
+                                                variant="ghost"
+                                                className="w-full justify-start text-xs h-8"
+                                                onClick={() => handleCreateTag(searchQuery)}
+                                                disabled={isUpdatingTags}
+                                            >
+                                                <Plus className="h-3 w-3 mr-2" />
+                                                Create "{searchQuery}"
+                                            </Button>
+                                        )}
+                                        {!searchQuery.trim() && "No tags found."}
+                                    </CommandEmpty>
+                                    <CommandGroup heading="Recent Tags">
+                                        {availableTags.map((tag) => {
+                                            const isSelected = video.tags?.some(t => t.id === tag.id);
+                                            return (
+                                                <CommandItem
+                                                    key={tag.id}
+                                                    onSelect={() => handleToggleTag(tag.id)}
+                                                    className="flex items-center justify-between"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <div
+                                                            className="w-2 h-2 rounded-full"
+                                                            style={{ backgroundColor: tag.color || '#94a3b8' }}
+                                                        />
+                                                        <span>{tag.name}</span>
+                                                    </div>
+                                                    {isSelected && <Check className="h-3 w-3" />}
+                                                </CommandItem>
+                                            );
+                                        })}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
