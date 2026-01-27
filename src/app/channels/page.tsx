@@ -5,7 +5,7 @@ import { Layout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trash2, RefreshCw, ExternalLink } from 'lucide-react';
+import { Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     Dialog,
@@ -158,16 +158,6 @@ function ChannelsPageContent() {
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            window.open(channel.channelUrl, '_blank');
-                                        }}
-                                        className="p-1.5 bg-background/80 hover:bg-accent rounded-full backdrop-blur-sm transition-colors"
-                                        title="View on YouTube"
-                                    >
-                                        <ExternalLink className="h-3.5 w-3.5" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
                                             setChannelToDelete(channel);
                                         }}
                                         className="p-1.5 bg-background/80 hover:bg-destructive hover:text-white rounded-full backdrop-blur-sm transition-colors"
@@ -192,8 +182,16 @@ function ChannelsPageContent() {
                                         )}
                                     </div>
                                     <div className="min-w-0">
-                                        <CardTitle className="text-xl font-bold line-clamp-1 group-hover:text-primary transition-colors">
-                                            {channel.name}
+                                        <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
+                                            <a
+                                                href={channel.channelUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="transition-colors hover:text-red-600 dark:hover:text-red-400"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {channel.name}
+                                            </a>
                                         </CardTitle>
                                         <Badge variant="secondary" className="mt-1 bg-primary/5 text-primary hover:bg-primary/10 border-none px-2 py-0">
                                             {channel.videoCount} {channel.videoCount === 1 ? 'video' : 'videos'}
