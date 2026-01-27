@@ -9,6 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Layout } from '@/components/layout';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 interface Tag {
     id: string;
@@ -25,9 +32,14 @@ export default function SettingsPage() {
     const [editingTag, setEditingTag] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [editColor, setEditColor] = useState('');
+    const [defaultView, setDefaultView] = useState<'grid' | 'list'>('list');
 
     useEffect(() => {
         fetchTags();
+        const savedDefaultView = localStorage.getItem('defaultView') as 'grid' | 'list';
+        if (savedDefaultView) {
+            setDefaultView(savedDefaultView);
+        }
     }, []);
 
     const fetchTags = async () => {
@@ -125,6 +137,13 @@ export default function SettingsPage() {
             console.error('Error updating tag:', error);
             toast.error('Failed to update tag');
         }
+    };
+
+    const handleDefaultViewChange = (value: 'grid' | 'list') => {
+        setDefaultView(value);
+        localStorage.setItem('defaultView', value);
+        localStorage.setItem('videoViewMode', value);
+        toast.success(`Default view set to ${value === 'grid' ? 'Grid' : 'List'}`);
     };
 
     return (
@@ -288,10 +307,25 @@ export default function SettingsPage() {
                                     Main application settings and preferences.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent>
-                                <p className="text-muted-foreground italic">
-                                    More settings coming soon...
-                                </p>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="defaultView">Default View</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Choose which view to use by default when loading the watch list.
+                                    </p>
+                                    <Select 
+                                        value={defaultView} 
+                                        onValueChange={(value) => handleDefaultViewChange(value as 'grid' | 'list')}
+                                    >
+                                        <SelectTrigger id="defaultView" className="w-[180px]">
+                                            <SelectValue placeholder="Select view" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="grid">Grid View</SelectItem>
+                                            <SelectItem value="list">List View</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>

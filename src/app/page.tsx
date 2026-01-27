@@ -17,12 +17,16 @@ function HomePageContent() {
   });
   const [sort, setSort] = useState<any>({ field: 'custom', order: 'asc' });
   const [refreshKey, setRefreshKey] = useState(0);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   useEffect(() => {
     const savedViewMode = localStorage.getItem('videoViewMode') as 'grid' | 'list';
+    const defaultView = localStorage.getItem('defaultView') as 'grid' | 'list';
+
     if (savedViewMode) {
       setViewMode(savedViewMode);
+    } else if (defaultView) {
+      setViewMode(defaultView);
     }
   }, []);
 
