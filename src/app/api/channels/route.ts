@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { getDatabase } from '@/lib/db/database';
 import { ChannelRepository } from '@/lib/repositories';
 

@@ -7,6 +7,7 @@ FROM base AS deps
 WORKDIR /app
 
 # Install dependencies for building
+RUN apk add --no-cache libc6-compat python3 make g++
 COPY package.json package-lock.json* ./
 RUN npm ci
 
@@ -15,11 +16,9 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
+RUN mkdir -p data
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV DATABASE_PATH=/app/data/2watcharr.db
 
 RUN npm run build
 
@@ -35,8 +34,7 @@ RUN adduser --system --uid 1001 nextjs
 
 # Install Python and yt-dlp
 RUN apk add --no-cache python3 py3-pip curl \
-    && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
-    && chmod a+rx /usr/local/bin/yt-dlp
+    && pip3 install --break-system-packages yt-dlp
 
 COPY --from=builder /app/public ./public
 
@@ -50,8 +48,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/db/schema.sql ./src/lib/db/schema.sql
 
-# Create directory for SQLite database
-RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
+# Create directories for SQLite database and logs
+RUN mkdir -p /app/data /app/logs && chown nextjs:nodejs /app/data /app/logs
 
 USER nextjs
 

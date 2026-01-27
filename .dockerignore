@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+data
+logs
+README.md
+docs
+*.md
+# package-lock.json should not be ignored
