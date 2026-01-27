@@ -12,6 +12,7 @@ export interface YouTubeMetadata {
     videoUrl: string;
     uploadDate: string;
     publishedDate: string;
+    viewCount: number;
     channel: {
         id: string;
         name: string;
@@ -44,6 +45,7 @@ export class YouTubeMetadataService {
                 videoUrl: url,
                 uploadDate: this.formatDate(rawData.upload_date),
                 publishedDate: this.formatDate(rawData.release_date || rawData.upload_date),
+                viewCount: rawData.view_count || 0,
                 channel: {
                     id: rawData.channel_id || rawData.uploader_id || '',
                     name: rawData.channel || rawData.uploader || 'Unknown',
@@ -55,6 +57,39 @@ export class YouTubeMetadataService {
         } catch (error) {
             console.error('Failed to extract metadata:', error);
             throw new Error(`Failed to extract video metadata: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Extract metadata from a YouTube channel URL using yt-dlp
+     * @param url YouTube channel URL
+     * @returns Promise resolving to channel metadata
+     */
+    async extractChannelMetadata(url: string): Promise<Partial<YouTubeMetadata['channel']>> {
+        const command = `yt-dlp --no-download --dump-single-json --flat-playlist "${url}"`;
+
+        try {
+            const { stdout } = await execAsync(command);
+            const rawData = JSON.parse(stdout);
+
+            let thumbnailUrl = '';
+            if (rawData.thumbnails && rawData.thumbnails.length > 0) {
+                // Try to find a high quality thumbnail (avatar)
+                const avatar = rawData.thumbnails.find((t: any) => t.id === 'avatar_uncropped') ||
+                    rawData.thumbnails.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))[0];
+                thumbnailUrl = avatar?.url || '';
+            }
+
+            return {
+                id: rawData.id || '',
+                name: rawData.title || rawData.channel || 'Unknown',
+                url: rawData.channel_url || rawData.webpage_url || url,
+                description: rawData.description || '',
+                thumbnailUrl: thumbnailUrl,
+            };
+        } catch (error) {
+            console.error('Failed to extract channel metadata:', error);
+            return {};
         }
     }
 

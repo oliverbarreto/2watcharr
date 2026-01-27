@@ -12,7 +12,9 @@ export interface Video {
     videoUrl: string;
     uploadDate: string | null;
     publishedDate: string | null;
+    viewCount: number | null;
     channelId: string;
+    channelName?: string;
     watched: boolean;
     favorite: boolean;
     priority: Priority;
@@ -57,6 +59,7 @@ export interface CreateVideoDto {
     videoUrl: string;
     uploadDate?: string;
     publishedDate?: string;
+    viewCount?: number;
     channelId: string;
     userId?: string;
 }
@@ -68,6 +71,7 @@ export interface UpdateVideoDto {
     favorite?: boolean;
     priority?: Priority;
     customOrder?: number;
+    viewCount?: number;
 }
 
 export interface CreateChannelDto {
@@ -94,7 +98,7 @@ export interface VideoFilters {
     channelId?: string;
 }
 
-export type SortField = 'created_at' | 'priority' | 'favorite' | 'duration' | 'title';
+export type SortField = 'created_at' | 'priority' | 'favorite' | 'duration' | 'title' | 'custom';
 export type SortOrder = 'asc' | 'desc';
 
 export interface SortOptions {

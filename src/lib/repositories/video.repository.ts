@@ -21,9 +21,9 @@ export class VideoRepository {
         await this.db.run(
             `INSERT INTO videos (
         id, youtube_id, title, description, duration, thumbnail_url,
-        video_url, upload_date, published_date, channel_id, user_id,
+        video_url, upload_date, published_date, view_count, channel_id, user_id,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 id,
                 dto.youtubeId,
@@ -34,6 +34,7 @@ export class VideoRepository {
                 dto.videoUrl,
                 dto.uploadDate || null,
                 dto.publishedDate || null,
+                dto.viewCount || null,
                 dto.channelId,
                 dto.userId || null,
                 now,
@@ -74,7 +75,8 @@ export class VideoRepository {
         filters?: VideoFilters,
         sort?: SortOptions
     ): Promise<Video[]> {
-        let query = 'SELECT DISTINCT v.* FROM videos v';
+        let query = 'SELECT DISTINCT v.*, c.name as channel_name FROM videos v';
+        query += ' LEFT JOIN channels c ON v.channel_id = c.id';
         const params: any[] = [];
 
         // Join with video_tags if filtering by tags
@@ -123,8 +125,8 @@ export class VideoRepository {
             const orderBy = this.buildOrderBy(sort);
             query += ` ORDER BY ${orderBy}`;
         } else {
-            // Default sort: favorite DESC, priority DESC, created_at DESC
-            query += ' ORDER BY v.favorite DESC, v.priority DESC, v.created_at DESC';
+            // Default sort: Manual order first, then fallback to newest first
+            query += ' ORDER BY v.custom_order ASC, v.created_at DESC';
         }
 
         const rows = await this.db.all(query, params);
@@ -161,6 +163,10 @@ export class VideoRepository {
         if (dto.customOrder !== undefined) {
             updates.push('custom_order = ?');
             params.push(dto.customOrder);
+        }
+        if (dto.viewCount !== undefined) {
+            updates.push('view_count = ?');
+            params.push(dto.viewCount);
         }
 
         updates.push('updated_at = ?');
@@ -211,6 +217,26 @@ export class VideoRepository {
     }
 
     /**
+     * Move video to the beginning of the list
+     */
+    async moveToBeginning(id: string): Promise<void> {
+        const videos = await this.findAll({ watched: false }, { field: 'custom', order: 'asc' });
+        const videoIds = videos.map(v => v.id).filter(vid => vid !== id);
+        videoIds.unshift(id);
+        await this.reorder(videoIds);
+    }
+
+    /**
+     * Move video to the end of the list
+     */
+    async moveToEnd(id: string): Promise<void> {
+        const videos = await this.findAll({ watched: false }, { field: 'custom', order: 'asc' });
+        const videoIds = videos.map(v => v.id).filter(vid => vid !== id);
+        videoIds.push(id);
+        await this.reorder(videoIds);
+    }
+
+    /**
      * Associate tags with a video
      */
     async addTags(videoId: string, tagIds: string[]): Promise<void> {
@@ -246,6 +272,8 @@ export class VideoRepository {
         const direction = sort.order === 'asc' ? 'ASC' : 'DESC';
 
         switch (sort.field) {
+            case 'custom':
+                return `v.custom_order ${direction}, v.created_at DESC`;
             case 'created_at':
                 return `v.created_at ${direction}`;
             case 'priority':
@@ -257,7 +285,7 @@ export class VideoRepository {
             case 'title':
                 return `v.title ${direction}`;
             default:
-                return 'v.created_at DESC';
+                return 'v.custom_order ASC, v.created_at DESC';
         }
     }
 
@@ -272,7 +300,9 @@ export class VideoRepository {
             videoUrl: row.video_url,
             uploadDate: row.upload_date,
             publishedDate: row.published_date,
+            viewCount: row.view_count,
             channelId: row.channel_id,
+            channelName: row.channel_name,
             watched: Boolean(row.watched),
             favorite: Boolean(row.favorite),
             priority: row.priority,

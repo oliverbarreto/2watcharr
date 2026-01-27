@@ -1,16 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout';
 import { AddVideoDialog, FilterBar, VideoList } from '@/components/features/videos';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 export default function HomePage() {
-  const [filters, setFilters] = useState<any>({});
-  const [sort, setSort] = useState<any>({ field: 'created_at', order: 'desc' });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const channelId = searchParams.get('channelId');
+
+  const [filters, setFilters] = useState<any>({
+    channelId: channelId || undefined
+  });
+  const [sort, setSort] = useState<any>({ field: 'custom', order: 'asc' });
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const channelId = searchParams.get('channelId');
+    setFilters((prev: any) => ({
+      ...prev,
+      channelId: channelId || undefined
+    }));
+  }, [searchParams]);
 
   const handleVideoAdded = () => {
     setRefreshKey((prev) => prev + 1);
+  };
+
+  const clearChannelFilter = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('channelId');
+    router.push(`/?${params.toString()}`);
   };
 
   return (
@@ -24,11 +47,29 @@ export default function HomePage() {
               Manage your YouTube videos to watch later
             </p>
           </div>
-          <AddVideoDialog onVideoAdded={handleVideoAdded} />
+          <div className="flex items-center gap-2">
+            {filters.channelId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearChannelFilter}
+                className="flex items-center gap-1"
+              >
+                <X className="h-4 w-4" />
+                Clear Channel Filter
+              </Button>
+            )}
+            <AddVideoDialog onVideoAdded={handleVideoAdded} />
+          </div>
         </div>
 
         {/* Filters */}
-        <FilterBar onFilterChange={setFilters} onSortChange={setSort} />
+        <FilterBar
+          onFilterChange={setFilters}
+          onSortChange={setSort}
+          initialFilters={filters}
+          initialSort={sort}
+        />
 
         {/* Video List */}
         <VideoList key={refreshKey} filters={filters} sort={sort} />

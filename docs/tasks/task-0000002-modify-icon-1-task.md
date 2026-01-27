@@ -1,0 +1,21 @@
+# Task: Create and Substitute App Icon for 2watcharr
+
+- [x] Planning and Design <!-- id: 0 -->
+    - [x] Research "2watcharr" purpose for icon inspiration <!-- id: 1 -->
+    - [x] Create implementation plan <!-- id: 2 -->
+- [x] Icon Generation <!-- id: 3 -->
+    - [x] Generate a cool app icon using "nanobanana" style via `generate_image` <!-- id: 4 -->
+    - [x] Convert/Save the image as [favicon.ico](file:///Users/oliver/local/dev/2watcharr/src/app/favicon.ico) or suitable format <!-- id: 5 -->
+- [x] Implementation <!-- id: 6 -->
+    - [x] Replace [src/app/favicon.ico](file:///Users/oliver/local/dev/2watcharr/src/app/favicon.ico) with the new icon <!-- id: 7 -->
+    - [x] (Optional) Add PNG versions for Apple/Android if needed <!-- id: 8 -->
+- [x] Verification <!-- id: 9 -->
+    - [x] Verify the icon change in the layout/config <!-- id: 10 -->
+    - [x] Create walkthrough <!-- id: 11 -->
+- [x] Fix Icon Issues <!-- id: 12 -->
+    - [x] Explicitly reference icon in metadata <!-- id: 13 -->
+    - [x] Update Navbar to use the new icon image <!-- id: 14 -->
+    - [x] Verify fix in browser <!-- id: 15 -->
+- [x] Resolve Hydration Mismatch <!-- id: 16 -->
+    - [x] Add suppressHydrationWarning to layout.tsx <!-- id: 17 -->
+    - [x] Verify error is gone <!-- id: 18 -->

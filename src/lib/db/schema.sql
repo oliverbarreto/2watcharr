@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS videos (
   video_url TEXT NOT NULL,
   upload_date TEXT,                 -- YouTube upload date (ISO 8601)
   published_date TEXT,              -- YouTube published date (ISO 8601)
-  channel_id TEXT NOT NULL,
+  view_count INTEGER,               -- YouTube view count
+  channel_id TEXT,
   
   -- User management fields
   watched BOOLEAN NOT NULL DEFAULT 0,
@@ -53,7 +54,7 @@ CREATE TABLE IF NOT EXISTS videos (
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   
-  FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
+  FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE SET NULL,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

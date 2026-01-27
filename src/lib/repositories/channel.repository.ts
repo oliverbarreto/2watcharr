@@ -107,6 +107,13 @@ export class ChannelRepository {
         }));
     }
 
+    /**
+     * Delete a channel
+     */
+    async delete(id: string): Promise<void> {
+        await this.db.run('DELETE FROM channels WHERE id = ?', id);
+    }
+
     private mapRowToChannel(row: any): Channel {
         return {
             id: row.id,

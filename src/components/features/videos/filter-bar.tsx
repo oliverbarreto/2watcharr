@@ -16,13 +16,20 @@ import { Badge } from '@/components/ui/badge';
 interface FilterBarProps {
     onFilterChange?: (filters: any) => void;
     onSortChange?: (sort: any) => void;
+    initialFilters?: any;
+    initialSort?: {
+        field: string;
+        order: 'asc' | 'desc';
+    };
 }
 
-export function FilterBar({ onFilterChange, onSortChange }: FilterBarProps) {
-    const [search, setSearch] = useState('');
-    const [watchedFilter, setWatchedFilter] = useState<string>('all');
-    const [sortField, setSortField] = useState('created_at');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+export function FilterBar({ onFilterChange, onSortChange, initialFilters, initialSort }: FilterBarProps) {
+    const [search, setSearch] = useState(initialFilters?.search || '');
+    const [watchedFilter, setWatchedFilter] = useState<string>(
+        initialFilters?.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched')
+    );
+    const [sortField, setSortField] = useState(initialSort?.field || 'created_at');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSort?.order || 'desc');
 
     const handleSearchChange = (value: string) => {
         setSearch(value);
@@ -96,6 +103,7 @@ export function FilterBar({ onFilterChange, onSortChange }: FilterBarProps) {
                         <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
+                        <SelectItem value="custom">Manual</SelectItem>
                         <SelectItem value="created_at">Date Added</SelectItem>
                         <SelectItem value="priority">Priority</SelectItem>
                         <SelectItem value="favorite">Favorite</SelectItem>

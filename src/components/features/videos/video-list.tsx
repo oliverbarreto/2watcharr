@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Video } from '@/lib/domain/models';
 import { VideoCard } from './video-card';
+import { VideoListRow } from './video-list-row';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { LayoutGrid, List } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -18,6 +21,7 @@ import {
     SortableContext,
     sortableKeyboardCoordinates,
     rectSortingStrategy,
+    verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { toast } from 'sonner';
 
@@ -26,6 +30,7 @@ interface VideoListProps {
         search?: string;
         watched?: boolean;
         favorite?: boolean;
+        channelId?: string;
     };
     sort?: {
         field: string;
@@ -36,6 +41,20 @@ interface VideoListProps {
 export function VideoList({ filters, sort }: VideoListProps) {
     const [videos, setVideos] = useState<Video[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+    useEffect(() => {
+        const savedViewMode = localStorage.getItem('videoViewMode') as 'grid' | 'list';
+        if (savedViewMode) {
+            setViewMode(savedViewMode);
+        }
+    }, []);
+
+    const toggleViewMode = () => {
+        const newMode = viewMode === 'grid' ? 'list' : 'grid';
+        setViewMode(newMode);
+        localStorage.setItem('videoViewMode', newMode);
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -52,6 +71,7 @@ export function VideoList({ filters, sort }: VideoListProps) {
             if (filters?.search) params.append('search', filters.search);
             if (filters?.watched !== undefined) params.append('watched', String(filters.watched));
             if (filters?.favorite !== undefined) params.append('favorite', String(filters.favorite));
+            if (filters?.channelId) params.append('channelId', filters.channelId);
             if (sort?.field) params.append('sort', sort.field);
             if (sort?.order) params.append('order', sort.order);
 
@@ -98,12 +118,17 @@ export function VideoList({ filters, sort }: VideoListProps) {
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className={viewMode === 'grid'
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                : "flex flex-col gap-2"
+            }>
                 {[...Array(8)].map((_, i) => (
-                    <div key={i} className="space-y-3">
-                        <Skeleton className="aspect-video w-full" />
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-4 w-1/2" />
+                    <div key={i} className={viewMode === 'grid' ? "space-y-3" : "flex gap-3 py-2"}>
+                        <Skeleton className={viewMode === 'grid' ? "aspect-video w-full" : "w-40 aspect-video flex-shrink-0"} />
+                        <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </div>
                     </div>
                 ))}
             </div>
@@ -122,26 +147,56 @@ export function VideoList({ filters, sort }: VideoListProps) {
     }
 
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-        >
-            <SortableContext
-                items={videos.map(v => v.id)}
-                strategy={rectSortingStrategy}
+        <div className="space-y-4">
+            <div className="flex justify-end">
+                <Button variant="ghost" size="sm" onClick={toggleViewMode} className="gap-2">
+                    {viewMode === 'grid' ? (
+                        <>
+                            <List className="h-4 w-4" />
+                            List View
+                        </>
+                    ) : (
+                        <>
+                            <LayoutGrid className="h-4 w-4" />
+                            Grid View
+                        </>
+                    )}
+                </Button>
+            </div>
+
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {videos.map((video) => (
-                        <VideoCard
-                            key={video.id}
-                            video={video}
-                            onUpdate={fetchVideos}
-                            onDelete={fetchVideos}
-                        />
-                    ))}
-                </div>
-            </SortableContext>
-        </DndContext>
+                <SortableContext
+                    items={videos.map(v => v.id)}
+                    strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
+                >
+                    <div className={viewMode === 'grid'
+                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                        : "flex flex-col border rounded-md overflow-hidden bg-card/50"
+                    }>
+                        {videos.map((video) => (
+                            viewMode === 'grid' ? (
+                                <VideoCard
+                                    key={video.id}
+                                    video={video}
+                                    onUpdate={fetchVideos}
+                                    onDelete={fetchVideos}
+                                />
+                            ) : (
+                                <VideoListRow
+                                    key={video.id}
+                                    video={video}
+                                    onUpdate={fetchVideos}
+                                    onDelete={fetchVideos}
+                                />
+                            )
+                        ))}
+                    </div>
+                </SortableContext>
+            </DndContext>
+        </div>
     );
 }

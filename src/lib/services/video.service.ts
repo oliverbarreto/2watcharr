@@ -40,21 +40,29 @@ export class VideoService {
 
         // Create or update channel
         let channel = await this.channelRepo.findById(metadata.channel.id);
+
+        // If channel exists but lacks description or thumnail, try to fetch it
+        let channelMetadata = metadata.channel;
+        if (!channelMetadata.description || !channelMetadata.thumbnailUrl) {
+            const extraChannelMetadata = await this.metadataService.extractChannelMetadata(channelMetadata.url);
+            channelMetadata = { ...channelMetadata, ...extraChannelMetadata };
+        }
+
         if (!channel) {
             channel = await this.channelRepo.create({
-                id: metadata.channel.id,
-                name: metadata.channel.name,
-                description: metadata.channel.description,
-                thumbnailUrl: metadata.channel.thumbnailUrl,
-                channelUrl: metadata.channel.url,
+                id: channelMetadata.id,
+                name: channelMetadata.name,
+                description: channelMetadata.description,
+                thumbnailUrl: channelMetadata.thumbnailUrl,
+                channelUrl: channelMetadata.url,
             });
         } else {
             // Update channel info if it exists
-            channel = await this.channelRepo.update(metadata.channel.id, {
-                name: metadata.channel.name,
-                description: metadata.channel.description,
-                thumbnailUrl: metadata.channel.thumbnailUrl,
-                channelUrl: metadata.channel.url,
+            channel = await this.channelRepo.update(channelMetadata.id, {
+                name: channelMetadata.name,
+                description: channelMetadata.description,
+                thumbnailUrl: channelMetadata.thumbnailUrl,
+                channelUrl: channelMetadata.url,
             });
         }
 
@@ -68,6 +76,7 @@ export class VideoService {
             videoUrl: metadata.videoUrl,
             uploadDate: metadata.uploadDate,
             publishedDate: metadata.publishedDate,
+            viewCount: metadata.viewCount,
             channelId: channel.id,
         });
 
@@ -147,6 +156,20 @@ export class VideoService {
     }
 
     /**
+     * Move video to the beginning
+     */
+    async moveToBeginning(id: string): Promise<void> {
+        return this.videoRepo.moveToBeginning(id);
+    }
+
+    /**
+     * Move video to the end
+     */
+    async moveToEnd(id: string): Promise<void> {
+        return this.videoRepo.moveToEnd(id);
+    }
+
+    /**
      * Update video tags
      */
     async updateTags(id: string, tagIds: string[]): Promise<void> {
@@ -164,5 +187,32 @@ export class VideoService {
      */
     async getVideoTags(id: string): Promise<string[]> {
         return this.videoRepo.getTags(id);
+    }
+
+    /**
+     * Sync metadata for all channels
+     */
+    async syncAllChannelsMetadata(): Promise<{ total: number; synced: number }> {
+        const channels = await this.channelRepo.findAll();
+        let synced = 0;
+
+        for (const channel of channels) {
+            try {
+                const metadata = await this.metadataService.extractChannelMetadata(channel.channelUrl);
+                if (metadata.name) {
+                    await this.channelRepo.update(channel.id, {
+                        name: metadata.name,
+                        description: metadata.description,
+                        thumbnailUrl: metadata.thumbnailUrl,
+                        channelUrl: metadata.url,
+                    });
+                    synced++;
+                }
+            } catch (error) {
+                console.error(`Failed to sync channel ${channel.id}:`, error);
+            }
+        }
+
+        return { total: channels.length, synced };
     }
 }
