@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/popover';
 import {
     Command,
+    CommandDialog,
     CommandEmpty,
     CommandGroup,
     CommandInput,
@@ -388,67 +389,68 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
                                 <Star className={`h-4 w-4 ${video.favorite ? 'fill-primary text-primary' : ''}`} />
                             </Button>
 
-                            <Popover open={isTagPopoverOpen} onOpenChange={(open) => {
-                                setIsTagPopoverOpen(open);
-                                if (open) fetchTags();
-                            }}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={(e) => e.stopPropagation()}
-                                        title="Manage Tags"
-                                    >
-                                        <TagIcon className="h-4 w-4" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[200px] p-0" align="end" onClick={(e) => e.stopPropagation()}>
-                                    <Command>
-                                        <CommandInput
-                                            placeholder="Search or create tag..."
-                                            value={searchQuery}
-                                            onValueChange={setSearchQuery}
-                                        />
-                                        <CommandList>
-                                            <CommandEmpty>
-                                                {searchQuery.trim() && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        className="w-full justify-start text-xs h-8"
-                                                        onClick={() => handleCreateTag(searchQuery)}
-                                                        disabled={isUpdatingTags}
-                                                    >
-                                                        <Plus className="h-3 w-3 mr-2" />
-                                                        Create "{searchQuery}"
-                                                    </Button>
-                                                )}
-                                                {!searchQuery.trim() && "No tags found."}
-                                            </CommandEmpty>
-                                            <CommandGroup heading="Recent Tags">
-                                                {availableTags.map((tag) => {
-                                                    const isSelected = video.tags?.some(t => t.id === tag.id);
-                                                    return (
-                                                        <CommandItem
-                                                            key={tag.id}
-                                                            onSelect={() => handleToggleTag(tag.id)}
-                                                            className="flex items-center justify-between"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <div
-                                                                    className="w-2 h-2 rounded-full"
-                                                                    style={{ backgroundColor: tag.color || '#94a3b8' }}
-                                                                />
-                                                                <span>{tag.name}</span>
-                                                            </div>
-                                                            {isSelected && <Check className="h-3 w-3" />}
-                                                        </CommandItem>
-                                                    );
-                                                })}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsTagPopoverOpen(true);
+                                    fetchTags();
+                                }}
+                                title="Manage Tags"
+                            >
+                                <TagIcon className="h-4 w-4" />
+                            </Button>
+
+                            <CommandDialog 
+                                open={isTagPopoverOpen} 
+                                onOpenChange={setIsTagPopoverOpen}
+                                title="Manage Tags"
+                                description="Search or create tags for this video"
+                            >
+                                <CommandInput
+                                    placeholder="Search or create tag..."
+                                    value={searchQuery}
+                                    onValueChange={setSearchQuery}
+                                />
+                                <CommandList>
+                                    <CommandEmpty>
+                                        {searchQuery.trim() && (
+                                            <Button
+                                                variant="ghost"
+                                                className="w-full justify-start text-xs h-8"
+                                                onClick={() => handleCreateTag(searchQuery)}
+                                                disabled={isUpdatingTags}
+                                            >
+                                                <Plus className="h-3 w-3 mr-2" />
+                                                Create "{searchQuery}"
+                                            </Button>
+                                        )}
+                                        {!searchQuery.trim() && "No tags found."}
+                                    </CommandEmpty>
+                                    <CommandGroup heading="Recent Tags">
+                                        {availableTags.map((tag) => {
+                                            const isSelected = video.tags?.some(t => t.id === tag.id);
+                                            return (
+                                                <CommandItem
+                                                    key={tag.id}
+                                                    onSelect={() => handleToggleTag(tag.id)}
+                                                    className="flex items-center justify-between"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <div
+                                                            className="w-2 h-2 rounded-full"
+                                                            style={{ backgroundColor: tag.color || '#94a3b8' }}
+                                                        />
+                                                        <span>{tag.name}</span>
+                                                    </div>
+                                                    {isSelected && <Check className="h-3 w-3" />}
+                                                </CommandItem>
+                                            );
+                                        })}
+                                    </CommandGroup>
+                                </CommandList>
+                            </CommandDialog>
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
