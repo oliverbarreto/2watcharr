@@ -53,8 +53,24 @@ export class VideoRepository {
      * Find video by ID
      */
     async findById(id: string): Promise<Video | null> {
-        const row = await this.db.get('SELECT * FROM videos WHERE id = ?', id);
-        return row ? this.mapRowToVideo(row) : null;
+        const row = await this.db.get('SELECT v.*, c.name as channel_name FROM videos v LEFT JOIN channels c ON v.channel_id = c.id WHERE v.id = ?', id);
+        if (!row) return null;
+
+        const video = this.mapRowToVideo(row);
+        const tagRows = await this.db.all(`
+            SELECT t.* FROM tags t
+            JOIN video_tags vt ON t.id = vt.tag_id
+            WHERE vt.video_id = ?
+        `, id);
+        video.tags = tagRows.map(row => ({
+            id: row.id,
+            name: row.name,
+            color: row.color,
+            userId: row.user_id,
+            createdAt: row.created_at,
+        }));
+
+        return video;
     }
 
     /**
@@ -138,7 +154,39 @@ export class VideoRepository {
         }
 
         const rows = await this.db.all(query, params);
-        return rows.map((row) => this.mapRowToVideo(row));
+        const videos = rows.map((row) => this.mapRowToVideo(row));
+
+        if (videos.length > 0) {
+            const videoIds = videos.map(v => v.id);
+            const placeholders = videoIds.map(() => '?').join(',');
+            const tagRows = await this.db.all(`
+                SELECT vt.video_id, t.* FROM tags t
+                JOIN video_tags vt ON t.id = vt.tag_id
+                WHERE vt.video_id IN (${placeholders})
+            `, videoIds);
+
+            // Group tags by video_id
+            const tagsByVideoId: Record<string, any[]> = {};
+            tagRows.forEach(row => {
+                if (!tagsByVideoId[row.video_id]) {
+                    tagsByVideoId[row.video_id] = [];
+                }
+                tagsByVideoId[row.video_id].push({
+                    id: row.id,
+                    name: row.name,
+                    color: row.color,
+                    userId: row.user_id,
+                    createdAt: row.created_at,
+                });
+            });
+
+            // Attach tags to videos
+            videos.forEach(v => {
+                v.tags = tagsByVideoId[v.id] || [];
+            });
+        }
+
+        return videos;
     }
 
     /**
@@ -190,6 +238,14 @@ export class VideoRepository {
             `UPDATE videos SET ${updates.join(', ')} WHERE id = ?`,
             params
         );
+
+        // Update tags if provided
+        if (dto.tagIds !== undefined) {
+            await this.removeTags(id);
+            if (dto.tagIds.length > 0) {
+                await this.addTags(id, dto.tagIds);
+            }
+        }
 
         const video = await this.findById(id);
         if (!video) {

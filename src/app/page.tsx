@@ -3,9 +3,9 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout';
-import { AddVideoDialog, FilterBar, VideoList } from '@/components/features/videos';
+import { FilterBar, VideoList } from '@/components/features/videos';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, List, LayoutGrid } from 'lucide-react';
 
 function HomePageContent() {
   const searchParams = useSearchParams();
@@ -17,6 +17,20 @@ function HomePageContent() {
   });
   const [sort, setSort] = useState<any>({ field: 'custom', order: 'asc' });
   const [refreshKey, setRefreshKey] = useState(0);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  useEffect(() => {
+    const savedViewMode = localStorage.getItem('videoViewMode') as 'grid' | 'list';
+    if (savedViewMode) {
+      setViewMode(savedViewMode);
+    }
+  }, []);
+
+  const toggleViewMode = () => {
+    const newMode = viewMode === 'grid' ? 'list' : 'grid';
+    setViewMode(newMode);
+    localStorage.setItem('videoViewMode', newMode);
+  };
 
   useEffect(() => {
     const channelId = searchParams.get('channelId');
@@ -26,9 +40,11 @@ function HomePageContent() {
     }));
   }, [searchParams]);
 
-  const handleVideoAdded = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
+  useEffect(() => {
+    const handleAdded = () => setRefreshKey((prev) => prev + 1);
+    window.addEventListener('video-added', handleAdded);
+    return () => window.removeEventListener('video-added', handleAdded);
+  }, []);
 
   const clearChannelFilter = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -59,7 +75,19 @@ function HomePageContent() {
                 Clear Channel Filter
               </Button>
             )}
-            <AddVideoDialog onVideoAdded={handleVideoAdded} />
+            <Button variant="ghost" size="sm" onClick={toggleViewMode} className="gap-2">
+              {viewMode === 'grid' ? (
+                <>
+                  <List className="h-4 w-4" />
+                  List View
+                </>
+              ) : (
+                <>
+                  <LayoutGrid className="h-4 w-4" />
+                  Grid View
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
@@ -72,7 +100,7 @@ function HomePageContent() {
         />
 
         {/* Video List */}
-        <VideoList key={refreshKey} filters={filters} sort={sort} />
+        <VideoList key={refreshKey} filters={filters} sort={sort} viewMode={viewMode} />
       </div>
     </Layout>
   );

@@ -49,6 +49,42 @@ export class TagRepository {
     }
 
     /**
+     * Update a tag
+     */
+    async update(id: string, dto: Partial<CreateTagDto>): Promise<Tag> {
+        const updates: string[] = [];
+        const values: any[] = [];
+
+        if (dto.name !== undefined) {
+            updates.push('name = ?');
+            values.push(dto.name);
+        }
+
+        if (dto.color !== undefined) {
+            updates.push('color = ?');
+            values.push(dto.color);
+        }
+
+        if (updates.length === 0) {
+            const tag = await this.findById(id);
+            if (!tag) throw new Error('Tag not found');
+            return tag;
+        }
+
+        values.push(id);
+        await this.db.run(
+            `UPDATE tags SET ${updates.join(', ')} WHERE id = ?`,
+            values
+        );
+
+        const updatedTag = await this.findById(id);
+        if (!updatedTag) {
+            throw new Error('Failed to update tag');
+        }
+        return updatedTag;
+    }
+
+    /**
      * Delete tag
      */
     async delete(id: string): Promise<void> {

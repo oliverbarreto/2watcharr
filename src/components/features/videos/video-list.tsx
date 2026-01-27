@@ -31,30 +31,18 @@ interface VideoListProps {
         watched?: boolean;
         favorite?: boolean;
         channelId?: string;
+        tagIds?: string[];
     };
     sort?: {
         field: string;
         order: 'asc' | 'desc';
     };
+    viewMode: 'grid' | 'list';
 }
 
-export function VideoList({ filters, sort }: VideoListProps) {
+export function VideoList({ filters, sort, viewMode }: VideoListProps) {
     const [videos, setVideos] = useState<Video[]>([]);
     const [loading, setLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-    useEffect(() => {
-        const savedViewMode = localStorage.getItem('videoViewMode') as 'grid' | 'list';
-        if (savedViewMode) {
-            setViewMode(savedViewMode);
-        }
-    }, []);
-
-    const toggleViewMode = () => {
-        const newMode = viewMode === 'grid' ? 'list' : 'grid';
-        setViewMode(newMode);
-        localStorage.setItem('videoViewMode', newMode);
-    };
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -72,6 +60,9 @@ export function VideoList({ filters, sort }: VideoListProps) {
             if (filters?.watched !== undefined) params.append('watched', String(filters.watched));
             if (filters?.favorite !== undefined) params.append('favorite', String(filters.favorite));
             if (filters?.channelId) params.append('channelId', filters.channelId);
+            if (filters?.tagIds && filters.tagIds.length > 0) {
+                params.append('tags', filters.tagIds.join(','));
+            }
             if (sort?.field) params.append('sort', sort.field);
             if (sort?.order) params.append('order', sort.order);
 
@@ -148,22 +139,6 @@ export function VideoList({ filters, sort }: VideoListProps) {
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
-                <Button variant="ghost" size="sm" onClick={toggleViewMode} className="gap-2">
-                    {viewMode === 'grid' ? (
-                        <>
-                            <List className="h-4 w-4" />
-                            List View
-                        </>
-                    ) : (
-                        <>
-                            <LayoutGrid className="h-4 w-4" />
-                            Grid View
-                        </>
-                    )}
-                </Button>
-            </div>
-
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}

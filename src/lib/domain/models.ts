@@ -21,6 +21,7 @@ export interface Video {
     priority: Priority;
     customOrder: number | null;
     userId: string | null;
+    tags?: Tag[];
     createdAt: number;
     updatedAt: number;
 }
@@ -74,6 +75,7 @@ export interface UpdateVideoDto {
     priority?: Priority;
     customOrder?: number;
     viewCount?: number;
+    tagIds?: string[];
 }
 
 export interface CreateChannelDto {
