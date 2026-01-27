@@ -1,66 +1,63 @@
 # iOS Shortcut Setup Guide
 
-This guide will help you set up an iOS Shortcut to easily save YouTube videos to your **2watcharr** list directly from the YouTube app on your iPhone or iPad.
+This guide will help you set up a robust iOS Shortcut to save YouTube videos to your **2watcharr** list.
 
 ## Prerequisites
 
 1. Your **2watcharr** server must be running and accessible from your iOS device.
    - If running locally on your Mac, your iPhone must be on the **same Wi-Fi network**.
-   - You need your Mac's local IP address (e.g., `192.168.1.100`).
+   - Use your Mac's local IP address (e.g., `192.168.1.100`) instead of `localhost`.
 
 ## Step-by-Step Setup
 
-1. **Open the "Shortcuts" app** on your iOS device.
-2. Tap the **+** button to create a new shortcut.
-3. Tap **"Rename"** at the top and name it **"Save to 2watcharr"**.
-4. Enable **"Show in Share Sheet"**:
-   - Tap the "i" info icon at the bottom.
-   - Toggle on **"Show in Share Sheet"**.
-   - Tap "Done".
+### 1. Basic Configuration
+1. **Open the "Shortcuts" app** and create a new shortcut named **"Save to 2watcharr"**.
+2. Tap the **"i" (Info)** icon and toggle on **"Show in Share Sheet"**.
+3. Set it to receive **only URLs** from the Share Sheet.
 
-### Configure Shortcut Actions
+### 2. Configure Actions
 
-Add the following actions in order:
+Follow these steps to add error handling and progress feedback:
 
-1. **Receive**
-   - Tap "Receive" and set it to receive **URLs** and **Media** (uncheck others) from **Share Sheet**.
-   - It should look like: `Receive URLs and Media input from Share Sheet`.
+1.  **Receive URLs** from Share Sheet. (If no input: `Continue`).
+2.  **Set Variable**: Name it `VideoURL` and set it to the `Shortcut Input`.
+3.  **Show Notification** (Progress):
+    - Title: `2watcharr`
+    - Body: `Añadiendo video: VideoURL...`
+4.  **Get Contents of URL**:
+    - URL: `http://YOUR_MAC_IP:3000/api/shortcuts/add-video`
+    - Method: `POST`
+    - Headers: `Content-Type: application/json`
+    - Request Body: `JSON`
+    - Add Field: `url` (Value: `VideoURL`)
+5.  **Get Dictionary from Input**: (Pass the result of the previous action).
+6.  **Get Value for Key** `success` in `Dictionary`.
+7.  **If `Value` is 1** (or is true):
+    - **Show Notification**:
+        - Title: `2watcharr`
+        - Body: `✅ Se ha añadido el video: VideoURL`
+8.  **Otherwise**:
+    - **Get Value for Key** `error` in `Dictionary`.
+    - **Show Notification**:
+        - Title: `2watcharr`
+        - Body: `❌ Error al añadir video: VideoURL. Error: Value` (Value here is the error message).
+9.  **End If**
 
-2. **Get Variable** (Optional but recommended)
-   - Add a "Text" action to define your server URL.
-   - Text: `http://192.168.1.XX:3000` (Replace with your actual IP and port).
-   - Add "Set Variable" action. Name it `ServerURL`.
+## Pro-Tips
 
-3. **Get Contents of URL**
-   - Search for "Get Contents of URL" action.
-   - Set URL to: `ServerURL/api/shortcuts/add-video`
-   - Expand the arrow (`>`) to configure:
-     - **Method**: `POST`
-     - **Headers**:
-       - Key: `Content-Type`
-       - Value: `application/json`
-     - **Request Body**: `JSON`
-     - Add new field:
-       - Key: `url`
-       - Value: Select `Shortcut Input` (magic variable)
+### Fixing "Documento PDF..."
+If your notification shows "Documento PDF...", it's because Shortcuts is trying to pass the entire "Shortcut Input" (which contains Safari metadata) into the notification. 
+**The Fix**: Always use a **"Get URLs from Input"** action or assign the input to a **Text** variable (`VideoURL`) at the beginning, and use that variable in your notifications.
 
-4. **Show Notification**
-   - Search for "Show Notification" action.
-   - Title: `2watcharr`
-   - Body: `Video added successfully!` (You can also map this to the API response if you want advanced feedback).
+### Showing Progress
+Showing a notification right before the **"Get Contents of URL"** action acts as a progress indicator. The shortcut will show the first notification, then wait for the network call, and finally show the success/error notification.
 
-## How to Use
-
-1. Open the **YouTube app** on your iPhone.
-2. Find a video you want to watch later.
-3. Tap **Share**.
-4. Tap **More...** to see the full system share sheet.
-5. Tap **"Save to 2watcharr"**.
-
-You should see a notification confirming the video was added!
+### Local Testing
+If you are testing on your Mac using the Shortcuts app:
+- You can use `http://localhost:3000`.
+- If using an iPhone, you **must** use your Mac's IP (e.g., `http://192.168.1.5:3000`).
 
 ## Troubleshooting
 
-- **"Connection Refused"**: Ensure your Mac and iPhone are on the same Wi-Fi network and the IP address is correct.
-- **"Invalid URL"**: Make sure you are sharing a video URL, not a playlist or channel page.
-- **Firewall**: Check if your Mac's firewall is blocking connections to port 3000.
+- **Connection Refused**: Double check the IP address. In Terminal, run `ipconfig getifaddr en0` to find your Mac's local IP.
+- **Wait Time**: Large video metadata might take a few seconds to process. The progress notification helps confirm it's working.
