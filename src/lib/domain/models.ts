@@ -17,6 +17,7 @@ export interface Video {
     channelName?: string;
     watched: boolean;
     favorite: boolean;
+    isDeleted: boolean;
     priority: Priority;
     customOrder: number | null;
     userId: string | null;
@@ -69,6 +70,7 @@ export interface UpdateVideoDto {
     description?: string;
     watched?: boolean;
     favorite?: boolean;
+    isDeleted?: boolean;
     priority?: Priority;
     customOrder?: number;
     viewCount?: number;
@@ -96,6 +98,7 @@ export interface VideoFilters {
     watched?: boolean;
     favorite?: boolean;
     channelId?: string;
+    isDeleted?: boolean;
 }
 
 export type SortField = 'created_at' | 'priority' | 'favorite' | 'duration' | 'title' | 'custom';

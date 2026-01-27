@@ -168,7 +168,7 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
     return (
         <div ref={setNodeRef} style={style} className="h-full">
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <Card className={`group relative h-full flex flex-col ${video.watched ? 'opacity-60' : ''}`}>
+                <Card className={`group relative h-full flex flex-col overflow-hidden ${video.watched ? 'opacity-60' : ''}`}>
                     <CardContent className="p-4 flex-1 flex flex-col">
                         {/* Drag Handle */}
                         <div
@@ -317,6 +317,13 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
                             </DropdownMenu>
                         </div>
                     </CardContent>
+
+                    {/* Bottom Drag Handle Line */}
+                    <div
+                        {...attributes}
+                        {...listeners}
+                        className="absolute bottom-0 left-0 w-full h-1.5 bg-primary opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-20"
+                    />
                 </Card>
 
                 <DialogContent>

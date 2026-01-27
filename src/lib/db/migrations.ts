@@ -129,4 +129,33 @@ export async function runMigrations(db: Database): Promise<void> {
       }
     }
   }
+
+  // Check if add_is_deleted migration has been applied
+  const migration4 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_is_deleted'
+  );
+
+  if (!migration4) {
+    console.log('Running add_is_deleted migration...');
+    try {
+      await db.run('ALTER TABLE videos ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT 0');
+      await db.run('CREATE INDEX idx_videos_is_deleted ON videos(is_deleted)');
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'add_is_deleted'
+      );
+      console.log('add_is_deleted migration completed.');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('duplicate column name')) {
+        await db.run(
+          'INSERT INTO migrations (name) VALUES (?)',
+          'add_is_deleted'
+        );
+        console.log('is_deleted column already existed, migration marked as completed.');
+      } else {
+        throw error;
+      }
+    }
+  }
 }

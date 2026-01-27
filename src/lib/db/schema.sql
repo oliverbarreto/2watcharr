@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS videos (
   -- User management fields
   watched BOOLEAN NOT NULL DEFAULT 0,
   favorite BOOLEAN NOT NULL DEFAULT 0,
+  is_deleted BOOLEAN NOT NULL DEFAULT 0,
   priority TEXT CHECK(priority IN ('none', 'low', 'medium', 'high')) DEFAULT 'none',
   custom_order INTEGER,             -- For manual reordering
   
@@ -72,6 +73,7 @@ CREATE TABLE IF NOT EXISTS video_tags (
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_videos_channel_id ON videos(channel_id);
 CREATE INDEX IF NOT EXISTS idx_videos_watched ON videos(watched);
+CREATE INDEX IF NOT EXISTS idx_videos_is_deleted ON videos(is_deleted);
 CREATE INDEX IF NOT EXISTS idx_videos_favorite ON videos(favorite);
 CREATE INDEX IF NOT EXISTS idx_videos_priority ON videos(priority);
 CREATE INDEX IF NOT EXISTS idx_videos_created_at ON videos(created_at);

@@ -35,7 +35,26 @@ export class VideoService {
         // Check if video already exists
         const existing = await this.videoRepo.findByYouTubeId(metadata.videoId);
         if (existing) {
-            throw new Error('Video already exists in the database');
+            // If the video already exists, we "add it back" by clearing the isDeleted flag
+            // and marking it as unwatched, while also updating metadata
+            const updatedVideo = await this.videoRepo.update(existing.id, {
+                isDeleted: false,
+                watched: false,
+                title: metadata.title,
+                description: metadata.description,
+                viewCount: metadata.viewCount,
+            });
+
+            // Re-associate tags if provided
+            if (tagIds && tagIds.length > 0) {
+                await this.videoRepo.removeTags(existing.id);
+                await this.videoRepo.addTags(existing.id, tagIds);
+            }
+
+            // Move to beginning of the list
+            await this.videoRepo.moveToBeginning(existing.id);
+
+            return updatedVideo;
         }
 
         // Create or update channel

@@ -9,6 +9,7 @@ const updateVideoSchema = z.object({
     description: z.string().optional(),
     watched: z.boolean().optional(),
     favorite: z.boolean().optional(),
+    isDeleted: z.boolean().optional(),
     priority: z.enum(['none', 'low', 'medium', 'high']).optional(),
     tagIds: z.array(z.string()).optional(),
 });

@@ -111,6 +111,14 @@ export class VideoRepository {
             params.push(filters.favorite ? 1 : 0);
         }
 
+        if (filters?.isDeleted !== undefined) {
+            conditions.push('v.is_deleted = ?');
+            params.push(filters.isDeleted ? 1 : 0);
+        } else {
+            // Default: only show non-deleted videos
+            conditions.push('v.is_deleted = 0');
+        }
+
         if (filters?.channelId) {
             conditions.push('v.channel_id = ?');
             params.push(filters.channelId);
@@ -160,6 +168,10 @@ export class VideoRepository {
             updates.push('priority = ?');
             params.push(dto.priority);
         }
+        if (dto.isDeleted !== undefined) {
+            updates.push('is_deleted = ?');
+            params.push(dto.isDeleted ? 1 : 0);
+        }
         if (dto.customOrder !== undefined) {
             updates.push('custom_order = ?');
             params.push(dto.customOrder);
@@ -190,7 +202,10 @@ export class VideoRepository {
      * Delete video
      */
     async delete(id: string): Promise<void> {
-        await this.db.run('DELETE FROM videos WHERE id = ?', id);
+        await this.db.run('UPDATE videos SET is_deleted = 1, updated_at = ? WHERE id = ?', [
+            Math.floor(Date.now() / 1000),
+            id
+        ]);
     }
 
     /**
@@ -305,6 +320,7 @@ export class VideoRepository {
             channelName: row.channel_name,
             watched: Boolean(row.watched),
             favorite: Boolean(row.favorite),
+            isDeleted: Boolean(row.is_deleted),
             priority: row.priority,
             customOrder: row.custom_order,
             userId: row.user_id,

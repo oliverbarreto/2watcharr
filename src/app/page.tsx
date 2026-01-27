@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout';
 import { AddVideoDialog, FilterBar, VideoList } from '@/components/features/videos';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
-export default function HomePage() {
+function HomePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const channelId = searchParams.get('channelId');
@@ -75,5 +75,26 @@ export default function HomePage() {
         <VideoList key={refreshKey} filters={filters} sort={sort} />
       </div>
     </Layout>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Watch Later</h1>
+              <p className="text-muted-foreground">
+                Loading videos...
+              </p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    }>
+      <HomePageContent />
+    </Suspense>
   );
 }
