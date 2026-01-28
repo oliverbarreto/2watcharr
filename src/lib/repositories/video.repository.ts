@@ -6,6 +6,7 @@ import {
     UpdateVideoDto,
     VideoFilters,
     SortOptions,
+    VideoEventType,
 } from '../domain/models';
 
 export class VideoRepository {
@@ -53,7 +54,16 @@ export class VideoRepository {
      * Find video by ID
      */
     async findById(id: string): Promise<Video | null> {
-        const row = await this.db.get('SELECT v.*, c.name as channel_name FROM videos v LEFT JOIN channels c ON v.channel_id = c.id WHERE v.id = ?', id);
+        const row = await this.db.get(`
+            SELECT v.*, c.name as channel_name,
+            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
+            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
+            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
+            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
+            FROM videos v 
+            LEFT JOIN channels c ON v.channel_id = c.id 
+            WHERE v.id = ?
+        `, id);
         if (!row) return null;
 
         const video = this.mapRowToVideo(row);
@@ -91,7 +101,15 @@ export class VideoRepository {
         filters?: VideoFilters,
         sort?: SortOptions
     ): Promise<Video[]> {
-        let query = 'SELECT DISTINCT v.*, c.name as channel_name FROM videos v';
+        const hasTagFilter = filters?.tagIds && filters.tagIds.length > 0;
+        let query = `
+            SELECT ${hasTagFilter ? 'DISTINCT ' : ''}v.*, c.name as channel_name,
+            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
+            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
+            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
+            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
+            FROM videos v
+        `;
         query += ' LEFT JOIN channels c ON v.channel_id = c.id';
         const params: any[] = [];
 
@@ -265,6 +283,19 @@ export class VideoRepository {
     }
 
     /**
+     * Add a video event
+     */
+    async addEvent(videoId: string, type: VideoEventType): Promise<void> {
+        const id = uuidv4();
+        const now = Math.floor(Date.now() / 1000);
+
+        await this.db.run(
+            'INSERT INTO video_events (id, video_id, type, created_at) VALUES (?, ?, ?, ?)',
+            [id, videoId, type, now]
+        );
+    }
+
+    /**
      * Reorder videos
      */
     async reorder(videoIds: string[]): Promise<void> {
@@ -355,6 +386,14 @@ export class VideoRepository {
                 return `v.duration ${direction}`;
             case 'title':
                 return `v.title ${direction}`;
+            case 'date_added':
+                return `last_added_at ${direction}`;
+            case 'date_watched':
+                return `last_watched_at ${direction}`;
+            case 'date_favorited':
+                return `last_favorited_at ${direction}`;
+            case 'date_removed':
+                return `last_removed_at ${direction}`;
             default:
                 return 'v.custom_order ASC, v.created_at DESC';
         }
@@ -382,6 +421,10 @@ export class VideoRepository {
             userId: row.user_id,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
+            lastAddedAt: row.last_added_at || undefined,
+            lastWatchedAt: row.last_watched_at || undefined,
+            lastFavoritedAt: row.last_favorited_at || undefined,
+            lastRemovedAt: row.last_removed_at || undefined,
         };
     }
 }

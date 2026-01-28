@@ -70,6 +70,16 @@ CREATE TABLE IF NOT EXISTS video_tags (
   FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
 
+-- Video events (added, watched, favorited, etc.)
+CREATE TABLE IF NOT EXISTS video_events (
+  id TEXT PRIMARY KEY,
+  video_id TEXT NOT NULL,
+  type TEXT NOT NULL,              -- added, watched, unwatched, favorited, unfavorited, removed, restored
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  
+  FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_videos_channel_id ON videos(channel_id);
 CREATE INDEX IF NOT EXISTS idx_videos_watched ON videos(watched);
@@ -79,3 +89,6 @@ CREATE INDEX IF NOT EXISTS idx_videos_priority ON videos(priority);
 CREATE INDEX IF NOT EXISTS idx_videos_created_at ON videos(created_at);
 CREATE INDEX IF NOT EXISTS idx_video_tags_tag_id ON video_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_tags_user_id ON tags(user_id);
+CREATE INDEX IF NOT EXISTS idx_video_events_video_id ON video_events(video_id);
+CREATE INDEX IF NOT EXISTS idx_video_events_type ON video_events(type);
+CREATE INDEX IF NOT EXISTS idx_video_events_created_at ON video_events(created_at);

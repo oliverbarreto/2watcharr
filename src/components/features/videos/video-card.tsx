@@ -262,6 +262,25 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
         }
     };
 
+    const formatEventDate = () => {
+        if (video.lastRemovedAt && video.isDeleted) {
+            return `Removed ${formatDistanceToNow(new Date(video.lastRemovedAt * 1000), { addSuffix: true })}`;
+        }
+        
+        // Find the latest significant event
+        const events = [
+            { type: 'Watched', date: video.lastWatchedAt },
+            { type: 'Restored', date: video.lastAddedAt && video.lastAddedAt > (video.createdAt + 10) ? video.lastAddedAt : null }, // Heuristic for restored
+            { type: 'Added', date: video.lastAddedAt || video.createdAt }
+        ].filter(e => e.date).sort((a, b) => (b.date || 0) - (a.date || 0));
+
+        if (events.length > 0 && events[0].date) {
+            return `${events[0].type} ${formatDistanceToNow(new Date(events[0].date * 1000), { addSuffix: true })}`;
+        }
+        
+        return '';
+    };
+
     return (
         <div ref={setNodeRef} style={style} className="h-full">
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -327,6 +346,12 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
                                     <>
                                         <span>•</span>
                                         <span>{formatPublishedDate(video.publishedDate)}</span>
+                                    </>
+                                )}
+                                {formatEventDate() && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="text-primary/80 font-medium">{formatEventDate()}</span>
                                     </>
                                 )}
                             </div>

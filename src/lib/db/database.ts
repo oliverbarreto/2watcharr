@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 import { runMigrations } from './migrations';
+import path from 'path';
 
 let db: Database | null = null;
 
@@ -10,7 +11,12 @@ let db: Database | null = null;
  */
 export async function getDatabase(): Promise<Database> {
     if (!db) {
-        const dbPath = process.env.DATABASE_PATH || './data/2watcharr.db';
+        let dbPath = process.env.DATABASE_PATH || './data/2watcharr.db';
+        
+        // Ensure path is absolute for reliability in different environments
+        if (!path.isAbsolute(dbPath)) {
+            dbPath = path.resolve(process.cwd(), dbPath);
+        }
 
         db = await open({
             filename: dbPath,

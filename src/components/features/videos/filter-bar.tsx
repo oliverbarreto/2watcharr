@@ -172,7 +172,10 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="custom">Manual</SelectItem>
-                                <SelectItem value="created_at">Date Added</SelectItem>
+                                <SelectItem value="date_added">Date Added</SelectItem>
+                                <SelectItem value="date_watched">Date Watched</SelectItem>
+                                <SelectItem value="date_favorited">Date Favorited</SelectItem>
+                                <SelectItem value="date_removed">Date Removed</SelectItem>
                                 <SelectItem value="priority">Priority</SelectItem>
                                 <SelectItem value="favorite">Favorite</SelectItem>
                                 <SelectItem value="duration">Duration</SelectItem>

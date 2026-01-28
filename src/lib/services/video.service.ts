@@ -45,6 +45,9 @@ export class VideoService {
                 viewCount: metadata.viewCount,
             });
 
+            // Record 'restored' event
+            await this.videoRepo.addEvent(existing.id, 'restored');
+
             // Re-associate tags if provided
             if (tagIds && tagIds.length > 0) {
                 await this.videoRepo.removeTags(existing.id);
@@ -99,6 +102,9 @@ export class VideoService {
             channelId: channel.id,
         });
 
+        // Record 'added' event
+        await this.videoRepo.addEvent(video.id, 'added');
+
         // Associate tags if provided
         if (tagIds && tagIds.length > 0) {
             await this.videoRepo.addTags(video.id, tagIds);
@@ -136,6 +142,7 @@ export class VideoService {
      */
     async deleteVideo(id: string): Promise<void> {
         await this.videoRepo.delete(id);
+        await this.videoRepo.addEvent(id, 'removed');
     }
 
     /**
@@ -146,7 +153,13 @@ export class VideoService {
         if (!video) {
             throw new Error('Video not found');
         }
-        return this.videoRepo.update(id, { watched: !video.watched });
+        const newWatched = !video.watched;
+        const updatedVideo = await this.videoRepo.update(id, { watched: newWatched });
+        
+        // Record event
+        await this.videoRepo.addEvent(id, newWatched ? 'watched' : 'unwatched');
+        
+        return updatedVideo;
     }
 
     /**
@@ -157,7 +170,13 @@ export class VideoService {
         if (!video) {
             throw new Error('Video not found');
         }
-        return this.videoRepo.update(id, { favorite: !video.favorite });
+        const newFavorite = !video.favorite;
+        const updatedVideo = await this.videoRepo.update(id, { favorite: newFavorite });
+        
+        // Record event
+        await this.videoRepo.addEvent(id, newFavorite ? 'favorited' : 'unfavorited');
+        
+        return updatedVideo;
     }
 
     /**

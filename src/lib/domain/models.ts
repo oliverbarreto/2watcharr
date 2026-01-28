@@ -2,6 +2,15 @@
 
 export type Priority = 'none' | 'low' | 'medium' | 'high';
 
+export type VideoEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored';
+
+export interface VideoEvent {
+    id: string;
+    videoId: string;
+    type: VideoEventType;
+    createdAt: number;
+}
+
 export interface Video {
     id: string;
     youtubeId: string;
@@ -24,6 +33,11 @@ export interface Video {
     tags?: Tag[];
     createdAt: number;
     updatedAt: number;
+    // Event timestamps
+    lastAddedAt?: number;
+    lastWatchedAt?: number;
+    lastFavoritedAt?: number;
+    lastRemovedAt?: number;
 }
 
 export interface Channel {
@@ -103,7 +117,7 @@ export interface VideoFilters {
     isDeleted?: boolean;
 }
 
-export type SortField = 'created_at' | 'priority' | 'favorite' | 'duration' | 'title' | 'custom';
+export type SortField = 'created_at' | 'priority' | 'favorite' | 'duration' | 'title' | 'custom' | 'date_added' | 'date_watched' | 'date_favorited' | 'date_removed';
 export type SortOrder = 'asc' | 'desc';
 
 export interface SortOptions {

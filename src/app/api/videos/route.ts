@@ -91,7 +91,10 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error('Error listing videos:', error);
         return NextResponse.json(
-            { error: 'Failed to list videos' },
+            { 
+                error: 'Failed to list videos', 
+                message: error instanceof Error ? error.message : String(error) 
+            },
             { status: 500 }
         );
     }

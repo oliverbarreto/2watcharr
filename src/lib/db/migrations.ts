@@ -158,4 +158,45 @@ export async function runMigrations(db: Database): Promise<void> {
       }
     }
   }
+
+  // Check if add_video_events migration has been applied
+  const migration5 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_video_events'
+  );
+
+  if (!migration5) {
+    console.log('Running add_video_events migration...');
+    try {
+      await db.exec(`
+        CREATE TABLE IF NOT EXISTS video_events (
+          id TEXT PRIMARY KEY,
+          video_id TEXT NOT NULL,
+          type TEXT NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_video_events_video_id ON video_events(video_id);
+        CREATE INDEX IF NOT EXISTS idx_video_events_type ON video_events(type);
+        CREATE INDEX IF NOT EXISTS idx_video_events_created_at ON video_events(created_at);
+      `);
+
+      // Backfill: Create 'added' events for all existing videos using their created_at date
+      await db.run(`
+        INSERT INTO video_events (id, video_id, type, created_at)
+        SELECT lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || '4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', abs(random()) % 4 + 1, 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6))),
+               id, 'added', created_at
+        FROM videos
+      `);
+
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'add_video_events'
+      );
+      console.log('add_video_events migration completed.');
+    } catch (error) {
+      console.error('Error running add_video_events migration:', error);
+      throw error;
+    }
+  }
 }
