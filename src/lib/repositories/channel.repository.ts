@@ -1,5 +1,5 @@
 import { Database } from 'sqlite';
-import { Channel, CreateChannelDto } from '../domain/models';
+import { Channel, CreateChannelDto, Tag } from '../domain/models';
 
 export class ChannelRepository {
     constructor(private db: Database) { }
@@ -92,19 +92,57 @@ export class ChannelRepository {
     /**
      * Get channel with video count
      */
-    async getChannelsWithVideoCount(): Promise<Array<Channel & { videoCount: number }>> {
+    async getChannelsWithVideoCount(): Promise<Array<Channel & { videoCount: number; tags: Tag[] }>> {
         const rows = await this.db.all(`
-      SELECT c.*, COUNT(v.id) as video_count
-      FROM channels c
-      LEFT JOIN videos v ON c.id = v.channel_id
-      GROUP BY c.id
-      ORDER BY c.name ASC
-    `);
+            SELECT c.*, COUNT(v.id) as video_count
+            FROM channels c
+            LEFT JOIN videos v ON c.id = v.channel_id AND v.is_deleted = 0
+            GROUP BY c.id
+            ORDER BY c.name ASC
+        `);
 
-        return rows.map((row: any) => ({
+        const channels = rows.map((row: any) => ({
             ...this.mapRowToChannel(row),
             videoCount: row.video_count,
+            tags: [] as Tag[],
         }));
+
+        if (channels.length > 0) {
+            const channelIds = channels.map((c) => c.id);
+            const placeholders = channelIds.map(() => '?').join(',');
+
+            // Get all tags for these channels
+            const tagRows = await this.db.all(`
+                SELECT DISTINCT v.channel_id, t.*
+                FROM tags t
+                JOIN video_tags vt ON t.id = vt.tag_id
+                JOIN videos v ON vt.video_id = v.id
+                WHERE v.channel_id IN (${placeholders}) AND v.is_deleted = 0
+                ORDER BY t.name ASC
+            `, channelIds);
+
+            // Group tags by channel_id
+            const tagsByChannelId: Record<string, Tag[]> = {};
+            tagRows.forEach((row: any) => {
+                if (!tagsByChannelId[row.channel_id]) {
+                    tagsByChannelId[row.channel_id] = [];
+                }
+                tagsByChannelId[row.channel_id].push({
+                    id: row.id,
+                    name: row.name,
+                    color: row.color,
+                    userId: row.user_id,
+                    createdAt: row.created_at,
+                });
+            });
+
+            // Attach tags to channels
+            channels.forEach((c) => {
+                c.tags = tagsByChannelId[c.id] || [];
+            });
+        }
+
+        return channels;
     }
 
     /**

@@ -18,6 +18,12 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 
+interface Tag {
+    id: string;
+    name: string;
+    color: string | null;
+}
+
 interface Channel {
     id: string;
     name: string;
@@ -25,6 +31,7 @@ interface Channel {
     thumbnailUrl: string | null;
     channelUrl: string;
     videoCount: number;
+    tags?: Tag[];
 }
 
 function ChannelsPageContent() {
@@ -103,8 +110,14 @@ function ChannelsPageContent() {
                         {[...Array(8)].map((_, i) => (
                             <Card key={i}>
                                 <CardHeader className="flex flex-row items-center gap-4">
-                                    <Skeleton className="h-12 w-12 rounded-full" />
-                                    <Skeleton className="h-6 w-3/4" />
+                                    <Skeleton className="h-16 w-16 rounded-full flex-shrink-0" />
+                                    <div className="flex-1 min-w-0 space-y-2">
+                                        <Skeleton className="h-6 w-3/4" />
+                                        <div className="flex gap-1">
+                                            <Skeleton className="h-4 w-12" />
+                                            <Skeleton className="h-4 w-16" />
+                                        </div>
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     <Skeleton className="h-4 w-full mb-2" />
@@ -196,6 +209,24 @@ function ChannelsPageContent() {
                                         <Badge variant="secondary" className="mt-1 bg-primary/5 text-primary hover:bg-primary/10 border-none px-2 py-0">
                                             {channel.videoCount} {channel.videoCount === 1 ? 'video' : 'videos'}
                                         </Badge>
+                                        {channel.tags && channel.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                {channel.tags.map((tag) => (
+                                                    <Badge
+                                                        key={tag.id}
+                                                        variant="outline"
+                                                        className="text-[10px] px-1.5 py-0 h-4"
+                                                        style={tag.color ? {
+                                                            backgroundColor: `${tag.color}15`,
+                                                            color: tag.color,
+                                                            borderColor: `${tag.color}30`
+                                                        } : undefined}
+                                                    >
+                                                        {tag.name}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </CardHeader>
 
@@ -248,8 +279,14 @@ export default function ChannelsPage() {
                         {[...Array(8)].map((_, i) => (
                             <Card key={i}>
                                 <CardHeader className="flex flex-row items-center gap-4">
-                                    <Skeleton className="h-12 w-12 rounded-full" />
-                                    <Skeleton className="h-6 w-3/4" />
+                                    <Skeleton className="h-16 w-16 rounded-full flex-shrink-0" />
+                                    <div className="flex-1 min-w-0 space-y-2">
+                                        <Skeleton className="h-6 w-3/4" />
+                                        <div className="flex gap-1">
+                                            <Skeleton className="h-4 w-12" />
+                                            <Skeleton className="h-4 w-16" />
+                                        </div>
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     <Skeleton className="h-4 w-full mb-2" />
