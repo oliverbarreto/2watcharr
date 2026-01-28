@@ -1,5 +1,0 @@
-- [ ] Incorporate tasks for tracking changelog, features and bugs in the AI Assistant methodology: 
-    - [ ] use `./docs/specs/roadmap/feature-*.md` files to track features in a structured way
-    - [ ] use `./docs/specs/roadmap/bug-*.md` files to track bugs in a structured way
-    - [ ] After every feature or bug fix, update the corresponding file to reflect the changes made
-    - [ ] After every feature or bug fix, update the `./CHANGELOG.md` file to reflect the changes made according to the follwing methodology [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Also you can read more in `./docs/reference/keep-a-changelog.md`

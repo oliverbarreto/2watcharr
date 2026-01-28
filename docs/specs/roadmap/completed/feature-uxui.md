@@ -1,0 +1,14 @@
+
+- [x] UI/UX: some ui modifications we need to implement:
+    - [x] FEATURE: `task-0000010-extend-video-model-with-dates-1-prompt.md` 
+        - [x] Testing: Implemented a test-driven approach with 7 passing Vitest tests.
+        - [x] Backend: Created a video_events table and updated the repository/service layers to record and retrieve events (Added, Watched, Favorited, etc.).
+        - [x] Frontend: Added new sort options to the filter bar and displayed relevant event dates on video cards and list rows.
+    - [x] show all the tags assigned to videos of a channel in the channel card
+    - [x] Relocate "Add Video" button to top navigation bar as a red circular "+" button.
+    - [x] Move Grid/List view toggle to the page header next to the title.
+    - [x] Implement red "handle" line at the bottom of video cards for better drag-and-drop UX.
+    - [x] Update channel cards: link channel name to YouTube, remove share icon.
+    - [x] Use Lucide Play icons for watched/unwatched status filters.
+    - [x] Optimize mobile layout for filters and search bar.
+    - [x] Add default view setting (Grid/List) in the settings menu.
