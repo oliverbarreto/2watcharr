@@ -98,3 +98,41 @@ export async function deleteProfile(id: string) {
       return { error: "Failed to delete profile" };
     }
 }
+/**
+ * Update an existing user profile (Admin only)
+ */
+export async function updateProfile(id: string, data: {
+  username?: string;
+  password?: string;
+  displayName?: string;
+  emoji?: string;
+  color?: string;
+  isAdmin?: boolean;
+}) {
+  try {
+    const db = await getDatabase();
+    const userService = new UserService(db);
+    
+    // Create updates object, only including provided fields
+    const updates: any = {};
+    if (data.username !== undefined) updates.username = data.username;
+    if (data.displayName !== undefined) updates.displayName = data.displayName;
+    if (data.emoji !== undefined) updates.emoji = data.emoji;
+    if (data.color !== undefined) updates.color = data.color;
+    if (data.isAdmin !== undefined) updates.isAdmin = data.isAdmin;
+    
+    // Only update password if it's not empty
+    if (data.password && data.password.trim() !== "") {
+        updates.password = data.password;
+    }
+
+    await userService.updateUser(id, updates);
+    
+    revalidatePath("/settings");
+    revalidatePath("/profiles");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return { error: "Failed to update profile" };
+  }
+}

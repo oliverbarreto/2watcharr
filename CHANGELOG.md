@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Edit User functionality in User Management settings (allows changing icon, color, name, username, and password).
 - Initial project setup with Next.js v15, TypeScript, and Tailwind CSS
 - SQLite database support with `sqlite3` and promise-based wrapper
 - shadcn/ui component library integration
