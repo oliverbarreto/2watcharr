@@ -492,4 +492,38 @@ export async function runMigrations(db: Database): Promise<void> {
       await db.run('PRAGMA foreign_keys = ON');
     }
   }
+
+  // Check if add_watch_status migration has been applied
+  const migration8 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_watch_status'
+  );
+
+  if (!migration8) {
+    console.log('Running add_watch_status migration...');
+    try {
+      await db.run("ALTER TABLE episodes ADD COLUMN watch_status TEXT NOT NULL DEFAULT 'unwatched'");
+      await db.run('CREATE INDEX IF NOT EXISTS idx_episodes_watch_status ON episodes(watch_status)');
+
+      // Migrate existing 'watched' data
+      await db.run("UPDATE episodes SET watch_status = 'watched' WHERE watched = 1");
+      await db.run("UPDATE episodes SET watch_status = 'unwatched' WHERE watched = 0");
+
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'add_watch_status'
+      );
+      console.log('add_watch_status migration completed.');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('duplicate column name')) {
+        await db.run(
+          'INSERT INTO migrations (name) VALUES (?)',
+          'add_watch_status'
+        );
+        console.log('watch_status column already existed, migration marked as completed.');
+      } else {
+        throw error;
+      }
+    }
+  }
 }

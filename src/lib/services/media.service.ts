@@ -135,7 +135,25 @@ export class MediaService {
      * Update an episode
      */
     async updateEpisode(id: string, updates: UpdateEpisodeDto): Promise<MediaEpisode> {
-        return this.episodeRepo.update(id, updates);
+        const episode = await this.episodeRepo.update(id, updates);
+        
+        if (updates.watchStatus !== undefined) {
+             await this.episodeRepo.addEvent(id, updates.watchStatus as any);
+        } else if (updates.watched !== undefined) {
+             await this.episodeRepo.addEvent(id, updates.watched ? 'watched' : 'unwatched');
+        }
+
+        if (updates.favorite !== undefined) {
+             await this.episodeRepo.addEvent(id, updates.favorite ? 'favorited' : 'unfavorited');
+        }
+
+        if (updates.isDeleted === true) {
+             await this.episodeRepo.addEvent(id, 'removed');
+        } else if (updates.isDeleted === false) {
+             await this.episodeRepo.addEvent(id, 'restored');
+        }
+
+        return episode;
     }
 
     /**
@@ -155,10 +173,31 @@ export class MediaService {
             throw new Error('Episode not found');
         }
         const newWatched = !episode.watched;
-        const updated = await this.episodeRepo.update(id, { watched: newWatched });
+        const updated = await this.episodeRepo.update(id, { 
+            watched: newWatched,
+            watchStatus: newWatched ? 'watched' : 'unwatched'
+        });
         
         // Record event
         await this.episodeRepo.addEvent(id, newWatched ? 'watched' : 'unwatched');
+        
+        return updated;
+    }
+
+    /**
+     * Set watch status
+     */
+    async setWatchStatus(id: string, status: 'unwatched' | 'pending' | 'watched'): Promise<MediaEpisode> {
+        const updated = await this.episodeRepo.update(id, { watchStatus: status });
+        
+        // Record event
+        if (status === 'watched') {
+            await this.episodeRepo.addEvent(id, 'watched');
+        } else if (status === 'pending') {
+            await this.episodeRepo.addEvent(id, 'pending');
+        } else {
+            await this.episodeRepo.addEvent(id, 'unwatched');
+        }
         
         return updated;
     }
@@ -218,6 +257,8 @@ export class MediaService {
         // Add new tags
         if (tagIds.length > 0) {
             await this.episodeRepo.addTags(id, tagIds);
+            // Record 'tagged' event
+            await this.episodeRepo.addEvent(id, 'tagged');
         }
     }
 

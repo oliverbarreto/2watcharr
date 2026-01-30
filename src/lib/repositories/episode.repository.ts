@@ -23,8 +23,8 @@ export class EpisodeRepository {
             `INSERT INTO episodes (
         id, type, external_id, title, description, duration, thumbnail_url,
         url, upload_date, published_date, view_count, channel_id, user_id,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        watch_status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 id,
                 dto.type,
@@ -39,6 +39,7 @@ export class EpisodeRepository {
                 dto.viewCount || null,
                 dto.channelId,
                 dto.userId,
+                'unwatched',
                 now,
                 now,
             ]
@@ -59,6 +60,7 @@ export class EpisodeRepository {
             SELECT e.*, c.name as channel_name,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'pending' ORDER BY created_at DESC LIMIT 1) as last_pending_at,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
             FROM episodes e 
@@ -144,6 +146,11 @@ export class EpisodeRepository {
         if (filters?.watched !== undefined) {
             conditions.push('e.watched = ?');
             params.push(filters.watched ? 1 : 0);
+        }
+
+        if (filters?.watchStatus !== undefined) {
+            conditions.push('e.watch_status = ?');
+            params.push(filters.watchStatus);
         }
 
         if (filters?.favorite !== undefined) {
@@ -236,6 +243,18 @@ export class EpisodeRepository {
         if (dto.watched !== undefined) {
             updates.push('watched = ?');
             params.push(dto.watched ? 1 : 0);
+            // Sync watch_status if not explicitly provided
+            if (dto.watchStatus === undefined) {
+                updates.push('watch_status = ?');
+                params.push(dto.watched ? 'watched' : 'unwatched');
+            }
+        }
+        if (dto.watchStatus !== undefined) {
+            updates.push('watch_status = ?');
+            params.push(dto.watchStatus);
+            // Sync watched boolean
+            updates.push('watched = ?');
+            params.push(dto.watchStatus === 'watched' ? 1 : 0);
         }
         if (dto.favorite !== undefined) {
             updates.push('favorite = ?');
@@ -426,6 +445,7 @@ export class EpisodeRepository {
             channelId: row.channel_id,
             channelName: row.channel_name,
             watched: Boolean(row.watched),
+            watchStatus: row.watch_status,
             favorite: Boolean(row.favorite),
             isDeleted: Boolean(row.is_deleted),
             priority: row.priority,
@@ -435,6 +455,7 @@ export class EpisodeRepository {
             updatedAt: row.updated_at,
             lastAddedAt: row.last_added_at || undefined,
             lastWatchedAt: row.last_watched_at || undefined,
+            lastPendingAt: row.last_pending_at || undefined,
             lastFavoritedAt: row.last_favorited_at || undefined,
             lastRemovedAt: row.last_removed_at || undefined,
         };

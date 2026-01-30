@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS episodes (
   
   -- User management fields
   watched BOOLEAN NOT NULL DEFAULT 0,
+  watch_status TEXT NOT NULL DEFAULT 'unwatched', -- 'unwatched', 'pending', 'watched'
   favorite BOOLEAN NOT NULL DEFAULT 0,
   is_deleted BOOLEAN NOT NULL DEFAULT 0,
   priority TEXT CHECK(priority IN ('none', 'low', 'medium', 'high')) DEFAULT 'none',
@@ -84,7 +85,7 @@ CREATE TABLE IF NOT EXISTS episode_tags (
 CREATE TABLE IF NOT EXISTS media_events (
   id TEXT PRIMARY KEY,
   episode_id TEXT NOT NULL,
-  type TEXT NOT NULL,              -- added, watched, unwatched, favorited, unfavorited, removed, restored
+  type TEXT NOT NULL,              -- added, watched, unwatched, favorited, unfavorited, removed, restored, tagged, pending
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   
   FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE CASCADE
@@ -94,6 +95,7 @@ CREATE TABLE IF NOT EXISTS media_events (
 CREATE INDEX IF NOT EXISTS idx_episodes_type ON episodes(type);
 CREATE INDEX IF NOT EXISTS idx_episodes_channel_id ON episodes(channel_id);
 CREATE INDEX IF NOT EXISTS idx_episodes_watched ON episodes(watched);
+CREATE INDEX IF NOT EXISTS idx_episodes_watch_status ON episodes(watch_status);
 CREATE INDEX IF NOT EXISTS idx_episodes_is_deleted ON episodes(is_deleted);
 CREATE INDEX IF NOT EXISTS idx_episodes_favorite ON episodes(favorite);
 CREATE INDEX IF NOT EXISTS idx_episodes_priority ON episodes(priority);

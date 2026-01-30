@@ -2,8 +2,9 @@
 
 export type Priority = 'none' | 'low' | 'medium' | 'high';
 export type MediaType = 'video' | 'podcast';
+export type WatchStatus = 'unwatched' | 'pending' | 'watched';
 
-export type MediaEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored';
+export type MediaEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored' | 'tagged' | 'pending';
 
 export interface MediaEvent {
     id: string;
@@ -41,6 +42,7 @@ export interface MediaEpisode {
     channelId: string;
     channelName?: string;
     watched: boolean;
+    watchStatus: WatchStatus;
     favorite: boolean;
     isDeleted: boolean;
     priority: Priority;
@@ -52,6 +54,7 @@ export interface MediaEpisode {
     // Event timestamps
     lastAddedAt?: number;
     lastWatchedAt?: number;
+    lastPendingAt?: number;
     lastFavoritedAt?: number;
     lastRemovedAt?: number;
 }
@@ -102,6 +105,7 @@ export interface UpdateEpisodeDto {
     title?: string;
     description?: string;
     watched?: boolean;
+    watchStatus?: WatchStatus;
     favorite?: boolean;
     isDeleted?: boolean;
     priority?: Priority;
@@ -133,6 +137,7 @@ export interface EpisodeFilters {
     tagIds?: string[];
     search?: string;
     watched?: boolean;
+    watchStatus?: WatchStatus;
     favorite?: boolean;
     channelId?: string;
     isDeleted?: boolean;

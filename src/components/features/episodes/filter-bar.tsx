@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Play, Tag as TagIcon, X } from 'lucide-react';
+import { Search, Play, Tag as TagIcon, X, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +34,8 @@ interface FilterBarProps {
 export function FilterBar({ onFilterChange, onSortChange, initialFilters, initialSort }: FilterBarProps) {
     const [search, setSearch] = useState(initialFilters?.search || '');
     const [watchedFilter, setWatchedFilter] = useState<string>(
-        initialFilters?.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched')
+        initialFilters?.watchStatus === 'pending' ? 'pending' : 
+        (initialFilters?.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched'))
     );
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilters?.tagIds || []);
     const [tags, setTags] = useState<Tag[]>([]);
@@ -61,7 +62,8 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         setSearch(value);
         onFilterChange?.({
             search: value || undefined,
-            watched: watchedFilter === 'all' ? undefined : watchedFilter === 'watched',
+            watched: watchedFilter === 'watched' ? true : undefined,
+            watchStatus: watchedFilter === 'unwatched' ? 'unwatched' : (watchedFilter === 'pending' ? 'pending' : undefined),
             tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
         });
     };
@@ -70,7 +72,8 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         setWatchedFilter(value);
         onFilterChange?.({
             search: search || undefined,
-            watched: value === 'all' ? undefined : value === 'watched',
+            watched: value === 'watched' ? true : undefined,
+            watchStatus: value === 'unwatched' ? 'unwatched' : (value === 'pending' ? 'pending' : undefined),
             tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
         });
     };
@@ -147,6 +150,20 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Unwatched</TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={watchedFilter === 'pending' ? 'default' : 'outline'}
+                                        size="icon"
+                                        onClick={() => handleWatchedFilterChange('pending')}
+                                        className="h-9 w-9 flex-shrink-0"
+                                    >
+                                        <Clock className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Pending Confirmation</TooltipContent>
                             </Tooltip>
 
                             <Tooltip>

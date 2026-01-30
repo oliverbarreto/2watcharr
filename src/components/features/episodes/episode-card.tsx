@@ -30,6 +30,7 @@ import {
     Plus,
     Youtube,
     Mic,
+    Clock,
 } from 'lucide-react';
 import {
     CommandDialog,
@@ -137,8 +138,26 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
         }
     };
 
-    const handlePlay = () => {
+    const handlePlay = async () => {
         window.open(episode.url, '_blank');
+        
+        const watchAction = localStorage.getItem('watchAction') || 'pending';
+        if (watchAction === 'watched' && episode.watchStatus === 'unwatched') {
+            handleToggleWatched();
+        } else if (watchAction === 'pending' && episode.watchStatus === 'unwatched') {
+            try {
+                const response = await fetch(`/api/episodes/${episode.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ watchStatus: 'pending' }),
+                });
+                if (response.ok) {
+                    onUpdate?.();
+                }
+            } catch (error) {
+                console.error('Failed to set pending status:', error);
+            }
+        }
     };
 
     const fetchTags = async () => {
@@ -265,7 +284,8 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
         // Find the latest significant event
         const events = [
             { type: 'Watched', date: episode.lastWatchedAt },
-            { type: 'Restored', date: episode.lastAddedAt && episode.lastAddedAt > (episode.createdAt + 10) ? episode.lastAddedAt : null }, // Heuristic for restored
+            { type: 'Status updated', date: episode.lastPendingAt },
+            { type: 'Restored', date: episode.lastAddedAt && episode.lastAddedAt > (episode.createdAt + 10) ? episode.lastAddedAt : null },
             { type: 'Added', date: episode.lastAddedAt || episode.createdAt }
         ].filter(e => e.date).sort((a, b) => (b.date || 0) - (a.date || 0));
 
@@ -279,7 +299,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
     return (
         <div ref={setNodeRef} style={style} className="h-full">
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <Card className={`group relative h-full flex flex-col overflow-hidden ${episode.watched ? 'opacity-60' : ''}`}>
+                <Card className={`group relative h-full flex flex-col overflow-hidden ${episode.watched ? 'opacity-60' : ''} ${episode.watchStatus === 'pending' ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}>
                     <CardContent className="p-4 flex-1 flex flex-col">
                         {/* Drag Handle */}
                         <div
@@ -326,6 +346,28 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
                             {episode.watched && (
                                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                                     <Check className="h-12 w-12 text-white" />
+                                </div>
+                            )}
+
+                            {/* Pending Overlay */}
+                            {episode.watchStatus === 'pending' && !episode.watched && (
+                                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] group/pending">
+                                    <div className="bg-primary text-primary-foreground px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold shadow-lg animate-pulse mb-3">
+                                        <Clock className="h-4 w-4" />
+                                        Watched?
+                                    </div>
+                                    <Button 
+                                        size="sm" 
+                                        variant="default" 
+                                        className="h-8 shadow-md opacity-0 group-hover/pending:opacity-100 transition-opacity"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleToggleWatched();
+                                        }}
+                                    >
+                                        <Check className="h-4 w-4 mr-2" />
+                                        Confirm
+                                    </Button>
                                 </div>
                             )}
                         </div>
@@ -380,6 +422,12 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
                                     {episode.priority.charAt(0).toUpperCase() + episode.priority.slice(1)}
                                 </Badge>
                             )}
+                            {episode.watchStatus === 'pending' && (
+                                <Badge variant="default" className="gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    Pending Confirmation
+                                </Badge>
+                            )}
                             {episode.tags?.map((tag) => (
                                 <Badge
                                     key={tag.id}
@@ -400,16 +448,25 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
                         <div className="flex items-center gap-2 mt-2">
                             <Button
                                 size="sm"
-                                variant={episode.watched ? 'secondary' : 'outline'}
+                                variant={episode.watchStatus === 'pending' ? 'default' : (episode.watched ? 'secondary' : 'outline')}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleToggleWatched();
                                 }}
                                 className="flex-1"
-                                title={episode.watched ? "Mark as unwatched" : "Mark as watched"}
+                                title={episode.watchStatus === 'pending' ? "Confirm watched" : (episode.watched ? "Mark as unwatched" : "Mark as watched")}
                             >
-                                <Check className={`h-4 w-4 mr-2 ${episode.watched ? 'text-primary' : ''}`} />
-                                {episode.watched ? 'Watched' : 'Mark Watched'}
+                                {episode.watchStatus === 'pending' ? (
+                                    <>
+                                        <Check className="h-4 w-4 mr-2" />
+                                        Confirm Watched
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check className={`h-4 w-4 mr-2 ${episode.watched ? 'text-primary' : ''}`} />
+                                        {episode.watched ? 'Watched' : 'Mark Watched'}
+                                    </>
+                                )}
                             </Button>
 
                             <Button

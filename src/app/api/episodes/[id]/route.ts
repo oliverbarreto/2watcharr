@@ -10,6 +10,7 @@ const updateEpisodeSchema = z.object({
     title: z.string().optional(),
     description: z.string().optional(),
     watched: z.boolean().optional(),
+    watchStatus: z.enum(['unwatched', 'pending', 'watched']).optional(),
     favorite: z.boolean().optional(),
     isDeleted: z.boolean().optional(),
     priority: z.enum(['none', 'low', 'medium', 'high']).optional(),

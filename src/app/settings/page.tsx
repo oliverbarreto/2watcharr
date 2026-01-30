@@ -38,12 +38,17 @@ export default function SettingsPage() {
     const [editName, setEditName] = useState('');
     const [editColor, setEditColor] = useState('');
     const [defaultView, setDefaultView] = useState<'grid' | 'list'>('list');
+    const [watchAction, setWatchAction] = useState<'none' | 'watched' | 'pending'>('pending');
 
     useEffect(() => {
         fetchTags();
         const savedDefaultView = localStorage.getItem('defaultView') as 'grid' | 'list';
         if (savedDefaultView) {
             setDefaultView(savedDefaultView);
+        }
+        const savedWatchAction = localStorage.getItem('watchAction') as 'none' | 'watched' | 'pending';
+        if (savedWatchAction) {
+            setWatchAction(savedWatchAction);
         }
     }, []);
 
@@ -149,6 +154,12 @@ export default function SettingsPage() {
         localStorage.setItem('defaultView', value);
         localStorage.setItem('episodeViewMode', value);
         toast.success(`Default view set to ${value === 'grid' ? 'Grid' : 'List'}`);
+    };
+
+    const handleWatchActionChange = (value: 'none' | 'watched' | 'pending') => {
+        setWatchAction(value);
+        localStorage.setItem('watchAction', value);
+        toast.success(`Watch action set to ${value === 'none' ? 'None' : value === 'watched' ? 'Mark as Watched' : 'Mark as Pending'}`);
     };
 
     return (
@@ -326,6 +337,26 @@ export default function SettingsPage() {
                                         <SelectContent>
                                             <SelectItem value="grid">Grid View</SelectItem>
                                             <SelectItem value="list">List View</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="watchAction">Default Watch Action</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Action to take when opening a video from the list.
+                                    </p>
+                                    <Select 
+                                        value={watchAction} 
+                                        onValueChange={(value) => handleWatchActionChange(value as 'none' | 'watched' | 'pending')}
+                                    >
+                                        <SelectTrigger id="watchAction" className="w-[180px]">
+                                            <SelectValue placeholder="Select action" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">None</SelectItem>
+                                            <SelectItem value="watched">Mark as Watched</SelectItem>
+                                            <SelectItem value="pending">Mark as Pending</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Settings, LogOut, User } from 'lucide-react';
+import { Plus, Settings, LogOut, User, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
 import { AddEpisodeDialog } from '@/components/features/episodes/add-episode-dialog';
@@ -51,6 +51,9 @@ export function Navbar() {
                     <Link href="/channels">
                         <Button variant="ghost" className="hidden sm:inline-flex">Channels</Button>
                     </Link>
+                    <Link href="/stats">
+                        <Button variant="ghost" className="hidden sm:inline-flex">Stats</Button>
+                    </Link>
                     
                     <Link href="/settings">
                         <Button variant="ghost" size="icon" className="rounded-full">
@@ -91,6 +94,12 @@ export function Navbar() {
                                 <Link href="/settings" className="cursor-pointer">
                                     <Settings className="mr-2 h-4 w-4" />
                                     <span>Settings</span>
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/stats" className="cursor-pointer">
+                                    <BarChart3 className="mr-2 h-4 w-4" />
+                                    <span>Stats</span>
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
