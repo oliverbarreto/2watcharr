@@ -1,8 +1,11 @@
-
-- [ ] Allow adding Podcasts to the watch list 
+- [ ] Allow the user to add Podcasts to the watch list 
     - The user could add also podcast episodes to the watch list. Just like videos we must keep track of the Podcast channel. 
     - We need a way to distinguish between videos and podcasts in the app and UI
-    - We need to use another way to get the metadata for podcasts. We cannot use yt-dlp for that. We need to use another tool for that. We could use iTunes public API
+    - We should create a new concept: media episode, which can be either a video or a podcast episode. Both types share similar metadata: title, description, thumbnail, duration, etc. Both come from a Channel with similar metadata: Channel Name, Description, thumbnail, etc.
+    - We need to use another way to get the metadata for podcasts. We cannot use yt-dlp for that. We need to use another tool for that. We could use iTunes public API or the RSS feed of the podcast.
+    - Example of url shared by apple podcasts app: `https://podcasts.apple.com/es/podcast/moonshots-with-peter-diamandis/id1648228034?i=1000746918090`. This url when clicked on both mac and iphone opens the apple podcasts app and takes you to the podcast page. 
+    - Below are some basic examples of how to get the metadata for podcasts using iTunes public API, but we can investigate in more detail this api or other alternatives:
+
 ```markdown
 Here’s a working command that calls the iTunes Search API and returns JSON metadata for the given Apple Podcasts ID:
 curl -s "https://itunes.apple.com/lookup?id=1648228034&entity=podcast

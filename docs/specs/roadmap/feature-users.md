@@ -1,12 +1,11 @@
-
-- [ ] SECURITY and USER Management - like Movistar or Netflix... 
-    - you need an account with user / password to login. This user will be the owner of the account and will be marked as admin. There cannot be more than one admin user per account. The admin user can add/remove/edit users and their profiles. 
-    - we will trust everyone with the user/password to access the app online
-    - the account can have multiple users, all with their own profile: watch list, tags, priority, etc.
-    - when you login the user must pick a user from a list of users and will acces the app with that user profile. It should be nice page with all the profiles (eg: like appletv or disney plus user selection page)
+- [ ] SECURITY and USER Management - like AppleTV or Netflix streaming apps
+    - Users need an account with user/password to login. This first user will be the owner of the account and will be marked as admin. There cannot be more than one admin user per account. The admin user can add/remove/edit users and their profiles. 
+    - We will trust everyone with the user/password to access the app online
+    - The account can have multiple users, all with their own profile: watch list, tags, priority, etc.
+    - When a user logs in, they must pick a user from a list of users and will access the app with that user profile. It should be nice page with all the profiles (eg: like appletv or disney plus user selection page). We can have an option in settings to have the app always open with the default user profile or use lcoal storage to store the user. Analyze the in planning mode the best option for UX.
     - The app should have an oboarding process that: 
-        - will ask for a user profile name and a user password
-        - will ask for an emogi and a color to represent the user avatar
-        - will create a user profile with all the neeeded pieces in the database: user, watch list, tags, priority
-        - will ask if the user wants to create more users (they can always be added later)
+        - asks for a user profile name and a user password
+        - asks for an emogi and a color to represent the user avatar
+        - creates a user profile with all the needed pieces in the database: user, watch list, tags, priority
+        - asks if the user wants to create more users (they can always be added later)
     - Add user management in settings to support multiple users. All other users will be regular users. 
