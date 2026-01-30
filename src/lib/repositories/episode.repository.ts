@@ -1,38 +1,39 @@
 import { Database } from 'sqlite';
 import { v4 as uuidv4 } from 'uuid';
 import {
-    Video,
-    CreateVideoDto,
-    UpdateVideoDto,
-    VideoFilters,
+    MediaEpisode,
+    CreateEpisodeDto,
+    UpdateEpisodeDto,
+    EpisodeFilters,
     SortOptions,
-    VideoEventType,
+    MediaEventType,
 } from '../domain/models';
 
-export class VideoRepository {
+export class EpisodeRepository {
     constructor(private db: Database) { }
 
     /**
-     * Create a new video
+     * Create a new episode
      */
-    async create(dto: CreateVideoDto): Promise<Video> {
+    async create(dto: CreateEpisodeDto): Promise<MediaEpisode> {
         const id = uuidv4();
         const now = Math.floor(Date.now() / 1000);
 
         await this.db.run(
-            `INSERT INTO videos (
-        id, youtube_id, title, description, duration, thumbnail_url,
-        video_url, upload_date, published_date, view_count, channel_id, user_id,
+            `INSERT INTO episodes (
+        id, type, external_id, title, description, duration, thumbnail_url,
+        url, upload_date, published_date, view_count, channel_id, user_id,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 id,
-                dto.youtubeId,
+                dto.type,
+                dto.externalId,
                 dto.title,
                 dto.description || null,
                 dto.duration || null,
                 dto.thumbnailUrl || null,
-                dto.videoUrl,
+                dto.url,
                 dto.uploadDate || null,
                 dto.publishedDate || null,
                 dto.viewCount || null,
@@ -43,36 +44,36 @@ export class VideoRepository {
             ]
         );
 
-        const video = await this.findById(id);
-        if (!video) {
-            throw new Error('Failed to create video');
+        const episode = await this.findById(id);
+        if (!episode) {
+            throw new Error('Failed to create episode');
         }
-        return video;
+        return episode;
     }
 
     /**
-     * Find video by ID
+     * Find episode by ID
      */
-    async findById(id: string): Promise<Video | null> {
+    async findById(id: string): Promise<MediaEpisode | null> {
         const row = await this.db.get(`
-            SELECT v.*, c.name as channel_name,
-            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
-            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
-            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
-            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
-            FROM videos v 
-            LEFT JOIN channels c ON v.channel_id = c.id 
-            WHERE v.id = ?
+            SELECT e.*, c.name as channel_name,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
+            FROM episodes e 
+            LEFT JOIN channels c ON e.channel_id = c.id 
+            WHERE e.id = ?
         `, id);
         if (!row) return null;
 
-        const video = this.mapRowToVideo(row);
+        const episode = this.mapRowToEpisode(row);
         const tagRows = await this.db.all(`
             SELECT t.* FROM tags t
-            JOIN video_tags vt ON t.id = vt.tag_id
-            WHERE vt.video_id = ?
+            JOIN episode_tags et ON t.id = et.tag_id
+            WHERE et.episode_id = ?
         `, id);
-        video.tags = tagRows.map(row => ({
+        episode.tags = tagRows.map(row => ({
             id: row.id,
             name: row.name,
             color: row.color,
@@ -80,81 +81,86 @@ export class VideoRepository {
             createdAt: row.created_at,
         }));
 
-        return video;
+        return episode;
     }
 
     /**
-     * Find video by YouTube ID
+     * Find episode by External ID
      */
-    async findByYouTubeId(youtubeId: string): Promise<Video | null> {
+    async findByExternalId(externalId: string): Promise<MediaEpisode | null> {
         const row = await this.db.get(
-            'SELECT * FROM videos WHERE youtube_id = ?',
-            youtubeId
+            'SELECT * FROM episodes WHERE external_id = ?',
+            externalId
         );
-        return row ? this.mapRowToVideo(row) : null;
+        return row ? this.mapRowToEpisode(row) : null;
     }
 
     /**
-     * Find all videos with optional filters and sorting
+     * Find all episodes with optional filters and sorting
      */
     async findAll(
-        filters?: VideoFilters,
+        filters?: EpisodeFilters,
         sort?: SortOptions
-    ): Promise<Video[]> {
+    ): Promise<MediaEpisode[]> {
         const hasTagFilter = filters?.tagIds && filters.tagIds.length > 0;
         let query = `
-            SELECT ${hasTagFilter ? 'DISTINCT ' : ''}v.*, c.name as channel_name,
-            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
-            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
-            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
-            (SELECT created_at FROM video_events WHERE video_id = v.id AND type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
-            FROM videos v
+            SELECT ${hasTagFilter ? 'DISTINCT ' : ''}e.*, c.name as channel_name,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
+            FROM episodes e
         `;
-        query += ' LEFT JOIN channels c ON v.channel_id = c.id';
+        query += ' LEFT JOIN channels c ON e.channel_id = c.id';
         const params: any[] = [];
 
-        // Join with video_tags if filtering by tags
+        // Join with episode_tags if filtering by tags
         if (filters?.tagIds && filters.tagIds.length > 0) {
-            query += ' INNER JOIN video_tags vt ON v.id = vt.video_id';
+            query += ' INNER JOIN episode_tags et ON e.id = et.episode_id';
         }
 
         // Build WHERE clause
         const conditions: string[] = [];
 
+        if (filters?.type) {
+            conditions.push('e.type = ?');
+            params.push(filters.type);
+        }
+
         if (filters?.tagIds && filters.tagIds.length > 0) {
             const placeholders = filters.tagIds.map(() => '?').join(',');
-            conditions.push(`vt.tag_id IN (${placeholders})`);
+            conditions.push(`et.tag_id IN (${placeholders})`);
             params.push(...filters.tagIds);
         }
 
         if (filters?.search) {
             conditions.push(
-                '(v.title LIKE ? OR v.description LIKE ? OR EXISTS (SELECT 1 FROM channels c WHERE c.id = v.channel_id AND c.name LIKE ?))'
+                '(e.title LIKE ? OR e.description LIKE ? OR EXISTS (SELECT 1 FROM channels c WHERE c.id = e.channel_id AND c.name LIKE ?))'
             );
             const searchTerm = `%${filters.search}%`;
             params.push(searchTerm, searchTerm, searchTerm);
         }
 
         if (filters?.watched !== undefined) {
-            conditions.push('v.watched = ?');
+            conditions.push('e.watched = ?');
             params.push(filters.watched ? 1 : 0);
         }
 
         if (filters?.favorite !== undefined) {
-            conditions.push('v.favorite = ?');
+            conditions.push('e.favorite = ?');
             params.push(filters.favorite ? 1 : 0);
         }
 
         if (filters?.isDeleted !== undefined) {
-            conditions.push('v.is_deleted = ?');
+            conditions.push('e.is_deleted = ?');
             params.push(filters.isDeleted ? 1 : 0);
         } else {
-            // Default: only show non-deleted videos
-            conditions.push('v.is_deleted = 0');
+            // Default: only show non-deleted episodes
+            conditions.push('e.is_deleted = 0');
         }
 
         if (filters?.channelId) {
-            conditions.push('v.channel_id = ?');
+            conditions.push('e.channel_id = ?');
             params.push(filters.channelId);
         }
 
@@ -168,28 +174,28 @@ export class VideoRepository {
             query += ` ORDER BY ${orderBy}`;
         } else {
             // Default sort: Manual order first, then fallback to newest first
-            query += ' ORDER BY v.custom_order ASC, v.created_at DESC';
+            query += ' ORDER BY e.custom_order ASC, e.created_at DESC';
         }
 
         const rows = await this.db.all(query, params);
-        const videos = rows.map((row) => this.mapRowToVideo(row));
+        const episodes = rows.map((row) => this.mapRowToEpisode(row));
 
-        if (videos.length > 0) {
-            const videoIds = videos.map(v => v.id);
-            const placeholders = videoIds.map(() => '?').join(',');
+        if (episodes.length > 0) {
+            const episodeIds = episodes.map(e => e.id);
+            const placeholders = episodeIds.map(() => '?').join(',');
             const tagRows = await this.db.all(`
-                SELECT vt.video_id, t.* FROM tags t
-                JOIN video_tags vt ON t.id = vt.tag_id
-                WHERE vt.video_id IN (${placeholders})
-            `, videoIds);
+                SELECT et.episode_id, t.* FROM tags t
+                JOIN episode_tags et ON t.id = et.tag_id
+                WHERE et.episode_id IN (${placeholders})
+            `, episodeIds);
 
-            // Group tags by video_id
-            const tagsByVideoId: Record<string, any[]> = {};
+            // Group tags by episode_id
+            const tagsByEpisodeId: Record<string, any[]> = {};
             tagRows.forEach(row => {
-                if (!tagsByVideoId[row.video_id]) {
-                    tagsByVideoId[row.video_id] = [];
+                if (!tagsByEpisodeId[row.episode_id]) {
+                    tagsByEpisodeId[row.episode_id] = [];
                 }
-                tagsByVideoId[row.video_id].push({
+                tagsByEpisodeId[row.episode_id].push({
                     id: row.id,
                     name: row.name,
                     color: row.color,
@@ -198,19 +204,19 @@ export class VideoRepository {
                 });
             });
 
-            // Attach tags to videos
-            videos.forEach(v => {
-                v.tags = tagsByVideoId[v.id] || [];
+            // Attach tags to episodes
+            episodes.forEach(e => {
+                e.tags = tagsByEpisodeId[e.id] || [];
             });
         }
 
-        return videos;
+        return episodes;
     }
 
     /**
-     * Update video
+     * Update episode
      */
-    async update(id: string, dto: UpdateVideoDto): Promise<Video> {
+    async update(id: string, dto: UpdateEpisodeDto): Promise<MediaEpisode> {
         const updates: string[] = [];
         const params: any[] = [];
 
@@ -253,7 +259,7 @@ export class VideoRepository {
         params.push(id);
 
         await this.db.run(
-            `UPDATE videos SET ${updates.join(', ')} WHERE id = ?`,
+            `UPDATE episodes SET ${updates.join(', ')} WHERE id = ?`,
             params
         );
 
@@ -265,50 +271,50 @@ export class VideoRepository {
             }
         }
 
-        const video = await this.findById(id);
-        if (!video) {
-            throw new Error('Video not found after update');
+        const episode = await this.findById(id);
+        if (!episode) {
+            throw new Error('Episode not found after update');
         }
-        return video;
+        return episode;
     }
 
     /**
-     * Delete video
+     * Delete episode (soft delete)
      */
     async delete(id: string): Promise<void> {
-        await this.db.run('UPDATE videos SET is_deleted = 1, updated_at = ? WHERE id = ?', [
+        await this.db.run('UPDATE episodes SET is_deleted = 1, updated_at = ? WHERE id = ?', [
             Math.floor(Date.now() / 1000),
             id
         ]);
     }
 
     /**
-     * Add a video event
+     * Add a media event
      */
-    async addEvent(videoId: string, type: VideoEventType): Promise<void> {
+    async addEvent(episodeId: string, type: MediaEventType): Promise<void> {
         const id = uuidv4();
         const now = Math.floor(Date.now() / 1000);
 
         await this.db.run(
-            'INSERT INTO video_events (id, video_id, type, created_at) VALUES (?, ?, ?, ?)',
-            [id, videoId, type, now]
+            'INSERT INTO media_events (id, episode_id, type, created_at) VALUES (?, ?, ?, ?)',
+            [id, episodeId, type, now]
         );
     }
 
     /**
-     * Reorder videos
+     * Reorder episodes
      */
-    async reorder(videoIds: string[]): Promise<void> {
+    async reorder(episodeIds: string[]): Promise<void> {
         const now = Math.floor(Date.now() / 1000);
 
         // Use a transaction for consistency
         await this.db.run('BEGIN TRANSACTION');
 
         try {
-            for (let i = 0; i < videoIds.length; i++) {
+            for (let i = 0; i < episodeIds.length; i++) {
                 await this.db.run(
-                    'UPDATE videos SET custom_order = ?, updated_at = ? WHERE id = ?',
-                    [i, now, videoIds[i]]
+                    'UPDATE episodes SET custom_order = ?, updated_at = ? WHERE id = ?',
+                    [i, now, episodeIds[i]]
                 );
             }
             await this.db.run('COMMIT');
@@ -319,53 +325,53 @@ export class VideoRepository {
     }
 
     /**
-     * Move video to the beginning of the list
+     * Move episode to the beginning of the list
      */
     async moveToBeginning(id: string): Promise<void> {
-        const videos = await this.findAll({ watched: false }, { field: 'custom', order: 'asc' });
-        const videoIds = videos.map(v => v.id).filter(vid => vid !== id);
-        videoIds.unshift(id);
-        await this.reorder(videoIds);
+        const episodes = await this.findAll({ watched: false }, { field: 'custom', order: 'asc' });
+        const episodeIds = episodes.map(e => e.id).filter(vid => vid !== id);
+        episodeIds.unshift(id);
+        await this.reorder(episodeIds);
     }
 
     /**
-     * Move video to the end of the list
+     * Move episode to the end of the list
      */
     async moveToEnd(id: string): Promise<void> {
-        const videos = await this.findAll({ watched: false }, { field: 'custom', order: 'asc' });
-        const videoIds = videos.map(v => v.id).filter(vid => vid !== id);
-        videoIds.push(id);
-        await this.reorder(videoIds);
+        const episodes = await this.findAll({ watched: false }, { field: 'custom', order: 'asc' });
+        const episodeIds = episodes.map(e => e.id).filter(vid => vid !== id);
+        episodeIds.push(id);
+        await this.reorder(episodeIds);
     }
 
     /**
-     * Associate tags with a video
+     * Associate tags with an episode
      */
-    async addTags(videoId: string, tagIds: string[]): Promise<void> {
+    async addTags(episodeId: string, tagIds: string[]): Promise<void> {
         const now = Math.floor(Date.now() / 1000);
 
         for (const tagId of tagIds) {
             await this.db.run(
-                'INSERT OR IGNORE INTO video_tags (video_id, tag_id, created_at) VALUES (?, ?, ?)',
-                [videoId, tagId, now]
+                'INSERT OR IGNORE INTO episode_tags (episode_id, tag_id, created_at) VALUES (?, ?, ?)',
+                [episodeId, tagId, now]
             );
         }
     }
 
     /**
-     * Remove all tags from a video
+     * Remove all tags from an episode
      */
-    async removeTags(videoId: string): Promise<void> {
-        await this.db.run('DELETE FROM video_tags WHERE video_id = ?', videoId);
+    async removeTags(episodeId: string): Promise<void> {
+        await this.db.run('DELETE FROM episode_tags WHERE episode_id = ?', episodeId);
     }
 
     /**
-     * Get tags for a video
+     * Get tags for an episode
      */
-    async getTags(videoId: string): Promise<string[]> {
+    async getTags(episodeId: string): Promise<string[]> {
         const rows = await this.db.all(
-            'SELECT tag_id FROM video_tags WHERE video_id = ?',
-            videoId
+            'SELECT tag_id FROM episode_tags WHERE episode_id = ?',
+            episodeId
         );
         return rows.map((row: any) => row.tag_id);
     }
@@ -375,17 +381,17 @@ export class VideoRepository {
 
         switch (sort.field) {
             case 'custom':
-                return `v.custom_order ${direction}, v.created_at DESC`;
+                return `e.custom_order ${direction}, e.created_at DESC`;
             case 'created_at':
-                return `v.created_at ${direction}`;
+                return `e.created_at ${direction}`;
             case 'priority':
-                return `v.priority ${direction}, v.created_at DESC`;
+                return `e.priority ${direction}, e.created_at DESC`;
             case 'favorite':
-                return `v.favorite ${direction}, v.created_at DESC`;
+                return `e.favorite ${direction}, e.created_at DESC`;
             case 'duration':
-                return `v.duration ${direction}`;
+                return `e.duration ${direction}`;
             case 'title':
-                return `v.title ${direction}`;
+                return `e.title ${direction}`;
             case 'date_added':
                 return `last_added_at ${direction}`;
             case 'date_watched':
@@ -395,19 +401,20 @@ export class VideoRepository {
             case 'date_removed':
                 return `last_removed_at ${direction}`;
             default:
-                return 'v.custom_order ASC, v.created_at DESC';
+                return 'e.custom_order ASC, e.created_at DESC';
         }
     }
 
-    private mapRowToVideo(row: any): Video {
+    private mapRowToEpisode(row: any): MediaEpisode {
         return {
             id: row.id,
-            youtubeId: row.youtube_id,
+            type: row.type,
+            externalId: row.external_id,
             title: row.title,
             description: row.description,
             duration: row.duration,
             thumbnailUrl: row.thumbnail_url,
-            videoUrl: row.video_url,
+            url: row.url,
             uploadDate: row.upload_date,
             publishedDate: row.published_date,
             viewCount: row.view_count,

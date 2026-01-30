@@ -2,11 +2,11 @@ import Link from 'next/link';
 import { Plus, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
-import { AddVideoDialog } from '@/components/features/videos/add-video-dialog';
+import { AddEpisodeDialog } from '@/components/features/episodes/add-episode-dialog';
 
 export function Navbar() {
-    const handleVideoAdded = () => {
-        window.dispatchEvent(new CustomEvent('video-added'));
+    const handleEpisodeAdded = () => {
+        window.dispatchEvent(new CustomEvent('episode-added'));
     };
 
     return (
@@ -18,8 +18,8 @@ export function Navbar() {
                 </Link>
 
                 <div className="flex items-center gap-4">
-                    <AddVideoDialog
-                        onVideoAdded={handleVideoAdded}
+                    <AddEpisodeDialog
+                        onEpisodeAdded={handleEpisodeAdded}
                         trigger={
                             <Button
                                 size="icon"

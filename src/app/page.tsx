@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout';
-import { FilterBar, VideoList } from '@/components/features/videos';
+import { FilterBar, EpisodeList } from '@/components/features/episodes';
 import { Button } from '@/components/ui/button';
 import { X, List, LayoutGrid } from 'lucide-react';
 
@@ -20,7 +20,7 @@ function HomePageContent() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   useEffect(() => {
-    const savedViewMode = localStorage.getItem('videoViewMode') as 'grid' | 'list';
+    const savedViewMode = localStorage.getItem('episodeViewMode') as 'grid' | 'list';
     const defaultView = localStorage.getItem('defaultView') as 'grid' | 'list';
 
     if (savedViewMode) {
@@ -33,7 +33,7 @@ function HomePageContent() {
   const toggleViewMode = () => {
     const newMode = viewMode === 'grid' ? 'list' : 'grid';
     setViewMode(newMode);
-    localStorage.setItem('videoViewMode', newMode);
+    localStorage.setItem('episodeViewMode', newMode);
   };
 
   useEffect(() => {
@@ -46,8 +46,8 @@ function HomePageContent() {
 
   useEffect(() => {
     const handleAdded = () => setRefreshKey((prev) => prev + 1);
-    window.addEventListener('video-added', handleAdded);
-    return () => window.removeEventListener('video-added', handleAdded);
+    window.addEventListener('episode-added', handleAdded);
+    return () => window.removeEventListener('episode-added', handleAdded);
   }, []);
 
   const clearChannelFilter = () => {
@@ -64,7 +64,7 @@ function HomePageContent() {
           <div>
             <h1 className="text-3xl font-bold">Watch Later</h1>
             <p className="text-muted-foreground">
-              Manage your YouTube videos to watch later
+              Manage your videos and podcasts to watch later
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -103,8 +103,8 @@ function HomePageContent() {
           initialSort={sort}
         />
 
-        {/* Video List */}
-        <VideoList key={refreshKey} filters={filters} sort={sort} viewMode={viewMode} />
+        {/* Episode List */}
+        <EpisodeList key={refreshKey} filters={filters} sort={sort} viewMode={viewMode} />
       </div>
     </Layout>
   );
@@ -119,7 +119,7 @@ export default function HomePage() {
             <div>
               <h1 className="text-3xl font-bold">Watch Later</h1>
               <p className="text-muted-foreground">
-                Loading videos...
+                Loading...
               </p>
             </div>
           </div>

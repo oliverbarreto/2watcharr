@@ -1,4 +1,4 @@
 // Re-export all repositories for easy importing
-export { VideoRepository } from './video.repository';
+export { EpisodeRepository } from './episode.repository';
 export { ChannelRepository } from './channel.repository';
 export { TagRepository } from './tag.repository';

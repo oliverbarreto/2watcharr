@@ -1,31 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { getDatabase } from '@/lib/db/database';
-import { VideoService } from '@/lib/services';
+import { MediaService } from '@/lib/services';
 import { z } from 'zod';
+import { MediaType } from '@/lib/domain/models';
 
 // Request validation schema
-const addVideoSchema = z.object({
+const addEpisodeSchema = z.object({
     url: z.string().url('Invalid URL'),
     tagIds: z.array(z.string()).optional(),
 });
 
 /**
- * POST /api/videos - Add a new video from URL
+ * POST /api/episodes - Add a new episode from URL
  */
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { url, tagIds } = addVideoSchema.parse(body);
+        const { url, tagIds } = addEpisodeSchema.parse(body);
 
         const db = await getDatabase();
-        const videoService = new VideoService(db);
+        const mediaService = new MediaService(db);
 
-        const video = await videoService.addVideoFromUrl(url, tagIds);
+        const episode = await mediaService.addEpisodeFromUrl(url, tagIds);
 
-        return NextResponse.json(video, { status: 201 });
+        return NextResponse.json(episode, { status: 201 });
     } catch (error) {
-        console.error('Error adding video:', error);
+        console.error('Error adding episode:', error);
 
         if (error instanceof z.ZodError) {
             return NextResponse.json(
@@ -42,14 +43,14 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json(
-            { error: 'Failed to add video' },
+            { error: 'Failed to add episode' },
             { status: 500 }
         );
     }
 }
 
 /**
- * GET /api/videos - List videos with optional filters and sorting
+ * GET /api/episodes - List episodes with optional filters and sorting
  */
 export async function GET(request: NextRequest) {
     try {
@@ -61,8 +62,10 @@ export async function GET(request: NextRequest) {
         const watchedParam = searchParams.get('watched');
         const favoriteParam = searchParams.get('favorite');
         const channelId = searchParams.get('channelId') || undefined;
+        const type = searchParams.get('type') as MediaType | undefined;
 
         const filters = {
+            type,
             tagIds,
             search,
             watched: watchedParam ? watchedParam === 'true' : undefined,
@@ -80,19 +83,19 @@ export async function GET(request: NextRequest) {
         };
 
         const db = await getDatabase();
-        const videoService = new VideoService(db);
+        const mediaService = new MediaService(db);
 
-        const videos = await videoService.listVideos(filters, sort);
+        const episodes = await mediaService.listEpisodes(filters, sort);
 
         return NextResponse.json({
-            videos,
-            total: videos.length,
+            episodes,
+            total: episodes.length,
         });
     } catch (error) {
-        console.error('Error listing videos:', error);
+        console.error('Error listing episodes:', error);
         return NextResponse.json(
             { 
-                error: 'Failed to list videos', 
+                error: 'Failed to list episodes', 
                 message: error instanceof Error ? error.message : String(error) 
             },
             { status: 500 }

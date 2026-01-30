@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/db/database';
-import { VideoService } from '@/lib/services';
+import { MediaService } from '@/lib/services';
 import { z } from 'zod';
 
 // Request validation schema
-const updateVideoSchema = z.object({
+const updateEpisodeSchema = z.object({
     title: z.string().optional(),
     description: z.string().optional(),
     watched: z.boolean().optional(),
@@ -15,7 +15,7 @@ const updateVideoSchema = z.object({
 });
 
 /**
- * GET /api/videos/[id] - Get a single video
+ * GET /api/episodes/[id] - Get a single episode
  */
 export async function GET(
     request: NextRequest,
@@ -24,35 +24,35 @@ export async function GET(
     try {
         const { id } = await params;
         const db = await getDatabase();
-        const videoService = new VideoService(db);
+        const mediaService = new MediaService(db);
 
-        const video = await videoService.getVideo(id);
+        const episode = await mediaService.getEpisode(id);
 
-        if (!video) {
+        if (!episode) {
             return NextResponse.json(
-                { error: 'Video not found' },
+                { error: 'Episode not found' },
                 { status: 404 }
             );
         }
 
-        // Get tags for the video
-        const tagIds = await videoService.getVideoTags(id);
+        // Get tags for the episode
+        const tagIds = await mediaService.getEpisodeTags(id);
 
         return NextResponse.json({
-            ...video,
+            ...episode,
             tagIds,
         });
     } catch (error) {
-        console.error('Error getting video:', error);
+        console.error('Error getting episode:', error);
         return NextResponse.json(
-            { error: 'Failed to get video' },
+            { error: 'Failed to get episode' },
             { status: 500 }
         );
     }
 }
 
 /**
- * PATCH /api/videos/[id] - Update a video
+ * PATCH /api/episodes/[id] - Update an episode
  */
 export async function PATCH(
     request: NextRequest,
@@ -61,25 +61,25 @@ export async function PATCH(
     try {
         const { id } = await params;
         const body = await request.json();
-        const data = updateVideoSchema.parse(body);
+        const data = updateEpisodeSchema.parse(body);
 
         const db = await getDatabase();
-        const videoService = new VideoService(db);
+        const mediaService = new MediaService(db);
 
         // Extract tagIds separately
         const { tagIds, ...updates } = data;
 
-        // Update video properties
-        const video = await videoService.updateVideo(id, updates);
+        // Update episode properties
+        const episode = await mediaService.updateEpisode(id, updates);
 
         // Update tags if provided
         if (tagIds !== undefined) {
-            await videoService.updateTags(id, tagIds);
+            await mediaService.updateTags(id, tagIds);
         }
 
-        return NextResponse.json(video);
+        return NextResponse.json(episode);
     } catch (error) {
-        console.error('Error updating video:', error);
+        console.error('Error updating episode:', error);
 
         if (error instanceof z.ZodError) {
             return NextResponse.json(
@@ -96,14 +96,14 @@ export async function PATCH(
         }
 
         return NextResponse.json(
-            { error: 'Failed to update video' },
+            { error: 'Failed to update episode' },
             { status: 500 }
         );
     }
 }
 
 /**
- * DELETE /api/videos/[id] - Delete a video
+ * DELETE /api/episodes/[id] - Delete an episode
  */
 export async function DELETE(
     request: NextRequest,
@@ -112,15 +112,15 @@ export async function DELETE(
     try {
         const { id } = await params;
         const db = await getDatabase();
-        const videoService = new VideoService(db);
+        const mediaService = new MediaService(db);
 
-        await videoService.deleteVideo(id);
+        await mediaService.deleteEpisode(id);
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error('Error deleting video:', error);
+        console.error('Error deleting episode:', error);
         return NextResponse.json(
-            { error: 'Failed to delete video' },
+            { error: 'Failed to delete episode' },
             { status: 500 }
         );
     }

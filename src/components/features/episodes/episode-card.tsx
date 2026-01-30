@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Video, Tag } from '@/lib/domain/models';
+import { useState } from 'react';
+import { MediaEpisode, Tag } from '@/lib/domain/models';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,34 +28,29 @@ import {
     ArrowDown,
     Tag as TagIcon,
     Plus,
+    Youtube,
+    Mic,
 } from 'lucide-react';
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-    Command,
     CommandDialog,
     CommandEmpty,
     CommandGroup,
     CommandInput,
     CommandItem,
     CommandList,
-    CommandSeparator,
 } from '@/components/ui/command';
 import { toast } from 'sonner';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { formatDistanceToNow } from 'date-fns';
 
-interface VideoCardProps {
-    video: Video;
+interface EpisodeCardProps {
+    episode: MediaEpisode;
     onUpdate?: () => void;
     onDelete?: () => void;
 }
 
-export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
+export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
@@ -68,7 +63,7 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
         setNodeRef,
         transform,
         transition,
-    } = useSortable({ id: video.id });
+    } = useSortable({ id: episode.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -77,57 +72,57 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
 
     const handleToggleWatched = async () => {
         try {
-            const response = await fetch(`/api/videos/${video.id}`, {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ watched: !video.watched }),
+                body: JSON.stringify({ watched: !episode.watched }),
             });
 
-            if (!response.ok) throw new Error('Failed to update video');
+            if (!response.ok) throw new Error('Failed to update episode');
 
-            toast.success(video.watched ? 'Marked as unwatched' : 'Marked as watched');
+            toast.success(episode.watched ? 'Marked as unwatched' : 'Marked as watched');
             onUpdate?.();
         } catch (error) {
-            toast.error('Failed to update video');
+            toast.error('Failed to update episode');
         }
     };
 
     const handleToggleFavorite = async () => {
         try {
-            const response = await fetch(`/api/videos/${video.id}`, {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ favorite: !video.favorite }),
+                body: JSON.stringify({ favorite: !episode.favorite }),
             });
 
-            if (!response.ok) throw new Error('Failed to update video');
+            if (!response.ok) throw new Error('Failed to update episode');
 
-            toast.success(video.favorite ? 'Removed from favorites' : 'Added to favorites');
+            toast.success(episode.favorite ? 'Removed from favorites' : 'Added to favorites');
             onUpdate?.();
         } catch (error) {
-            toast.error('Failed to update video');
+            toast.error('Failed to update episode');
         }
     };
 
     const handleDelete = async () => {
         try {
-            const response = await fetch(`/api/videos/${video.id}`, {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
                 method: 'DELETE',
             });
 
-            if (!response.ok) throw new Error('Failed to delete video');
+            if (!response.ok) throw new Error('Failed to delete episode');
 
-            toast.success('Video removed from watch later list');
+            toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} removed from list`);
             setIsDeleteDialogOpen(false);
             onDelete?.();
         } catch (error) {
-            toast.error('Failed to delete video');
+            toast.error('Failed to delete episode');
         }
     };
 
     const handleReorder = async (position: 'beginning' | 'end') => {
         try {
-            const response = await fetch(`/api/videos/${video.id}/reorder`, {
+            const response = await fetch(`/api/episodes/${episode.id}/reorder`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ position }),
@@ -138,12 +133,12 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
             toast.success(`Moved to ${position}`);
             onUpdate?.();
         } catch (error) {
-            toast.error('Failed to reorder video');
+            toast.error('Failed to reorder episode');
         }
     };
 
     const handlePlay = () => {
-        window.open(video.videoUrl, '_blank');
+        window.open(episode.url, '_blank');
     };
 
     const fetchTags = async () => {
@@ -161,13 +156,13 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
     const handleToggleTag = async (tagId: string) => {
         setIsUpdatingTags(true);
         try {
-            const currentTagIds = video.tags?.map(t => t.id) || [];
+            const currentTagIds = episode.tags?.map(t => t.id) || [];
             const isTagSelected = currentTagIds.includes(tagId);
             const newTagIds = isTagSelected
                 ? currentTagIds.filter(id => id !== tagId)
                 : [...currentTagIds, tagId];
 
-            const response = await fetch(`/api/videos/${video.id}`, {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tagIds: newTagIds }),
@@ -209,7 +204,7 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
 
             const newTag = await createResponse.json();
 
-            // 2. Add tag to video
+            // 2. Add tag to episode
             await handleToggleTag(newTag.id);
 
             setSearchQuery('');
@@ -263,15 +258,15 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
     };
 
     const formatEventDate = () => {
-        if (video.lastRemovedAt && video.isDeleted) {
-            return `Removed ${formatDistanceToNow(new Date(video.lastRemovedAt * 1000), { addSuffix: true })}`;
+        if (episode.lastRemovedAt && episode.isDeleted) {
+            return `Removed ${formatDistanceToNow(new Date(episode.lastRemovedAt * 1000), { addSuffix: true })}`;
         }
         
         // Find the latest significant event
         const events = [
-            { type: 'Watched', date: video.lastWatchedAt },
-            { type: 'Restored', date: video.lastAddedAt && video.lastAddedAt > (video.createdAt + 10) ? video.lastAddedAt : null }, // Heuristic for restored
-            { type: 'Added', date: video.lastAddedAt || video.createdAt }
+            { type: 'Watched', date: episode.lastWatchedAt },
+            { type: 'Restored', date: episode.lastAddedAt && episode.lastAddedAt > (episode.createdAt + 10) ? episode.lastAddedAt : null }, // Heuristic for restored
+            { type: 'Added', date: episode.lastAddedAt || episode.createdAt }
         ].filter(e => e.date).sort((a, b) => (b.date || 0) - (a.date || 0));
 
         if (events.length > 0 && events[0].date) {
@@ -284,7 +279,7 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
     return (
         <div ref={setNodeRef} style={style} className="h-full">
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <Card className={`group relative h-full flex flex-col overflow-hidden ${video.watched ? 'opacity-60' : ''}`}>
+                <Card className={`group relative h-full flex flex-col overflow-hidden ${episode.watched ? 'opacity-60' : ''}`}>
                     <CardContent className="p-4 flex-1 flex flex-col">
                         {/* Drag Handle */}
                         <div
@@ -297,23 +292,38 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
 
                         {/* Thumbnail */}
                         <div className="relative aspect-video mb-3 rounded-md overflow-hidden bg-muted cursor-pointer" onClick={handlePlay}>
-                            {video.thumbnailUrl && (
+                            {episode.thumbnailUrl && (
                                 <img
-                                    src={video.thumbnailUrl}
-                                    alt={video.title}
+                                    src={episode.thumbnailUrl}
+                                    alt={episode.title}
                                     className="w-full h-full object-cover"
                                 />
                             )}
 
+                            {/* Media Type Icon */}
+                            <div className="absolute top-2 right-2">
+                                {episode.type === 'podcast' ? (
+                                    <Badge className="bg-purple-600 text-white border-none px-1.5 py-0.5">
+                                        <Mic className="h-3 w-3 mr-1" />
+                                        Podcast
+                                    </Badge>
+                                ) : (
+                                    <Badge className="bg-red-600 text-white border-none px-1.5 py-0.5">
+                                        <Youtube className="h-3 w-3 mr-1" />
+                                        Video
+                                    </Badge>
+                                )}
+                            </div>
+
                             {/* Duration Badge */}
-                            {video.duration && (
+                            {episode.duration && (
                                 <Badge className="absolute bottom-2 right-2 bg-black/80 text-white border-none">
-                                    {formatDuration(video.duration)}
+                                    {formatDuration(episode.duration)}
                                 </Badge>
                             )}
 
                             {/* Watched Overlay */}
-                            {video.watched && (
+                            {episode.watched && (
                                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                                     <Check className="h-12 w-12 text-white" />
                                 </div>
@@ -324,28 +334,28 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
                         <div className="mb-2">
                             <h3
                                 className="font-semibold line-clamp-2 mb-1 cursor-pointer hover:text-primary transition-colors"
-                                title={video.title}
+                                title={episode.title}
                                 onClick={handlePlay}
                             >
-                                {video.title}
+                                {episode.title}
                             </h3>
                             <div className="flex flex-wrap items-center gap-x-1 gap-y-0 text-xs text-muted-foreground">
                                 <span
                                     className="hover:text-foreground cursor-pointer font-medium"
-                                    onClick={() => window.location.href = `/channels?channelId=${video.channelId}`}
+                                    onClick={() => window.location.href = `/channels?channelId=${episode.channelId}`}
                                 >
-                                    {video.channelName || 'Unknown Channel'}
+                                    {episode.channelName || 'Unknown Channel'}
                                 </span>
-                                {video.viewCount !== null && (
+                                {episode.viewCount !== null && episode.type === 'video' && (
                                     <>
                                         <span>•</span>
-                                        <span>{formatViews(video.viewCount)}</span>
+                                        <span>{formatViews(episode.viewCount)}</span>
                                     </>
                                 )}
-                                {video.publishedDate && (
+                                {episode.publishedDate && (
                                     <>
                                         <span>•</span>
-                                        <span>{formatPublishedDate(video.publishedDate)}</span>
+                                        <span>{formatPublishedDate(episode.publishedDate)}</span>
                                     </>
                                 )}
                                 {formatEventDate() && (
@@ -359,18 +369,18 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
 
                         {/* Badges */}
                         <div className="flex flex-wrap gap-2 mb-auto pb-3">
-                            {video.favorite && (
+                            {episode.favorite && (
                                 <Badge variant="secondary" className="gap-1">
                                     <Star className="h-3 w-3 fill-current" />
                                     Favorite
                                 </Badge>
                             )}
-                            {video.priority !== 'none' && (
-                                <Badge className={getPriorityColor(video.priority)}>
-                                    {video.priority.charAt(0).toUpperCase() + video.priority.slice(1)}
+                            {episode.priority !== 'none' && (
+                                <Badge className={getPriorityColor(episode.priority)}>
+                                    {episode.priority.charAt(0).toUpperCase() + episode.priority.slice(1)}
                                 </Badge>
                             )}
-                            {video.tags?.map((tag) => (
+                            {episode.tags?.map((tag) => (
                                 <Badge
                                     key={tag.id}
                                     variant="outline"
@@ -390,28 +400,28 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
                         <div className="flex items-center gap-2 mt-2">
                             <Button
                                 size="sm"
-                                variant={video.watched ? 'secondary' : 'outline'}
+                                variant={episode.watched ? 'secondary' : 'outline'}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleToggleWatched();
                                 }}
                                 className="flex-1"
-                                title={video.watched ? "Mark as unwatched" : "Mark as watched"}
+                                title={episode.watched ? "Mark as unwatched" : "Mark as watched"}
                             >
-                                <Check className={`h-4 w-4 mr-2 ${video.watched ? 'text-primary' : ''}`} />
-                                {video.watched ? 'Watched' : 'Mark Watched'}
+                                <Check className={`h-4 w-4 mr-2 ${episode.watched ? 'text-primary' : ''}`} />
+                                {episode.watched ? 'Watched' : 'Mark Watched'}
                             </Button>
 
                             <Button
                                 size="sm"
-                                variant={video.favorite ? 'secondary' : 'outline'}
+                                variant={episode.favorite ? 'secondary' : 'outline'}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleToggleFavorite();
                                 }}
-                                title={video.favorite ? "Remove from favorites" : "Add to favorites"}
+                                title={episode.favorite ? "Remove from favorites" : "Add to favorites"}
                             >
-                                <Star className={`h-4 w-4 ${video.favorite ? 'fill-primary text-primary' : ''}`} />
+                                <Star className={`h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                             </Button>
 
                             <Button
@@ -431,7 +441,7 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
                                 open={isTagPopoverOpen} 
                                 onOpenChange={setIsTagPopoverOpen}
                                 title="Manage Tags"
-                                description="Search or create tags for this video"
+                                description="Search or create tags for this episode"
                             >
                                 <CommandInput
                                     placeholder="Search or create tag..."
@@ -455,7 +465,7 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
                                     </CommandEmpty>
                                     <CommandGroup heading="Recent Tags">
                                         {availableTags.map((tag) => {
-                                            const isSelected = video.tags?.some(t => t.id === tag.id);
+                                            const isSelected = episode.tags?.some(t => t.id === tag.id);
                                             return (
                                                 <CommandItem
                                                     key={tag.id}
@@ -507,7 +517,7 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
                                         setIsDeleteDialogOpen(true);
                                     }} className="text-destructive font-medium">
                                         <Trash2 className="mr-2 h-4 w-4" />
-                                        Remove from watch later list
+                                        Remove from list
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -524,9 +534,9 @@ export function VideoCard({ video, onUpdate, onDelete }: VideoCardProps) {
 
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Remove from watch later list</DialogTitle>
+                        <DialogTitle>Remove from list</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to remove "{video.title}"? This action cannot be undone.
+                            Are you sure you want to remove "{episode.title}"? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

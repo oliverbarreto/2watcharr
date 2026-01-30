@@ -25,12 +25,12 @@ import { Tag } from '@/lib/domain/models';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
-interface AddVideoDialogProps {
-    onVideoAdded?: () => void;
+interface AddEpisodeDialogProps {
+    onEpisodeAdded?: () => void;
     trigger?: React.ReactNode;
 }
 
-export function AddVideoDialog({ onVideoAdded, trigger }: AddVideoDialogProps) {
+export function AddEpisodeDialog({ onEpisodeAdded, trigger }: AddEpisodeDialogProps) {
     const [open, setOpen] = useState(false);
     const [url, setUrl] = useState('');
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
@@ -58,14 +58,14 @@ export function AddVideoDialog({ onVideoAdded, trigger }: AddVideoDialogProps) {
         e.preventDefault();
 
         if (!url.trim()) {
-            toast.error('Please enter a YouTube URL');
+            toast.error('Please enter a URL');
             return;
         }
 
         setLoading(true);
 
         try {
-            const response = await fetch('/api/videos', {
+            const response = await fetch('/api/episodes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url, tagIds: selectedTagIds }),
@@ -73,17 +73,17 @@ export function AddVideoDialog({ onVideoAdded, trigger }: AddVideoDialogProps) {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Failed to add video');
+                throw new Error(error.error || 'Failed to add episode');
             }
 
-            const video = await response.json();
-            toast.success(`Added: ${video.title}`);
+            const episode = await response.json();
+            toast.success(`Added: ${episode.title}`);
             setUrl('');
             setSelectedTagIds([]);
             setOpen(false);
-            onVideoAdded?.();
+            onEpisodeAdded?.();
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to add video');
+            toast.error(error instanceof Error ? error.message : 'Failed to add episode');
         } finally {
             setLoading(false);
         }
@@ -92,7 +92,7 @@ export function AddVideoDialog({ onVideoAdded, trigger }: AddVideoDialogProps) {
     const defaultTrigger = (
         <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Add Video
+            Add New
         </Button>
     );
 
@@ -106,7 +106,7 @@ export function AddVideoDialog({ onVideoAdded, trigger }: AddVideoDialogProps) {
                         </DialogTrigger>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Add New Video</p>
+                        <p>Add Video or Podcast</p>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
@@ -114,18 +114,18 @@ export function AddVideoDialog({ onVideoAdded, trigger }: AddVideoDialogProps) {
             <DialogContent>
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add YouTube Video</DialogTitle>
+                        <DialogTitle>Add New Media</DialogTitle>
                         <DialogDescription>
-                            Paste a YouTube URL to add it to your watch later list
+                            Paste a YouTube or Podcast URL to add it to your list
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="url">YouTube URL</Label>
+                            <Label htmlFor="url">URL</Label>
                             <Input
                                 id="url"
                                 type="url"
-                                placeholder="https://youtube.com/watch?v=..."
+                                placeholder="https://youtube.com/watch?v=... or Podcast RSS/Link"
                                 value={url}
                                 onChange={(e) => setUrl(e.target.value)}
                                 disabled={loading}
@@ -173,7 +173,7 @@ export function AddVideoDialog({ onVideoAdded, trigger }: AddVideoDialogProps) {
                             Cancel
                         </Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? 'Adding...' : 'Add Video'}
+                            {loading ? 'Adding...' : 'Add Media'}
                         </Button>
                     </DialogFooter>
                 </form>

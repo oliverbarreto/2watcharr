@@ -1,24 +1,26 @@
 // Domain models for 2watcharr
 
 export type Priority = 'none' | 'low' | 'medium' | 'high';
+export type MediaType = 'video' | 'podcast';
 
-export type VideoEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored';
+export type MediaEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored';
 
-export interface VideoEvent {
+export interface MediaEvent {
     id: string;
-    videoId: string;
-    type: VideoEventType;
+    episodeId: string;
+    type: MediaEventType;
     createdAt: number;
 }
 
-export interface Video {
+export interface MediaEpisode {
     id: string;
-    youtubeId: string;
+    type: MediaType;
+    externalId: string;              // YouTube ID or Podcast ID
     title: string;
     description: string | null;
     duration: number | null;
     thumbnailUrl: string | null;
-    videoUrl: string;
+    url: string;                     // Video URL or Podcast Episode URL
     uploadDate: string | null;
     publishedDate: string | null;
     viewCount: number | null;
@@ -42,10 +44,11 @@ export interface Video {
 
 export interface Channel {
     id: string;
+    type: MediaType;
     name: string;
     description: string | null;
     thumbnailUrl: string | null;
-    channelUrl: string;
+    url: string;
     createdAt: number;
     updatedAt: number;
 }
@@ -58,21 +61,22 @@ export interface Tag {
     createdAt: number;
 }
 
-export interface VideoTag {
-    videoId: string;
+export interface EpisodeTag {
+    episodeId: string;
     tagId: string;
     createdAt: number;
 }
 
 // DTOs for creating/updating entities
 
-export interface CreateVideoDto {
-    youtubeId: string;
+export interface CreateEpisodeDto {
+    type: MediaType;
+    externalId: string;
     title: string;
     description?: string;
     duration?: number;
     thumbnailUrl?: string;
-    videoUrl: string;
+    url: string;
     uploadDate?: string;
     publishedDate?: string;
     viewCount?: number;
@@ -80,7 +84,7 @@ export interface CreateVideoDto {
     userId?: string;
 }
 
-export interface UpdateVideoDto {
+export interface UpdateEpisodeDto {
     title?: string;
     description?: string;
     watched?: boolean;
@@ -94,10 +98,12 @@ export interface UpdateVideoDto {
 
 export interface CreateChannelDto {
     id: string;
+    type: MediaType;
     name: string;
     description?: string;
     thumbnailUrl?: string;
-    channelUrl: string;
+    thumbnail_url?: string;
+    url: string;
 }
 
 export interface CreateTagDto {
@@ -108,7 +114,8 @@ export interface CreateTagDto {
 
 // Filter and sort options
 
-export interface VideoFilters {
+export interface EpisodeFilters {
+    type?: MediaType;
     tagIds?: string[];
     search?: string;
     watched?: boolean;
@@ -123,4 +130,10 @@ export type SortOrder = 'asc' | 'desc';
 export interface SortOptions {
     field: SortField;
     order: SortOrder;
+}
+
+export interface ChannelFilters {
+    search?: string;
+    tagIds?: string[];
+    type?: MediaType;
 }

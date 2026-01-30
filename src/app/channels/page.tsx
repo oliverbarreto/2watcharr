@@ -5,7 +5,9 @@ import { Layout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trash2, RefreshCw } from 'lucide-react';
+import { Trash2, RefreshCw, Youtube, Mic, Filter } from 'lucide-react';
+import { ChannelFilterBar } from '@/components/features/channels/channel-filter-bar';
+import { Channel as ChannelModel, Tag as TagModel } from '@/lib/domain/models';
 import { toast } from 'sonner';
 import {
     Dialog,
@@ -26,11 +28,12 @@ interface Tag {
 
 interface Channel {
     id: string;
+    type: 'video' | 'podcast';
     name: string;
     description: string | null;
     thumbnailUrl: string | null;
-    channelUrl: string;
-    videoCount: number;
+    url: string;
+    episodeCount: number;
     tags?: Tag[];
 }
 
@@ -41,10 +44,16 @@ function ChannelsPageContent() {
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
     const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
+    const [filters, setFilters] = useState<any>({});
 
-    const fetchChannels = async () => {
+    const fetchChannels = async (currentFilters = filters) => {
         try {
-            const response = await fetch('/api/channels');
+            const params = new URLSearchParams();
+            if (currentFilters.search) params.set('search', currentFilters.search);
+            if (currentFilters.type) params.set('type', currentFilters.type);
+            if (currentFilters.tagIds) params.set('tagIds', currentFilters.tagIds.join(','));
+
+            const response = await fetch(`/api/channels?${params.toString()}`);
             if (!response.ok) throw new Error('Failed to fetch channels');
 
             const data = await response.json();
@@ -60,6 +69,11 @@ function ChannelsPageContent() {
     useEffect(() => {
         fetchChannels();
     }, []);
+
+    const handleFilterChange = (newFilters: any) => {
+        setFilters(newFilters);
+        fetchChannels(newFilters);
+    };
 
     const handleSyncChannels = async () => {
         setSyncing(true);
@@ -103,7 +117,7 @@ function ChannelsPageContent() {
             <Layout>
                 <div className="space-y-6">
                     <div className="flex justify-between items-center">
-                        <h1 className="text-3xl font-bold">Channels</h1>
+                        <h1 className="text-3xl font-bold">Channels & Podcasts</h1>
                         <Skeleton className="h-10 w-32" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -136,9 +150,9 @@ function ChannelsPageContent() {
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold">Channels</h1>
+                        <h1 className="text-3xl font-bold">Channels & Podcasts</h1>
                         <p className="text-muted-foreground">
-                            All channels from your saved videos
+                            All sources from your saved content
                         </p>
                     </div>
                     <Button
@@ -152,11 +166,13 @@ function ChannelsPageContent() {
                     </Button>
                 </div>
 
+                <ChannelFilterBar onFilterChange={handleFilterChange} initialFilters={filters} />
+
                 {channels.length === 0 ? (
                     <div className="text-center py-12">
-                        <p className="text-muted-foreground text-lg">No channels yet</p>
+                        <p className="text-muted-foreground text-lg">No content yet</p>
                         <p className="text-sm text-muted-foreground mt-2">
-                            Add videos to see channels here
+                            Add videos or podcasts to see sources here
                         </p>
                     </div>
                 ) : (
@@ -174,7 +190,7 @@ function ChannelsPageContent() {
                                             setChannelToDelete(channel);
                                         }}
                                         className="p-1.5 bg-background/80 hover:bg-destructive hover:text-white rounded-full backdrop-blur-sm transition-colors"
-                                        title="Delete Channel"
+                                        title="Delete Source"
                                     >
                                         <Trash2 className="h-3.5 w-3.5" />
                                     </button>
@@ -196,18 +212,25 @@ function ChannelsPageContent() {
                                     </div>
                                     <div className="min-w-0">
                                         <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
-                                            <a
-                                                href={channel.channelUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="transition-colors hover:text-red-600 dark:hover:text-red-400"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                {channel.name}
-                                            </a>
+                                            <div className="flex items-center gap-2">
+                                                {channel.type === 'podcast' ? (
+                                                    <Mic className="h-4 w-4 text-purple-600" />
+                                                ) : (
+                                                    <Youtube className="h-4 w-4 text-red-600" />
+                                                )}
+                                                <a
+                                                    href={channel.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="transition-colors hover:text-primary"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {channel.name}
+                                                </a>
+                                            </div>
                                         </CardTitle>
                                         <Badge variant="secondary" className="mt-1 bg-primary/5 text-primary hover:bg-primary/10 border-none px-2 py-0">
-                                            {channel.videoCount} {channel.videoCount === 1 ? 'video' : 'videos'}
+                                            {channel.episodeCount} {channel.episodeCount === 1 ? 'episode' : 'episodes'}
                                         </Badge>
                                         {channel.tags && channel.tags.length > 0 && (
                                             <div className="flex flex-wrap gap-1 mt-2">
@@ -248,8 +271,8 @@ function ChannelsPageContent() {
                     <DialogHeader>
                         <DialogTitle>Are you absolutely sure?</DialogTitle>
                         <DialogDescription>
-                            This will remove <strong>{channelToDelete?.name}</strong> from your channel list.
-                            The videos from this channel will still remain in your watch list.
+                            This will remove <strong>{channelToDelete?.name}</strong> from your list.
+                            The episodes from this source will still remain in your list.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -272,7 +295,7 @@ export default function ChannelsPage() {
             <Layout>
                 <div className="space-y-6">
                     <div className="flex justify-between items-center">
-                        <h1 className="text-3xl font-bold">Channels</h1>
+                        <h1 className="text-3xl font-bold">Channels & Podcasts</h1>
                         <Skeleton className="h-10 w-32" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

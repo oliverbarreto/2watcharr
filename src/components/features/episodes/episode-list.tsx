@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Video } from '@/lib/domain/models';
-import { VideoCard } from './video-card';
-import { VideoListRow } from './video-list-row';
+import { MediaEpisode } from '@/lib/domain/models';
+import { EpisodeCard } from './episode-card';
+import { EpisodeListRow } from './episode-list-row';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { LayoutGrid, List } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -25,7 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { toast } from 'sonner';
 
-interface VideoListProps {
+interface EpisodeListProps {
     filters?: {
         search?: string;
         watched?: boolean;
@@ -40,8 +38,8 @@ interface VideoListProps {
     viewMode: 'grid' | 'list';
 }
 
-export function VideoList({ filters, sort, viewMode }: VideoListProps) {
-    const [videos, setVideos] = useState<Video[]>([]);
+export function EpisodeList({ filters, sort, viewMode }: EpisodeListProps) {
+    const [episodes, setEpisodes] = useState<MediaEpisode[]>([]);
     const [loading, setLoading] = useState(true);
 
     const sensors = useSensors(
@@ -51,7 +49,7 @@ export function VideoList({ filters, sort, viewMode }: VideoListProps) {
         })
     );
 
-    const fetchVideos = async () => {
+    const fetchEpisodes = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
@@ -66,38 +64,38 @@ export function VideoList({ filters, sort, viewMode }: VideoListProps) {
             if (sort?.field) params.append('sort', sort.field);
             if (sort?.order) params.append('order', sort.order);
 
-            const response = await fetch(`/api/videos?${params.toString()}`);
-            if (!response.ok) throw new Error('Failed to fetch videos');
+            const response = await fetch(`/api/episodes?${params.toString()}`);
+            if (!response.ok) throw new Error('Failed to fetch episodes');
 
             const data = await response.json();
-            setVideos(data.videos);
+            setEpisodes(data.episodes);
         } catch (error) {
-            console.error('Error fetching videos:', error);
+            console.error('Error fetching episodes:', error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchVideos();
+        fetchEpisodes();
     }, [filters, sort]);
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
 
         if (active.id !== over?.id) {
-            setVideos((items) => {
+            setEpisodes((items) => {
                 const oldIndex = items.findIndex((i) => i.id === active.id);
                 const newIndex = items.findIndex((i) => i.id === over?.id);
 
                 const newItems = arrayMove(items, oldIndex, newIndex);
 
                 // Persist the new order
-                const videoIds = newItems.map(v => v.id);
-                fetch('/api/videos/reorder', {
+                const episodeIds = newItems.map(v => v.id);
+                fetch('/api/episodes/reorder', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ videoIds }),
+                    body: JSON.stringify({ episodeIds }),
                 }).catch(() => {
                     toast.error('Failed to save order');
                 });
@@ -126,12 +124,12 @@ export function VideoList({ filters, sort, viewMode }: VideoListProps) {
         );
     }
 
-    if (videos.length === 0) {
+    if (episodes.length === 0) {
         return (
             <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">No videos found</p>
+                <p className="text-muted-foreground text-lg">No episodes found</p>
                 <p className="text-sm text-muted-foreground mt-2">
-                    Add your first video to get started
+                    Add your first video or podcast to get started
                 </p>
             </div>
         );
@@ -145,27 +143,27 @@ export function VideoList({ filters, sort, viewMode }: VideoListProps) {
                 onDragEnd={handleDragEnd}
             >
                 <SortableContext
-                    items={videos.map(v => v.id)}
+                    items={episodes.map(v => v.id)}
                     strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
                 >
                     <div className={viewMode === 'grid'
                         ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
                         : "flex flex-col border rounded-md overflow-hidden bg-card/50"
                     }>
-                        {videos.map((video) => (
+                        {episodes.map((episode) => (
                             viewMode === 'grid' ? (
-                                <VideoCard
-                                    key={video.id}
-                                    video={video}
-                                    onUpdate={fetchVideos}
-                                    onDelete={fetchVideos}
+                                <EpisodeCard
+                                    key={episode.id}
+                                    episode={episode}
+                                    onUpdate={fetchEpisodes}
+                                    onDelete={fetchEpisodes}
                                 />
                             ) : (
-                                <VideoListRow
-                                    key={video.id}
-                                    video={video}
-                                    onUpdate={fetchVideos}
-                                    onDelete={fetchVideos}
+                                <EpisodeListRow
+                                    key={episode.id}
+                                    episode={episode}
+                                    onUpdate={fetchEpisodes}
+                                    onDelete={fetchEpisodes}
                                 />
                             )
                         ))}

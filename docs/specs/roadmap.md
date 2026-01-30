@@ -11,6 +11,6 @@
 - [x] `./docs/specs/roadmap/completed/feature-video-management.md`                  20260127
 - [x] `./docs/specs/roadmap/completed/feature-integrations.md`                      20260127
 - [x] `./docs/specs/roadmap/completed/feature-uxui.md`                              20260128
+- [x] `./docs/specs/roadmap/feature-podcasts.md`                                    20260130
 - [ ] `./docs/specs/roadmap/feature-users.md`
-- [ ] `./docs/specs/roadmap/feature-podcasts.md`
 - [ ] `./docs/specs/roadmap/feature-stats.md`

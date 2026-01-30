@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "2watcharr - YouTube Watch Later Manager",
-  description: "Manage your YouTube videos to watch later with tags, priorities, and more",
+  title: "2watcharr - Media Watch Later Manager",
+  description: "Manage your videos and podcasts to watch later with tags, priorities, and more",
   icons: {
     icon: "/favicon.ico",
   },

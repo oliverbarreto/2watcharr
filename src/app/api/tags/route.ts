@@ -50,14 +50,14 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET /api/tags - List all tags with video counts
+ * GET /api/tags - List all tags with episode counts
  */
 export async function GET(request: NextRequest) {
     try {
         const db = await getDatabase();
         const tagRepo = new TagRepository(db);
 
-        const tags = await tagRepo.getTagsWithVideoCount();
+        const tags = await tagRepo.getTagsWithEpisodeCount();
 
         return NextResponse.json({ tags });
     } catch (error) {

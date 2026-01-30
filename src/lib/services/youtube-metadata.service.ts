@@ -1,34 +1,21 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { CreateEpisodeDto, CreateChannelDto } from '../domain/models';
 
 const execAsync = promisify(exec);
 
-export interface YouTubeMetadata {
-    videoId: string;
-    title: string;
-    description: string;
-    duration: number;
-    thumbnailUrl: string;
-    videoUrl: string;
-    uploadDate: string;
-    publishedDate: string;
-    viewCount: number;
-    channel: {
-        id: string;
-        name: string;
-        url: string;
-        description: string;
-        thumbnailUrl: string;
-    };
+export interface UnifiedMetadata {
+    episode: Partial<CreateEpisodeDto>;
+    channel: CreateChannelDto;
 }
 
 export class YouTubeMetadataService {
     /**
      * Extract metadata from a YouTube video URL using yt-dlp
      * @param url YouTube video URL
-     * @returns Promise resolving to video metadata
+     * @returns Promise resolving to unified metadata
      */
-    async extractMetadata(url: string): Promise<YouTubeMetadata> {
+    async extractMetadata(url: string): Promise<UnifiedMetadata> {
         // Use yt-dlp to extract JSON metadata without downloading
         const command = `yt-dlp --no-download --dump-json "${url}"`;
 
@@ -36,24 +23,30 @@ export class YouTubeMetadataService {
             const { stdout } = await execAsync(command);
             const rawData = JSON.parse(stdout);
 
-            return {
-                videoId: rawData.id,
+            const channel: CreateChannelDto = {
+                id: rawData.channel_id || rawData.uploader_id || '',
+                type: 'video',
+                name: rawData.channel || rawData.uploader || 'Unknown',
+                url: rawData.channel_url || rawData.uploader_url || '',
+                description: rawData.channel_description || '',
+                thumbnailUrl: rawData.channel_thumbnail || '',
+            };
+
+            const episode: Partial<CreateEpisodeDto> = {
+                type: 'video',
+                externalId: rawData.id,
                 title: rawData.title,
                 description: rawData.description || '',
                 duration: rawData.duration || 0,
                 thumbnailUrl: rawData.thumbnail || '',
-                videoUrl: url,
+                url: url,
                 uploadDate: this.formatDate(rawData.upload_date),
                 publishedDate: this.formatDate(rawData.release_date || rawData.upload_date),
                 viewCount: rawData.view_count || 0,
-                channel: {
-                    id: rawData.channel_id || rawData.uploader_id || '',
-                    name: rawData.channel || rawData.uploader || 'Unknown',
-                    url: rawData.channel_url || rawData.uploader_url || '',
-                    description: rawData.channel_description || '',
-                    thumbnailUrl: rawData.channel_thumbnail || '',
-                },
+                channelId: channel.id,
             };
+
+            return { episode, channel };
         } catch (error) {
             console.error('Failed to extract metadata:', error);
             throw new Error(`Failed to extract video metadata: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -65,7 +58,7 @@ export class YouTubeMetadataService {
      * @param url YouTube channel URL
      * @returns Promise resolving to channel metadata
      */
-    async extractChannelMetadata(url: string): Promise<Partial<YouTubeMetadata['channel']>> {
+    async extractChannelMetadata(url: string): Promise<Partial<CreateChannelDto>> {
         const command = `yt-dlp --no-download --dump-single-json --flat-playlist "${url}"`;
 
         try {
@@ -82,6 +75,7 @@ export class YouTubeMetadataService {
 
             return {
                 id: rawData.id || '',
+                type: 'video',
                 name: rawData.title || rawData.channel || 'Unknown',
                 url: rawData.channel_url || rawData.webpage_url || url,
                 description: rawData.description || '',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Filter, Play, Tag as TagIcon, X } from 'lucide-react';
+import { Search, Play, Tag as TagIcon, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -115,7 +115,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search videos..."
+                        placeholder="Search episodes..."
                         value={search}
                         onChange={(e) => handleSearchChange(e.target.value)}
                         className="pl-10"

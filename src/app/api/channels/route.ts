@@ -4,14 +4,23 @@ import { getDatabase } from '@/lib/db/database';
 import { ChannelRepository } from '@/lib/repositories';
 
 /**
- * GET /api/channels - List all channels with video counts
+ * GET /api/channels - List all channels with episode counts
  */
 export async function GET(request: NextRequest) {
     try {
+        const { searchParams } = new URL(request.url);
+        const search = searchParams.get('search') || undefined;
+        const type = (searchParams.get('type') as any) || undefined;
+        const tagIds = searchParams.get('tagIds')?.split(',') || undefined;
+
         const db = await getDatabase();
         const channelRepo = new ChannelRepository(db);
 
-        const channels = await channelRepo.getChannelsWithVideoCount();
+        const channels = await channelRepo.getChannelsWithEpisodeCount({
+            search,
+            type,
+            tagIds,
+        });
 
         return NextResponse.json({ channels });
     } catch (error) {

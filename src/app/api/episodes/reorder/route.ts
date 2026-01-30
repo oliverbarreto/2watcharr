@@ -1,33 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/db/database';
-import { VideoService } from '@/lib/services';
+import { MediaService } from '@/lib/services';
 import { z } from 'zod';
 
 const reorderSchema = z.object({
-    position: z.enum(['beginning', 'end']),
+    episodeIds: z.array(z.string()),
 });
 
-export async function POST(
-    request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
+/**
+ * POST /api/episodes/reorder - Reorder episodes
+ */
+export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { position } = reorderSchema.parse(body);
-        const { id } = await params;
+        const { episodeIds } = reorderSchema.parse(body);
 
         const db = await getDatabase();
-        const videoService = new VideoService(db);
+        const mediaService = new MediaService(db);
 
-        if (position === 'beginning') {
-            await videoService.moveToBeginning(id);
-        } else {
-            await videoService.moveToEnd(id);
-        }
+        await mediaService.reorderEpisodes(episodeIds);
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error('Error reordering video:', error);
+        console.error('Error reordering episodes:', error);
 
         if (error instanceof z.ZodError) {
             return NextResponse.json(
@@ -37,7 +32,7 @@ export async function POST(
         }
 
         return NextResponse.json(
-            { error: 'Failed to reorder video' },
+            { error: 'Failed to reorder episodes' },
             { status: 500 }
         );
     }

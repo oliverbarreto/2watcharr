@@ -1,4 +1,5 @@
-# Task: FEATURE: Podcasts
+PLAN MODE:
+
 we want to start planning and discussing a new epic feature. Here are my notes. Feel free to ask questions to understand the scope and requirements.
 
 The scope of this feature is to extend current video management to allow the user to also add Podcasts to the watch list. Here is the description of how we envision the feature: 
@@ -29,6 +30,7 @@ The feedUrl returned is the actual RSS feed for the podcast. That’s the canoni
 curl -s "https://itunes.apple.com/lookup?id=1648228034&entity=podcast" \
   | jq -r '.results[0].feedUrl'
 ```
+
 ```markdown
 Example: search for podcasts matching "Build One Ideas" (or any term).
 curl -s "https://itunes.apple.com/search?term=build+one+ideas&media=podcast&limit=1"

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Video, Tag } from '@/lib/domain/models';
-import { Card, CardContent } from '@/components/ui/card';
+import { MediaEpisode, Tag } from '@/lib/domain/models';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +11,6 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-    Play,
     Check,
     Star,
     MoreVertical,
@@ -22,14 +20,10 @@ import {
     ArrowDown,
     Tag as TagIcon,
     Plus,
+    Youtube,
+    Mic,
 } from 'lucide-react';
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-    Command,
     CommandDialog,
     CommandEmpty,
     CommandGroup,
@@ -42,13 +36,13 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { formatDistanceToNow } from 'date-fns';
 
-interface VideoListRowProps {
-    video: Video;
+interface EpisodeListRowProps {
+    episode: MediaEpisode;
     onUpdate?: () => void;
     onDelete?: () => void;
 }
 
-export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
+export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowProps) {
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -61,7 +55,7 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: video.id });
+    } = useSortable({ id: episode.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -72,57 +66,57 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
     const handleToggleWatched = async (e: React.MouseEvent) => {
         e.stopPropagation();
         try {
-            const response = await fetch(`/api/videos/${video.id}`, {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ watched: !video.watched }),
+                body: JSON.stringify({ watched: !episode.watched }),
             });
 
-            if (!response.ok) throw new Error('Failed to update video');
+            if (!response.ok) throw new Error('Failed to update episode');
 
-            toast.success(video.watched ? 'Marked as unwatched' : 'Marked as watched');
+            toast.success(episode.watched ? 'Marked as unwatched' : 'Marked as watched');
             onUpdate?.();
         } catch (error) {
-            toast.error('Failed to update video');
+            toast.error('Failed to update episode');
         }
     };
 
     const handleToggleFavorite = async (e: React.MouseEvent) => {
         e.stopPropagation();
         try {
-            const response = await fetch(`/api/videos/${video.id}`, {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ favorite: !video.favorite }),
+                body: JSON.stringify({ favorite: !episode.favorite }),
             });
 
-            if (!response.ok) throw new Error('Failed to update video');
+            if (!response.ok) throw new Error('Failed to update episode');
 
-            toast.success(video.favorite ? 'Removed from favorites' : 'Added to favorites');
+            toast.success(episode.favorite ? 'Removed from favorites' : 'Added to favorites');
             onUpdate?.();
         } catch (error) {
-            toast.error('Failed to update video');
+            toast.error('Failed to update episode');
         }
     };
 
     const handleDelete = async () => {
         try {
-            const response = await fetch(`/api/videos/${video.id}`, {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
                 method: 'DELETE',
             });
 
-            if (!response.ok) throw new Error('Failed to delete video');
+            if (!response.ok) throw new Error('Failed to delete episode');
 
-            toast.success('Video removed from watch later list');
+            toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} removed from list`);
             onDelete?.();
         } catch (error) {
-            toast.error('Failed to remove video');
+            toast.error('Failed to remove episode');
         }
     };
 
     const handleReorder = async (position: 'beginning' | 'end') => {
         try {
-            const response = await fetch(`/api/videos/${video.id}/reorder`, {
+            const response = await fetch(`/api/episodes/${episode.id}/reorder`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ position }),
@@ -133,7 +127,7 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
             toast.success(`Moved to ${position}`);
             onUpdate?.();
         } catch (error) {
-            toast.error('Failed to reorder video');
+            toast.error('Failed to reorder episode');
         }
     };
 
@@ -152,13 +146,13 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
     const handleToggleTag = async (tagId: string) => {
         setIsUpdatingTags(true);
         try {
-            const currentTagIds = video.tags?.map(t => t.id) || [];
+            const currentTagIds = episode.tags?.map(t => t.id) || [];
             const isTagSelected = currentTagIds.includes(tagId);
             const newTagIds = isTagSelected
                 ? currentTagIds.filter(id => id !== tagId)
                 : [...currentTagIds, tagId];
 
-            const response = await fetch(`/api/videos/${video.id}`, {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tagIds: newTagIds }),
@@ -210,7 +204,7 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
     };
 
     const handlePlay = () => {
-        window.open(video.videoUrl, '_blank');
+        window.open(episode.url, '_blank');
     };
 
     const formatDuration = (seconds: number | null) => {
@@ -242,15 +236,15 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
     };
 
     const formatEventDate = () => {
-        if (video.lastRemovedAt && video.isDeleted) {
-            return `Removed ${formatDistanceToNow(new Date(video.lastRemovedAt * 1000), { addSuffix: true })}`;
+        if (episode.lastRemovedAt && episode.isDeleted) {
+            return `Removed ${formatDistanceToNow(new Date(episode.lastRemovedAt * 1000), { addSuffix: true })}`;
         }
         
         // Find the latest significant event
         const events = [
-            { type: 'Watched', date: video.lastWatchedAt },
-            { type: 'Restored', date: video.lastAddedAt && video.lastAddedAt > (video.createdAt + 10) ? video.lastAddedAt : null },
-            { type: 'Added', date: video.lastAddedAt || video.createdAt }
+            { type: 'Watched', date: episode.lastWatchedAt },
+            { type: 'Restored', date: episode.lastAddedAt && episode.lastAddedAt > (episode.createdAt + 10) ? episode.lastAddedAt : null },
+            { type: 'Added', date: episode.lastAddedAt || episode.createdAt }
         ].filter(e => e.date).sort((a, b) => (b.date || 0) - (a.date || 0));
 
         if (events.length > 0 && events[0].date) {
@@ -264,7 +258,7 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
         <div
             ref={setNodeRef}
             style={style}
-            className={`group relative w-full border-b last:border-b-0 hover:bg-accent/30 transition-colors ${isDragging ? 'opacity-50 z-50' : ''} ${video.watched ? 'opacity-60' : ''}`}
+            className={`group relative w-full border-b last:border-b-0 hover:bg-accent/30 transition-colors ${isDragging ? 'opacity-50 z-50' : ''} ${episode.watched ? 'opacity-60' : ''}`}
         >
             <div className="flex items-center gap-3 p-2 cursor-default">
                 {/* Drag Handle */}
@@ -283,48 +277,56 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
                 >
                     {/* Thumbnail */}
                     <div className="relative w-48 aspect-video flex-shrink-0 rounded-md overflow-hidden bg-muted">
-                        {video.thumbnailUrl && (
+                        {episode.thumbnailUrl && (
                             <img
-                                src={video.thumbnailUrl}
-                                alt={video.title}
+                                src={episode.thumbnailUrl}
+                                alt={episode.title}
                                 className="w-full h-full object-cover"
                             />
                         )}
-                        {video.duration && (
+                        {episode.duration && (
                             <Badge className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] px-1 py-0 h-4 border-none">
-                                {formatDuration(video.duration)}
+                                {formatDuration(episode.duration)}
                             </Badge>
                         )}
-                        {video.watched && (
+                        {episode.watched && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                                 <Check className="h-8 w-8 text-white" />
                             </div>
                         )}
+                        {/* Media Type Icon */}
+                        <div className="absolute top-1 right-1">
+                            {episode.type === 'podcast' ? (
+                                <Mic className="h-3 w-3 text-white drop-shadow-md" />
+                            ) : (
+                                <Youtube className="h-3 w-3 text-white drop-shadow-md" />
+                            )}
+                        </div>
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0 flex flex-col gap-1">
-                        <h3 className="font-semibold text-sm line-clamp-2 leading-tight hover:text-primary transition-colors" title={video.title}>
-                            {video.title}
+                        <h3 className="font-semibold text-sm line-clamp-2 leading-tight hover:text-primary transition-colors" title={episode.title}>
+                            {episode.title}
                         </h3>
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                             <span
                                 className="font-medium hover:text-foreground truncate"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    window.location.href = `/channels?channelId=${video.channelId}`;
+                                    window.location.href = `/channels?channelId=${episode.channelId}`;
                                 }}
                             >
-                                {video.channelName || 'Unknown Channel'}
+                                {episode.channelName || 'Unknown Channel'}
                             </span>
                             <span>•</span>
-                            {video.viewCount !== null && (
+                            {episode.viewCount !== null && episode.type === 'video' && (
                                 <>
-                                    <span>{formatViews(video.viewCount)}</span>
+                                    <span>{formatViews(episode.viewCount)}</span>
                                     <span>•</span>
                                 </>
                             )}
-                            <span>{formatPublishedDate(video.publishedDate)}</span>
+                            <span>{formatPublishedDate(episode.publishedDate)}</span>
                             {formatEventDate() && (
                                 <>
                                     <span>•</span>
@@ -334,9 +336,9 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
                         </div>
 
                         {/* Tags Badges */}
-                        {video.tags && video.tags.length > 0 && (
+                        {episode.tags && episode.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
-                                {video.tags.map((tag) => (
+                                {episode.tags.map((tag) => (
                                     <Badge
                                         key={tag.id}
                                         variant="outline"
@@ -355,12 +357,12 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
 
                         {/* Status Icons */}
                         <div className="flex items-center gap-2 mt-0.5">
-                            {video.favorite && (
+                            {episode.favorite && (
                                 <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                             )}
-                            {video.priority !== 'none' && (
+                            {episode.priority !== 'none' && (
                                 <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-primary/30 text-primary">
-                                    {video.priority}
+                                    {episode.priority}
                                 </Badge>
                             )}
                         </div>
@@ -377,9 +379,9 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
                             e.stopPropagation();
                             handleToggleWatched(e);
                         }}
-                        title={video.watched ? "Mark as unwatched" : "Mark as watched"}
+                        title={episode.watched ? "Mark as unwatched" : "Mark as watched"}
                     >
-                        <Check className={`h-4 w-4 ${video.watched ? 'text-primary' : ''}`} />
+                        <Check className={`h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
                     </Button>
                     <Button
                         size="icon"
@@ -389,9 +391,9 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
                             e.stopPropagation();
                             handleToggleFavorite(e);
                         }}
-                        title={video.favorite ? "Remove from favorites" : "Add to favorites"}
+                        title={episode.favorite ? "Remove from favorites" : "Add to favorites"}
                     >
-                        <Star className={`h-4 w-4 ${video.favorite ? 'fill-primary text-primary' : ''}`} />
+                        <Star className={`h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                     </Button>
 
                     <Button
@@ -412,7 +414,7 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
                         open={isTagPopoverOpen} 
                         onOpenChange={setIsTagPopoverOpen}
                         title="Manage Tags"
-                        description="Search or create tags for this video"
+                        description="Search or create tags for this episode"
                     >
                         <CommandInput
                             placeholder="Search or create tag..."
@@ -436,7 +438,7 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
                             </CommandEmpty>
                             <CommandGroup heading="Recent Tags">
                                 {availableTags.map((tag) => {
-                                    const isSelected = video.tags?.some(t => t.id === tag.id);
+                                    const isSelected = episode.tags?.some(t => t.id === tag.id);
                                     return (
                                         <CommandItem
                                             key={tag.id}
@@ -489,7 +491,7 @@ export function VideoListRow({ video, onUpdate, onDelete }: VideoListRowProps) {
                                 handleDelete();
                             }} className="text-destructive">
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Remove from watch later list
+                                Remove from list
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

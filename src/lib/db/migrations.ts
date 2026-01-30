@@ -199,4 +199,154 @@ export async function runMigrations(db: Database): Promise<void> {
       throw error;
     }
   }
+
+  // Check if add_podcast_support migration has been applied
+  const migration6 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_podcast_support'
+  );
+
+  if (!migration6) {
+    console.log('Running add_podcast_support migration...');
+    
+    // Check if the episodes table already exists (new installation with generic schema)
+    const episodesTable = await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='episodes'");
+    if (episodesTable) {
+        console.log('Episodes table already exists, marking add_podcast_support as completed.');
+        await db.run("INSERT OR IGNORE INTO migrations (name) VALUES ('add_podcast_support')");
+        return;
+    }
+
+    await db.run('PRAGMA foreign_keys = OFF');
+    try {
+      // Check column names in old channels table for dynamic mapping
+      const tableInfo = await db.all('PRAGMA table_info(channels)');
+      const urlColumn = tableInfo.find(c => c.name === 'url' || c.name === 'channel_url')?.name || 'url';
+      const thumbColumn = tableInfo.find(c => c.name === 'thumbnail_url' || c.name === 'thumbnailUrl')?.name || 'thumbnail_url';
+
+      await db.exec(`
+        BEGIN TRANSACTION;
+        
+        -- 1. Migrate Channels to a generic structure
+        CREATE TABLE IF NOT EXISTS channels_new (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL DEFAULT 'video',
+          name TEXT NOT NULL,
+          description TEXT,
+          thumbnail_url TEXT,
+          url TEXT NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
+        
+        INSERT INTO channels_new (id, type, name, description, thumbnail_url, url, created_at, updated_at)
+        SELECT id, 'video', name, description, ${thumbColumn}, ${urlColumn}, created_at, updated_at FROM channels;
+        
+        DROP TABLE channels;
+        ALTER TABLE channels_new RENAME TO channels;
+        
+        -- 2. Migrate Videos to Episodes
+        CREATE TABLE IF NOT EXISTS episodes (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL DEFAULT 'video',
+          external_id TEXT NOT NULL UNIQUE,
+          title TEXT NOT NULL,
+          description TEXT,
+          duration INTEGER,
+          thumbnail_url TEXT,
+          url TEXT NOT NULL,
+          upload_date TEXT,
+          published_date TEXT,
+          view_count INTEGER,
+          channel_id TEXT,
+          watched BOOLEAN NOT NULL DEFAULT 0,
+          favorite BOOLEAN NOT NULL DEFAULT 0,
+          is_deleted BOOLEAN NOT NULL DEFAULT 0,
+          priority TEXT CHECK(priority IN ('none', 'low', 'medium', 'high')) DEFAULT 'none',
+          custom_order INTEGER,
+          user_id TEXT,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE SET NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        
+        INSERT INTO episodes (
+          id, type, external_id, title, description, duration, thumbnail_url,
+          url, upload_date, published_date, view_count, channel_id,
+          watched, favorite, is_deleted, priority, custom_order, user_id,
+          created_at, updated_at
+        )
+        SELECT 
+          id, 'video', youtube_id, title, description, duration, thumbnail_url,
+          video_url, upload_date, published_date, view_count, channel_id,
+          watched, favorite, is_deleted, priority, custom_order, user_id,
+          created_at, updated_at
+        FROM videos;
+        
+        DROP TABLE videos;
+        
+        -- 3. Migrate video_tags to episode_tags
+        CREATE TABLE IF NOT EXISTS episode_tags (
+          episode_id TEXT NOT NULL,
+          tag_id TEXT NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          PRIMARY KEY (episode_id, tag_id),
+          FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE CASCADE,
+          FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+        );
+        
+        INSERT INTO episode_tags (episode_id, tag_id, created_at)
+        SELECT video_id, tag_id, created_at FROM video_tags;
+        
+        DROP TABLE video_tags;
+        
+        -- 4. Migrate video_events to media_events
+        CREATE TABLE IF NOT EXISTS media_events (
+          id TEXT PRIMARY KEY,
+          episode_id TEXT NOT NULL,
+          type TEXT NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE CASCADE
+        );
+        
+        INSERT INTO media_events (id, episode_id, type, created_at)
+        SELECT id, video_id, type, created_at FROM video_events;
+        
+        DROP TABLE video_events;
+        
+        -- 5. Create Indexes
+        CREATE INDEX IF NOT EXISTS idx_episodes_type ON episodes(type);
+        CREATE INDEX IF NOT EXISTS idx_episodes_channel_id ON episodes(channel_id);
+        CREATE INDEX IF NOT EXISTS idx_episodes_watched ON episodes(watched);
+        CREATE INDEX IF NOT EXISTS idx_episodes_is_deleted ON episodes(is_deleted);
+        CREATE INDEX IF NOT EXISTS idx_episodes_favorite ON episodes(favorite);
+        CREATE INDEX IF NOT EXISTS idx_episodes_priority ON episodes(priority);
+        CREATE INDEX IF NOT EXISTS idx_episodes_created_at ON episodes(created_at);
+        CREATE INDEX IF NOT EXISTS idx_episode_tags_tag_id ON episode_tags(tag_id);
+        CREATE INDEX IF NOT EXISTS idx_media_events_episode_id ON media_events(episode_id);
+        CREATE INDEX IF NOT EXISTS idx_media_events_type ON media_events(type);
+        CREATE INDEX IF NOT EXISTS idx_media_events_created_at ON media_events(created_at);
+        CREATE INDEX IF NOT EXISTS idx_channels_type ON channels(type);
+        
+        -- 6. Record migration
+        INSERT INTO migrations (name) VALUES ('add_podcast_support');
+        
+        COMMIT;
+      `);
+      await db.run('PRAGMA foreign_keys = ON');
+      console.log('add_podcast_support migration completed.');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('already exists')) {
+          console.log('Some tables already existed, marking add_podcast_support as completed.');
+          await db.run("INSERT OR IGNORE INTO migrations (name) VALUES ('add_podcast_support')");
+          await db.run('PRAGMA foreign_keys = ON');
+          return;
+      }
+      try { await db.run('ROLLBACK'); } catch (e) {}
+      await db.run('PRAGMA foreign_keys = ON');
+      console.error('Error running add_podcast_support migration:', error);
+      throw error;
+    }
+  }
 }

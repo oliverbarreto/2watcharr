@@ -21,7 +21,7 @@ interface Tag {
     id: string;
     name: string;
     color: string | null;
-    videoCount: number;
+    episodeCount: number;
 }
 
 export default function SettingsPage() {
@@ -85,7 +85,7 @@ export default function SettingsPage() {
     };
 
     const handleDeleteTag = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this tag? This will remove it from all videos.')) {
+        if (!confirm('Are you sure you want to delete this tag? This will remove it from all episodes.')) {
             return;
         }
 
@@ -142,7 +142,7 @@ export default function SettingsPage() {
     const handleDefaultViewChange = (value: 'grid' | 'list') => {
         setDefaultView(value);
         localStorage.setItem('defaultView', value);
-        localStorage.setItem('videoViewMode', value);
+        localStorage.setItem('episodeViewMode', value);
         toast.success(`Default view set to ${value === 'grid' ? 'Grid' : 'List'}`);
     };
 
@@ -165,7 +165,7 @@ export default function SettingsPage() {
                                 <CardHeader>
                                     <CardTitle>Create New Tag</CardTitle>
                                     <CardDescription>
-                                        Add a new tag to organize your watch later videos.
+                                        Add a new tag to organize your content.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -206,7 +206,7 @@ export default function SettingsPage() {
                                 <CardHeader>
                                     <CardTitle>Existing Tags</CardTitle>
                                     <CardDescription>
-                                        Manage your existing tags and see how many videos use them.
+                                        Manage your existing tags and see how many episodes use them.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -267,7 +267,7 @@ export default function SettingsPage() {
                                                                 />
                                                                 <span className="font-medium">{tag.name}</span>
                                                                 <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
-                                                                    {tag.videoCount} videos
+                                                                    {tag.episodeCount} episodes
                                                                 </span>
                                                             </div>
                                                             <div className="flex gap-1">
@@ -311,7 +311,7 @@ export default function SettingsPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="defaultView">Default View</Label>
                                     <p className="text-sm text-muted-foreground">
-                                        Choose which view to use by default when loading the watch list.
+                                        Choose which view to use by default when loading the list.
                                     </p>
                                     <Select 
                                         value={defaultView} 

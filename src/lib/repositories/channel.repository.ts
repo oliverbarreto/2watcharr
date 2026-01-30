@@ -1,5 +1,5 @@
 import { Database } from 'sqlite';
-import { Channel, CreateChannelDto, Tag } from '../domain/models';
+import { Channel, CreateChannelDto, Tag, ChannelFilters } from '../domain/models';
 
 export class ChannelRepository {
     constructor(private db: Database) { }
@@ -12,14 +12,15 @@ export class ChannelRepository {
 
         await this.db.run(
             `INSERT INTO channels (
-        id, name, description, thumbnail_url, channel_url, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        id, type, name, description, thumbnail_url, url, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 dto.id,
+                dto.type,
                 dto.name,
                 dto.description || null,
-                dto.thumbnailUrl || null,
-                dto.channelUrl,
+                dto.thumbnail_url || dto.thumbnailUrl || null,
+                dto.url,
                 now,
                 now,
             ]
@@ -63,13 +64,13 @@ export class ChannelRepository {
             updates.push('description = ?');
             params.push(dto.description);
         }
-        if (dto.thumbnailUrl !== undefined) {
+        if (dto.thumbnail_url !== undefined || dto.thumbnailUrl !== undefined) {
             updates.push('thumbnail_url = ?');
-            params.push(dto.thumbnailUrl);
+            params.push(dto.thumbnail_url || dto.thumbnailUrl);
         }
-        if (dto.channelUrl !== undefined) {
-            updates.push('channel_url = ?');
-            params.push(dto.channelUrl);
+        if (dto.url !== undefined) {
+            updates.push('url = ?');
+            params.push(dto.url);
         }
 
         updates.push('updated_at = ?');
@@ -90,20 +91,53 @@ export class ChannelRepository {
     }
 
     /**
-     * Get channel with video count
+     * Get channel with episode count
      */
-    async getChannelsWithVideoCount(): Promise<Array<Channel & { videoCount: number; tags: Tag[] }>> {
-        const rows = await this.db.all(`
-            SELECT c.*, COUNT(v.id) as video_count
+    async getChannelsWithEpisodeCount(filters?: ChannelFilters): Promise<Array<Channel & { episodeCount: number; tags: Tag[] }>> {
+        const params: any[] = [];
+        const conditions: string[] = [];
+
+        let query = `
+            SELECT c.*, COUNT(e.id) as episode_count
             FROM channels c
-            LEFT JOIN videos v ON c.id = v.channel_id AND v.is_deleted = 0
+            LEFT JOIN episodes e ON c.id = e.channel_id AND e.is_deleted = 0
+        `;
+
+        if (filters?.search) {
+            conditions.push('(c.name LIKE ? OR c.description LIKE ?)');
+            const searchTerm = `%${filters.search}%`;
+            params.push(searchTerm, searchTerm);
+        }
+
+        if (filters?.type) {
+            conditions.push('c.type = ?');
+            params.push(filters.type);
+        }
+
+        if (filters?.tagIds && filters.tagIds.length > 0) {
+            const placeholders = filters.tagIds.map(() => '?').join(',');
+            conditions.push(`EXISTS (
+                SELECT 1 FROM episode_tags et 
+                JOIN episodes ep ON et.episode_id = ep.id
+                WHERE ep.channel_id = c.id AND et.tag_id IN (${placeholders})
+            )`);
+            params.push(...filters.tagIds);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        query += `
             GROUP BY c.id
             ORDER BY c.name ASC
-        `);
+        `;
+
+        const rows = await this.db.all(query, params);
 
         const channels = rows.map((row: any) => ({
             ...this.mapRowToChannel(row),
-            videoCount: row.video_count,
+            episodeCount: row.episode_count,
             tags: [] as Tag[],
         }));
 
@@ -113,11 +147,11 @@ export class ChannelRepository {
 
             // Get all tags for these channels
             const tagRows = await this.db.all(`
-                SELECT DISTINCT v.channel_id, t.*
+                SELECT DISTINCT e.channel_id, t.*
                 FROM tags t
-                JOIN video_tags vt ON t.id = vt.tag_id
-                JOIN videos v ON vt.video_id = v.id
-                WHERE v.channel_id IN (${placeholders}) AND v.is_deleted = 0
+                JOIN episode_tags et ON t.id = et.tag_id
+                JOIN episodes e ON et.episode_id = e.id
+                WHERE e.channel_id IN (${placeholders}) AND e.is_deleted = 0
                 ORDER BY t.name ASC
             `, channelIds);
 
@@ -155,10 +189,11 @@ export class ChannelRepository {
     private mapRowToChannel(row: any): Channel {
         return {
             id: row.id,
+            type: row.type || 'video',
             name: row.name,
             description: row.description,
-            thumbnailUrl: row.thumbnail_url,
-            channelUrl: row.channel_url,
+            thumbnailUrl: row.thumbnail_url || row.thumbnailUrl, // Handle both snake and camel if needed during transition
+            url: row.url || row.channel_url,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
         };

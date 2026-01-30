@@ -92,20 +92,20 @@ export class TagRepository {
     }
 
     /**
-     * Get tags with video count
+     * Get tags with episode count
      */
-    async getTagsWithVideoCount(): Promise<Array<Tag & { videoCount: number }>> {
+    async getTagsWithEpisodeCount(): Promise<Array<Tag & { episodeCount: number }>> {
         const rows = await this.db.all(`
-      SELECT t.*, COUNT(vt.video_id) as video_count
-      FROM tags t
-      LEFT JOIN video_tags vt ON t.id = vt.tag_id
-      GROUP BY t.id
-      ORDER BY t.name ASC
-    `);
+            SELECT t.*, COUNT(et.episode_id) as episode_count
+            FROM tags t
+            LEFT JOIN episode_tags et ON t.id = et.tag_id
+            GROUP BY t.id
+            ORDER BY t.name ASC
+        `);
 
         return rows.map((row: any) => ({
             ...this.mapRowToTag(row),
-            videoCount: row.video_count,
+            episodeCount: row.episode_count,
         }));
     }
 

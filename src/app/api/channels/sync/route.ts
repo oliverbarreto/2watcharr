@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { getDatabase } from '@/lib/db/database';
-import { VideoService } from '@/lib/services';
+import { MediaService } from '@/lib/services';
 
 /**
  * POST /api/channels/sync - Sync metadata for all channels
@@ -9,9 +9,9 @@ import { VideoService } from '@/lib/services';
 export async function POST(request: NextRequest) {
     try {
         const db = await getDatabase();
-        const videoService = new VideoService(db);
+        const mediaService = new MediaService(db);
 
-        const result = await videoService.syncAllChannelsMetadata();
+        const result = await mediaService.syncAllChannelsMetadata();
 
         return NextResponse.json({
             success: true,
