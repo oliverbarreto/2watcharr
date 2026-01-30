@@ -11,6 +11,10 @@ describe('EpisodeRepository Event Tracking', () => {
     beforeEach(async () => {
         db = await createTestDb();
         repository = new EpisodeRepository(db);
+        
+        // Insert test user for foreign key constraints
+        await db.run('INSERT INTO users (id, username, password) VALUES (?, ?, ?)', 
+            ['test-user', 'testuser', 'password']);
     });
 
     afterEach(async () => {
@@ -23,7 +27,8 @@ describe('EpisodeRepository Event Tracking', () => {
             externalId: 'test-id',
             title: 'Test Episode',
             url: 'https://youtube.com/watch?v=test-id',
-            channelId: 'channel-id'
+            channelId: 'channel-id',
+            userId: 'test-user'
         };
         
         // Setup: Create a channel first because of foreign key
@@ -45,7 +50,8 @@ describe('EpisodeRepository Event Tracking', () => {
             externalId: 'test-id-2',
             title: 'Test Episode 2',
             url: 'https://youtube.com/watch?v=test-id-2',
-            channelId: 'channel-id'
+            channelId: 'channel-id',
+            userId: 'test-user'
         };
         
         await db.run('INSERT OR IGNORE INTO channels (id, name, url) VALUES (?, ?, ?)', 
@@ -74,14 +80,16 @@ describe('EpisodeRepository Event Tracking', () => {
             externalId: 'vid1',
             title: 'Episode 1',
             url: 'url1',
-            channelId: 'channel-id'
+            channelId: 'channel-id',
+            userId: 'test-user'
         });
         const e2 = await repository.create({
             type: 'video',
             externalId: 'vid2',
             title: 'Episode 2',
             url: 'url2',
-            channelId: 'channel-id'
+            channelId: 'channel-id',
+            userId: 'test-user'
         });
 
         // e2 watched later than e1

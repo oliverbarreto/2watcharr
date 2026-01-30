@@ -152,6 +152,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
                     body: JSON.stringify({ watchStatus: 'pending' }),
                 });
                 if (response.ok) {
+                    toast.success('Marked as pending confirmation');
                     onUpdate?.();
                 }
             } catch (error) {

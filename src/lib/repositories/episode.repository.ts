@@ -109,6 +109,7 @@ export class EpisodeRepository {
             SELECT ${hasTagFilter ? 'DISTINCT ' : ''}e.*, c.name as channel_name,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'pending' ORDER BY created_at DESC LIMIT 1) as last_pending_at,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
             FROM episodes e

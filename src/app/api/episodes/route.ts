@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
         const watchedParam = searchParams.get('watched');
         const favoriteParam = searchParams.get('favorite');
         const channelId = searchParams.get('channelId') || undefined;
+        const watchStatus = searchParams.get('watchStatus') as any || undefined;
         const type = searchParams.get('type') as MediaType | undefined;
 
         const session = await getServerSession(authOptions);
@@ -83,6 +84,7 @@ export async function GET(request: NextRequest) {
             tagIds,
             search,
             watched: watchedParam ? watchedParam === 'true' : undefined,
+            watchStatus,
             favorite: favoriteParam ? favoriteParam === 'true' : undefined,
             channelId,
             userId,

@@ -14,6 +14,10 @@ describe('MediaService Event Tracking', () => {
         service = new MediaService(db);
         repository = new EpisodeRepository(db);
         
+        // Insert test user for foreign key constraints
+        await db.run('INSERT INTO users (id, username, password) VALUES (?, ?, ?)', 
+            ['test-user', 'testuser', 'password']);
+            
         // Setup a channel for tests
         await db.run('INSERT INTO channels (id, name, url) VALUES (?, ?, ?)', 
             ['channel-id', 'Test Channel', 'https://youtube.com/channel/id']);
@@ -29,7 +33,8 @@ describe('MediaService Event Tracking', () => {
             externalId: 'vid1',
             title: 'Test Episode',
             url: 'url1',
-            channelId: 'channel-id'
+            channelId: 'channel-id',
+            userId: 'test-user'
         });
 
         await service.toggleWatched(episode.id);
@@ -44,7 +49,8 @@ describe('MediaService Event Tracking', () => {
             externalId: 'vid1',
             title: 'Test Episode',
             url: 'url1',
-            channelId: 'channel-id'
+            channelId: 'channel-id',
+            userId: 'test-user'
         });
 
         // First watch
@@ -62,7 +68,8 @@ describe('MediaService Event Tracking', () => {
             externalId: 'vid1',
             title: 'Test Episode',
             url: 'url1',
-            channelId: 'channel-id'
+            channelId: 'channel-id',
+            userId: 'test-user'
         });
 
         await service.toggleFavorite(episode.id);
@@ -77,7 +84,8 @@ describe('MediaService Event Tracking', () => {
             externalId: 'vid1',
             title: 'Test Episode',
             url: 'url1',
-            channelId: 'channel-id'
+            channelId: 'channel-id',
+            userId: 'test-user'
         });
 
         await service.deleteEpisode(episode.id);

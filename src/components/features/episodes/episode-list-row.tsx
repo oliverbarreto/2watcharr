@@ -203,8 +203,39 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
         }
     };
 
-    const handlePlay = () => {
+    const handlePlay = async () => {
         window.open(episode.url, '_blank');
+        
+        const watchAction = localStorage.getItem('watchAction') || 'pending';
+        if (watchAction === 'watched' && episode.watchStatus === 'unwatched') {
+            try {
+                const response = await fetch(`/api/episodes/${episode.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ watched: true, watchStatus: 'watched' }),
+                });
+                if (response.ok) {
+                    toast.success('Marked as watched');
+                    onUpdate?.();
+                }
+            } catch (error) {
+                console.error('Failed to mark as watched:', error);
+            }
+        } else if (watchAction === 'pending' && episode.watchStatus === 'unwatched') {
+            try {
+                const response = await fetch(`/api/episodes/${episode.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ watchStatus: 'pending' }),
+                });
+                if (response.ok) {
+                    toast.success('Marked as pending confirmation');
+                    onUpdate?.();
+                }
+            } catch (error) {
+                console.error('Failed to set pending status:', error);
+            }
+        }
     };
 
     const formatDuration = (seconds: number | null) => {

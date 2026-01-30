@@ -58,24 +58,27 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         fetchTags();
     }, []);
 
+    const triggerFilterChange = (
+        currentSearch: string,
+        currentWatchedFilter: string,
+        currentTagIds: string[]
+    ) => {
+        onFilterChange?.({
+            search: currentSearch || undefined,
+            watched: currentWatchedFilter === 'watched' ? true : (currentWatchedFilter === 'all' ? undefined : false),
+            watchStatus: currentWatchedFilter === 'all' ? undefined : (currentWatchedFilter === 'watched' ? 'watched' : currentWatchedFilter),
+            tagIds: currentTagIds.length > 0 ? currentTagIds : undefined,
+        });
+    };
+
     const handleSearchChange = (value: string) => {
         setSearch(value);
-        onFilterChange?.({
-            search: value || undefined,
-            watched: watchedFilter === 'watched' ? true : undefined,
-            watchStatus: watchedFilter === 'unwatched' ? 'unwatched' : (watchedFilter === 'pending' ? 'pending' : undefined),
-            tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
-        });
+        triggerFilterChange(value, watchedFilter, selectedTagIds);
     };
 
     const handleWatchedFilterChange = (value: string) => {
         setWatchedFilter(value);
-        onFilterChange?.({
-            search: search || undefined,
-            watched: value === 'watched' ? true : undefined,
-            watchStatus: value === 'unwatched' ? 'unwatched' : (value === 'pending' ? 'pending' : undefined),
-            tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
-        });
+        triggerFilterChange(search, value, selectedTagIds);
     };
 
     const toggleTag = (tagId: string) => {
@@ -84,20 +87,12 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             : [...selectedTagIds, tagId];
         
         setSelectedTagIds(newSelected);
-        onFilterChange?.({
-            search: search || undefined,
-            watched: watchedFilter === 'all' ? undefined : watchedFilter === 'watched',
-            tagIds: newSelected.length > 0 ? newSelected : undefined,
-        });
+        triggerFilterChange(search, watchedFilter, newSelected);
     };
 
     const clearTags = () => {
         setSelectedTagIds([]);
-        onFilterChange?.({
-            search: search || undefined,
-            watched: watchedFilter === 'all' ? undefined : watchedFilter === 'watched',
-            tagIds: undefined,
-        });
+        triggerFilterChange(search, watchedFilter, []);
     };
 
     const handleSortChange = (field: string) => {

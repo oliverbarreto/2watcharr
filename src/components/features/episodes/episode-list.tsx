@@ -30,6 +30,7 @@ interface EpisodeListProps {
         favorite?: boolean;
         channelId?: string;
         tagIds?: string[];
+        watchStatus?: 'unwatched' | 'pending' | 'watched';
     };
     sort?: {
         field: string;
@@ -61,6 +62,7 @@ export function EpisodeList({ filters, sort, viewMode }: EpisodeListProps) {
             if (filters?.tagIds && filters.tagIds.length > 0) {
                 params.append('tags', filters.tagIds.join(','));
             }
+            if (filters?.watchStatus) params.append('watchStatus', filters.watchStatus);
             if (sort?.field) params.append('sort', sort.field);
             if (sort?.order) params.append('order', sort.order);
 
