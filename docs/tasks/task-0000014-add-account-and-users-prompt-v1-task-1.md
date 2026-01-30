@@ -1,0 +1,21 @@
+# Task: FEATURE: Users
+
+- [x] Research and Planning
+    - [x] Explore existing database schema and authentication/authorization logic
+    - [x] Design user and profile models
+    - [x] Plan onboarding workflow
+    - [x] Plan login and profile selection page
+    - [x] Plan "Remember me" functionality
+- [/] Implementation
+    - [/] Update database schema (migrations)
+    - [ ] Implement backend user management service/actions
+    - [ ] Implement authentication (NextAuth or custom)
+    - [ ] Build onboarding flow
+    - [ ] Build login/profile selection page
+    - [ ] Implement settings user management
+    - [ ] Update navigation bar with profile selector
+- [ ] Verification
+    - [ ] Test onboarding flow
+    - [ ] Test multi-user profile switching
+    - [ ] Test admin permissions
+    - [ ] Test "Remember me" functionality

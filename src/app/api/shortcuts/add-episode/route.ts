@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
 import { MediaService } from '@/lib/services';
 import { TagRepository } from '@/lib/repositories';
@@ -13,10 +15,15 @@ const addEpisodeSchema = z.object({
 
 /**
  * POST /api/shortcuts/add-episode - Add episode from iOS Shortcut
- * Simplified endpoint optimized for iOS Shortcuts integration. Now supports podcasts too.
  */
 export async function POST(request: NextRequest) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = (session.user as any).id;
+
         const body = await request.json();
         const { url, tag } = addEpisodeSchema.parse(body);
 
@@ -26,17 +33,17 @@ export async function POST(request: NextRequest) {
 
         let tagIds: string[] | undefined;
 
-        // If tag name is provided, find or create it
+        // If tag name is provided, find or create it for THIS user
         if (tag) {
-            let tagEntity = await tagRepo.findByName(tag);
+            let tagEntity = await tagRepo.findByName(tag, userId);
             if (!tagEntity) {
-                tagEntity = await tagRepo.create({ name: tag });
+                tagEntity = await tagRepo.create({ name: tag, userId });
             }
             tagIds = [tagEntity.id];
         }
 
         // Add the episode
-        const episode = await mediaService.addEpisodeFromUrl(url, tagIds);
+        const episode = await mediaService.addEpisodeFromUrl(url, userId, tagIds);
 
         return NextResponse.json({
             success: true,

@@ -38,7 +38,7 @@ export class EpisodeRepository {
                 dto.publishedDate || null,
                 dto.viewCount || null,
                 dto.channelId,
-                dto.userId || null,
+                dto.userId,
                 now,
                 now,
             ]
@@ -87,10 +87,10 @@ export class EpisodeRepository {
     /**
      * Find episode by External ID
      */
-    async findByExternalId(externalId: string): Promise<MediaEpisode | null> {
+    async findByExternalId(externalId: string, userId: string): Promise<MediaEpisode | null> {
         const row = await this.db.get(
-            'SELECT * FROM episodes WHERE external_id = ?',
-            externalId
+            'SELECT * FROM episodes WHERE external_id = ? AND user_id = ?',
+            [externalId, userId]
         );
         return row ? this.mapRowToEpisode(row) : null;
     }
@@ -162,6 +162,11 @@ export class EpisodeRepository {
         if (filters?.channelId) {
             conditions.push('e.channel_id = ?');
             params.push(filters.channelId);
+        }
+
+        if (filters?.userId) {
+            conditions.push('e.user_id = ?');
+            params.push(filters.userId);
         }
 
         if (conditions.length > 0) {

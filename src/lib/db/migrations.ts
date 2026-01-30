@@ -33,7 +33,20 @@ export async function runMigrations(db: Database): Promise<void> {
       'INSERT INTO migrations (name) VALUES (?)',
       'initial_schema'
     );
-    console.log('Initial schema migration completed.');
+    
+    // Mark legacy migrations as completed since they are built into schema.sql
+    const legacyMigrations = [
+      'allow_channel_deletion',
+      'add_view_count',
+      'add_is_deleted',
+      'add_video_events',
+      'add_podcast_support',
+      'add_user_management'
+    ];
+    for (const name of legacyMigrations) {
+      await db.run('INSERT OR IGNORE INTO migrations (name) VALUES (?)', name);
+    }
+    console.log('Initial schema migration completed and legacy migrations marked as done.');
   }
 
   // Check if allow_channel_deletion migration has been applied
@@ -43,62 +56,71 @@ export async function runMigrations(db: Database): Promise<void> {
   );
 
   if (!migration2) {
-    console.log('Running allow_channel_deletion migration...');
-    await db.run('PRAGMA foreign_keys = OFF');
-    await db.exec(`
-      BEGIN TRANSACTION;
-      
-      -- 1. Create backup
-      CREATE TABLE videos_backup AS SELECT * FROM videos;
-      
-      -- 2. Drop old table
-      DROP TABLE videos;
-      
-      -- 3. Recreate table with new schema
-      CREATE TABLE videos (
-        id TEXT PRIMARY KEY,
-        youtube_id TEXT NOT NULL UNIQUE,
-        title TEXT NOT NULL,
-        description TEXT,
-        duration INTEGER,
-        thumbnail_url TEXT,
-        video_url TEXT NOT NULL,
-        upload_date TEXT,
-        published_date TEXT,
-        channel_id TEXT,
-        watched BOOLEAN NOT NULL DEFAULT 0,
-        favorite BOOLEAN NOT NULL DEFAULT 0,
-        priority TEXT CHECK(priority IN ('none', 'low', 'medium', 'high')) DEFAULT 'none',
-        custom_order INTEGER,
-        user_id TEXT,
-        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-        updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-        FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE SET NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    const videosTable = await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='videos'");
+    if (!videosTable) {
+      console.log('Videos table not found, marking allow_channel_deletion migration as completed.');
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'allow_channel_deletion'
       );
-      
-      -- 4. Copy data back
-      INSERT INTO videos SELECT * FROM videos_backup;
-      
-      -- 5. Drop backup
-      DROP TABLE videos_backup;
-      
-      -- 6. Recreate indexes
-      CREATE INDEX idx_videos_channel_id ON videos(channel_id);
-      CREATE INDEX idx_videos_watched ON videos(watched);
-      CREATE INDEX idx_videos_favorite ON videos(favorite);
-      CREATE INDEX idx_videos_priority ON videos(priority);
-      CREATE INDEX idx_videos_created_at ON videos(created_at);
-      
-      COMMIT;
-    `);
-    await db.run('PRAGMA foreign_keys = ON');
+    } else {
+      console.log('Running allow_channel_deletion migration...');
+      await db.run('PRAGMA foreign_keys = OFF');
+      await db.exec(`
+        BEGIN TRANSACTION;
+        
+        -- 1. Create backup
+        CREATE TABLE videos_backup AS SELECT * FROM videos;
+        
+        -- 2. Drop old table
+        DROP TABLE videos;
+        
+        -- 3. Recreate table with new schema
+        CREATE TABLE videos (
+          id TEXT PRIMARY KEY,
+          youtube_id TEXT NOT NULL UNIQUE,
+          title TEXT NOT NULL,
+          description TEXT,
+          duration INTEGER,
+          thumbnail_url TEXT,
+          video_url TEXT NOT NULL,
+          upload_date TEXT,
+          published_date TEXT,
+          channel_id TEXT,
+          watched BOOLEAN NOT NULL DEFAULT 0,
+          favorite BOOLEAN NOT NULL DEFAULT 0,
+          priority TEXT CHECK(priority IN ('none', 'low', 'medium', 'high')) DEFAULT 'none',
+          custom_order INTEGER,
+          user_id TEXT,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE SET NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        
+        -- 4. Copy data back
+        INSERT INTO videos SELECT * FROM videos_backup;
+        
+        -- 5. Drop backup
+        DROP TABLE videos_backup;
+        
+        -- 6. Recreate indexes
+        CREATE INDEX idx_videos_channel_id ON videos(channel_id);
+        CREATE INDEX idx_videos_watched ON videos(watched);
+        CREATE INDEX idx_videos_favorite ON videos(favorite);
+        CREATE INDEX idx_videos_priority ON videos(priority);
+        CREATE INDEX idx_videos_created_at ON videos(created_at);
+        
+        COMMIT;
+      `);
+      await db.run('PRAGMA foreign_keys = ON');
 
-    await db.run(
-      'INSERT INTO migrations (name) VALUES (?)',
-      'allow_channel_deletion'
-    );
-    console.log('allow_channel_deletion migration completed.');
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'allow_channel_deletion'
+      );
+      console.log('allow_channel_deletion migration completed.');
+    }
   }
 
   // Check if add_view_count migration has been applied
@@ -214,17 +236,15 @@ export async function runMigrations(db: Database): Promise<void> {
     if (episodesTable) {
         console.log('Episodes table already exists, marking add_podcast_support as completed.');
         await db.run("INSERT OR IGNORE INTO migrations (name) VALUES ('add_podcast_support')");
-        return;
-    }
+    } else {
+        await db.run('PRAGMA foreign_keys = OFF');
+        try {
+            // Check column names in old channels table for dynamic mapping
+            const tableInfo = await db.all('PRAGMA table_info(channels)');
+            const urlColumn = tableInfo.find(c => c.name === 'url' || c.name === 'channel_url')?.name || 'url';
+            const thumbColumn = tableInfo.find(c => c.name === 'thumbnail_url' || c.name === 'thumbnailUrl')?.name || 'thumbnail_url';
 
-    await db.run('PRAGMA foreign_keys = OFF');
-    try {
-      // Check column names in old channels table for dynamic mapping
-      const tableInfo = await db.all('PRAGMA table_info(channels)');
-      const urlColumn = tableInfo.find(c => c.name === 'url' || c.name === 'channel_url')?.name || 'url';
-      const thumbColumn = tableInfo.find(c => c.name === 'thumbnail_url' || c.name === 'thumbnailUrl')?.name || 'thumbnail_url';
-
-      await db.exec(`
+            await db.exec(`
         BEGIN TRANSACTION;
         
         -- 1. Migrate Channels to a generic structure
@@ -334,19 +354,142 @@ export async function runMigrations(db: Database): Promise<void> {
         
         COMMIT;
       `);
-      await db.run('PRAGMA foreign_keys = ON');
-      console.log('add_podcast_support migration completed.');
+            await db.run('PRAGMA foreign_keys = ON');
+            console.log('add_podcast_support migration completed.');
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('already exists')) {
+                console.log('Some tables already existed, marking add_podcast_support as completed.');
+                await db.run("INSERT OR IGNORE INTO migrations (name) VALUES ('add_podcast_support')");
+                await db.run('PRAGMA foreign_keys = ON');
+            } else {
+                try { await db.run('ROLLBACK'); } catch (e) { }
+                await db.run('PRAGMA foreign_keys = ON');
+                console.error('Error running add_podcast_support migration:', error);
+                throw error;
+            }
+        }
+    }
+  }
+  // Check if add_user_management migration has been applied
+  const migration7 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_user_management'
+  );
+
+  if (!migration7) {
+    console.log('Running add_user_management migration...');
+    await db.run('PRAGMA foreign_keys = OFF');
+    try {
+      await db.exec(`
+        BEGIN TRANSACTION;
+
+        -- 1. Recreate users table with new columns
+        CREATE TABLE IF NOT EXISTS users_backup (
+          id TEXT PRIMARY KEY,
+          created_at INTEGER,
+          updated_at INTEGER
+        );
+        INSERT INTO users_backup SELECT * FROM users;
+        DROP TABLE users;
+        
+        CREATE TABLE users (
+          id TEXT PRIMARY KEY,
+          username TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          display_name TEXT,
+          emoji TEXT,
+          color TEXT,
+          is_admin BOOLEAN NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
+
+        -- 2. Create a temporary system user for existing data
+        -- This will be replaced/updated by the onboarding flow
+        INSERT INTO users (id, username, password, display_name, is_admin)
+        VALUES ('default-admin', 'admin', 'changeme', 'System Admin', 1);
+
+        -- 3. Update tags table
+        CREATE TABLE tags_new (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          color TEXT,
+          user_id TEXT NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE(name, user_id)
+        );
+        INSERT INTO tags_new (id, name, color, user_id, created_at)
+        SELECT id, name, color, COALESCE(user_id, 'default-admin'), created_at FROM tags;
+        DROP TABLE tags;
+        ALTER TABLE tags_new RENAME TO tags;
+
+        -- 4. Update episodes table
+        CREATE TABLE episodes_new (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL DEFAULT 'video',
+          external_id TEXT NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT,
+          duration INTEGER,
+          thumbnail_url TEXT,
+          url TEXT NOT NULL,
+          upload_date TEXT,
+          published_date TEXT,
+          view_count INTEGER,
+          channel_id TEXT,
+          watched BOOLEAN NOT NULL DEFAULT 0,
+          favorite BOOLEAN NOT NULL DEFAULT 0,
+          is_deleted BOOLEAN NOT NULL DEFAULT 0,
+          priority TEXT CHECK(priority IN ('none', 'low', 'medium', 'high')) DEFAULT 'none',
+          custom_order INTEGER,
+          user_id TEXT NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE SET NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE(external_id, user_id)
+        );
+        INSERT INTO episodes_new (
+          id, type, external_id, title, description, duration, thumbnail_url,
+          url, upload_date, published_date, view_count, channel_id,
+          watched, favorite, is_deleted, priority, custom_order, user_id,
+          created_at, updated_at
+        )
+        SELECT 
+          id, type, external_id, title, description, duration, thumbnail_url,
+          url, upload_date, published_date, view_count, channel_id,
+          watched, favorite, is_deleted, priority, custom_order, COALESCE(user_id, 'default-admin'),
+          created_at, updated_at
+        FROM episodes;
+        DROP TABLE episodes;
+        ALTER TABLE episodes_new RENAME TO episodes;
+
+        -- 5. Re-create indexes
+        CREATE INDEX IF NOT EXISTS idx_episodes_type ON episodes(type);
+        CREATE INDEX IF NOT EXISTS idx_episodes_channel_id ON episodes(channel_id);
+        CREATE INDEX IF NOT EXISTS idx_episodes_watched ON episodes(watched);
+        CREATE INDEX IF NOT EXISTS idx_episodes_is_deleted ON episodes(is_deleted);
+        CREATE INDEX IF NOT EXISTS idx_episodes_favorite ON episodes(favorite);
+        CREATE INDEX IF NOT EXISTS idx_episodes_priority ON episodes(priority);
+        CREATE INDEX IF NOT EXISTS idx_episodes_created_at ON episodes(created_at);
+        CREATE INDEX IF NOT EXISTS idx_tags_user_id ON tags(user_id);
+
+        -- 6. Clean up
+        DROP TABLE IF EXISTS users_backup;
+
+        -- 7. Record migration
+        INSERT INTO migrations (name) VALUES ('add_user_management');
+
+        COMMIT;
+      `);
+      console.log('add_user_management migration completed.');
     } catch (error) {
-      if (error instanceof Error && error.message.includes('already exists')) {
-          console.log('Some tables already existed, marking add_podcast_support as completed.');
-          await db.run("INSERT OR IGNORE INTO migrations (name) VALUES ('add_podcast_support')");
-          await db.run('PRAGMA foreign_keys = ON');
-          return;
-      }
       try { await db.run('ROLLBACK'); } catch (e) {}
-      await db.run('PRAGMA foreign_keys = ON');
-      console.error('Error running add_podcast_support migration:', error);
+      console.error('Error running add_user_management migration:', error);
       throw error;
+    } finally {
+      await db.run('PRAGMA foreign_keys = ON');
     }
   }
 }

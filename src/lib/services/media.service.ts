@@ -25,10 +25,11 @@ export class MediaService {
     /**
      * Add a media episode from a URL (YouTube or Podcast)
      * @param url Media URL
+     * @param userId User ID adding the episode
      * @param tagIds Optional array of tag IDs to associate with the episode
      * @returns Promise resolving to the created episode
      */
-    async addEpisodeFromUrl(url: string, tagIds?: string[]): Promise<MediaEpisode> {
+    async addEpisodeFromUrl(url: string, userId: string, tagIds?: string[]): Promise<MediaEpisode> {
         // Extract metadata
         const metadata = await this.metadataService.extractMetadata(url);
 
@@ -37,7 +38,7 @@ export class MediaService {
         }
 
         // Check if episode already exists
-        const existing = await this.episodeRepo.findByExternalId(metadata.episode.externalId);
+        const existing = await this.episodeRepo.findByExternalId(metadata.episode.externalId, userId);
         if (existing) {
             // If it already exists, we "add it back" by clearing the isDeleted flag
             // and marking it as unwatched, while also updating metadata
@@ -99,6 +100,7 @@ export class MediaService {
             publishedDate: metadata.episode.publishedDate,
             viewCount: metadata.episode.viewCount,
             channelId: channel.id,
+            userId: userId,
         });
 
         // Record 'added' event

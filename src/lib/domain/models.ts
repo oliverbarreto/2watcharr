@@ -12,6 +12,20 @@ export interface MediaEvent {
     createdAt: number;
 }
 
+export interface User {
+    id: string;
+    username: string;
+    password?: string;               // Optional in UI, required in DB
+    displayName: string | null;
+    emoji: string | null;
+    color: string | null;
+    isAdmin: boolean;
+    createdAt: number;
+    updatedAt: number;
+}
+
+export interface UserProfile extends Omit<User, 'password'> {}
+
 export interface MediaEpisode {
     id: string;
     type: MediaType;
@@ -31,7 +45,7 @@ export interface MediaEpisode {
     isDeleted: boolean;
     priority: Priority;
     customOrder: number | null;
-    userId: string | null;
+    userId: string;
     tags?: Tag[];
     createdAt: number;
     updatedAt: number;
@@ -57,7 +71,7 @@ export interface Tag {
     id: string;
     name: string;
     color: string | null;
-    userId: string | null;
+    userId: string;
     createdAt: number;
 }
 
@@ -81,7 +95,7 @@ export interface CreateEpisodeDto {
     publishedDate?: string;
     viewCount?: number;
     channelId: string;
-    userId?: string;
+    userId: string;
 }
 
 export interface UpdateEpisodeDto {
@@ -109,7 +123,7 @@ export interface CreateChannelDto {
 export interface CreateTagDto {
     name: string;
     color?: string;
-    userId?: string;
+    userId: string;
 }
 
 // Filter and sort options
@@ -122,6 +136,7 @@ export interface EpisodeFilters {
     favorite?: boolean;
     channelId?: string;
     isDeleted?: boolean;
+    userId?: string;
 }
 
 export type SortField = 'created_at' | 'priority' | 'favorite' | 'duration' | 'title' | 'custom' | 'date_added' | 'date_watched' | 'date_favorited' | 'date_removed';
@@ -136,4 +151,5 @@ export interface ChannelFilters {
     search?: string;
     tagIds?: string[];
     type?: MediaType;
+    userId?: string;
 }

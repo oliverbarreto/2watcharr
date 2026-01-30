@@ -13,6 +13,8 @@ services:
       - NODE_ENV=production
       - DATABASE_PATH=/app/data/2watcharr.db
       - LOG_LEVEL=info
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=q%a9jApvSE!gzqm7h8S8SsEc25*!k9HP # Change this to a secure random string
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]

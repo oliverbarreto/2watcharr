@@ -29,8 +29,16 @@ export async function getDatabase(): Promise<Database> {
         // Enable foreign keys
         await db.run('PRAGMA foreign_keys = ON');
 
-        // Run migrations
-        await runMigrations(db);
+        try {
+            // Run migrations
+            await runMigrations(db);
+        } catch (error) {
+            // If migrations fail, reset the db connection so we don't return a partially initialized DB
+            console.error('Failed to run database migrations:', error);
+            await db.close();
+            db = null;
+            throw error;
+        }
     }
 
     return db;

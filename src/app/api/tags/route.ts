@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
 import { TagRepository } from '@/lib/repositories';
 import { z } from 'zod';
@@ -14,14 +16,20 @@ const createTagSchema = z.object({
  */
 export async function POST(request: NextRequest) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = (session.user as any).id;
+
         const body = await request.json();
         const data = createTagSchema.parse(body);
 
         const db = await getDatabase();
         const tagRepo = new TagRepository(db);
 
-        // Check if tag already exists
-        const existing = await tagRepo.findByName(data.name);
+        // Check if tag already exists for THIS user
+        const existing = await tagRepo.findByName(data.name, userId);
         if (existing) {
             return NextResponse.json(
                 { error: 'Tag with this name already exists' },
@@ -29,7 +37,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const tag = await tagRepo.create(data);
+        const tag = await tagRepo.create({
+            ...data,
+            userId,
+        });
 
         return NextResponse.json(tag, { status: 201 });
     } catch (error) {
@@ -54,10 +65,16 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = (session.user as any).id;
+
         const db = await getDatabase();
         const tagRepo = new TagRepository(db);
 
-        const tags = await tagRepo.getTagsWithEpisodeCount();
+        const tags = await tagRepo.getTagsWithEpisodeCount(userId);
 
         return NextResponse.json({ tags });
     } catch (error) {

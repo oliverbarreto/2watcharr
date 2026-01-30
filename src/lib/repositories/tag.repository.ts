@@ -14,7 +14,7 @@ export class TagRepository {
 
         await this.db.run(
             `INSERT INTO tags (id, name, color, user_id, created_at) VALUES (?, ?, ?, ?, ?)`,
-            [id, dto.name, dto.color || null, dto.userId || null, now]
+            [id, dto.name, dto.color || null, dto.userId, now]
         );
 
         const tag = await this.findById(id);
@@ -35,16 +35,23 @@ export class TagRepository {
     /**
      * Find tag by name
      */
-    async findByName(name: string): Promise<Tag | null> {
-        const row = await this.db.get('SELECT * FROM tags WHERE name = ?', name);
+    async findByName(name: string, userId: string): Promise<Tag | null> {
+        const row = await this.db.get('SELECT * FROM tags WHERE name = ? AND user_id = ?', [name, userId]);
         return row ? this.mapRowToTag(row) : null;
     }
 
     /**
      * Find all tags
      */
-    async findAll(): Promise<Tag[]> {
-        const rows = await this.db.all('SELECT * FROM tags ORDER BY name ASC');
+    async findAll(userId?: string): Promise<Tag[]> {
+        let query = 'SELECT * FROM tags';
+        const params: any[] = [];
+        if (userId) {
+            query += ' WHERE user_id = ?';
+            params.push(userId);
+        }
+        query += ' ORDER BY name ASC';
+        const rows = await this.db.all(query, params);
         return rows.map((row) => this.mapRowToTag(row));
     }
 
@@ -94,14 +101,23 @@ export class TagRepository {
     /**
      * Get tags with episode count
      */
-    async getTagsWithEpisodeCount(): Promise<Array<Tag & { episodeCount: number }>> {
-        const rows = await this.db.all(`
+    async getTagsWithEpisodeCount(userId?: string): Promise<Array<Tag & { episodeCount: number }>> {
+        let query = `
             SELECT t.*, COUNT(et.episode_id) as episode_count
             FROM tags t
             LEFT JOIN episode_tags et ON t.id = et.tag_id
+        `;
+        const params: any[] = [];
+        if (userId) {
+            query += ' WHERE t.user_id = ?';
+            params.push(userId);
+        }
+        query += `
             GROUP BY t.id
             ORDER BY t.name ASC
-        `);
+        `;
+
+        const rows = await this.db.all(query, params);
 
         return rows.map((row: any) => ({
             ...this.mapRowToTag(row),

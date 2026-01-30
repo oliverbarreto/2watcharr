@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
 import { TagRepository } from '@/lib/repositories';
 
@@ -17,12 +19,24 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = (session.user as any).id;
+
         const { id } = await params;
         const body = await request.json();
         const data = updateTagSchema.parse(body);
 
         const db = await getDatabase();
         const tagRepo = new TagRepository(db);
+
+        // Check ownership
+        const existing = await tagRepo.findById(id);
+        if (!existing || existing.userId !== userId) {
+            return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
+        }
 
         const tag = await tagRepo.update(id, data);
 
@@ -50,9 +64,21 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = (session.user as any).id;
+
         const { id } = await params;
         const db = await getDatabase();
         const tagRepo = new TagRepository(db);
+
+        // Check ownership
+        const existing = await tagRepo.findById(id);
+        if (!existing || existing.userId !== userId) {
+            return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
+        }
 
         await tagRepo.delete(id);
 

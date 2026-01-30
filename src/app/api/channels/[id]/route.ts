@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
 import { ChannelRepository } from '@/lib/repositories';
 
@@ -10,6 +12,11 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user || !(session.user as any).isAdmin) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { id } = await params;
         if (!id) {
             return NextResponse.json({ error: 'Channel ID is required' }, { status: 400 });

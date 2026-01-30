@@ -103,6 +103,15 @@ export class ChannelRepository {
             LEFT JOIN episodes e ON c.id = e.channel_id AND e.is_deleted = 0
         `;
 
+        if (filters?.userId) {
+            query = `
+                SELECT c.*, COUNT(e.id) as episode_count
+                FROM channels c
+                INNER JOIN episodes e ON c.id = e.channel_id AND e.is_deleted = 0 AND e.user_id = ?
+            `;
+            params.push(filters.userId);
+        }
+
         if (filters?.search) {
             conditions.push('(c.name LIKE ? OR c.description LIKE ?)');
             const searchTerm = `%${filters.search}%`;
@@ -120,8 +129,10 @@ export class ChannelRepository {
                 SELECT 1 FROM episode_tags et 
                 JOIN episodes ep ON et.episode_id = ep.id
                 WHERE ep.channel_id = c.id AND et.tag_id IN (${placeholders})
+                ${filters?.userId ? 'AND ep.user_id = ?' : ''}
             )`);
             params.push(...filters.tagIds);
+            if (filters?.userId) params.push(filters.userId);
         }
 
         if (conditions.length > 0) {
@@ -145,15 +156,16 @@ export class ChannelRepository {
             const channelIds = channels.map((c) => c.id);
             const placeholders = channelIds.map(() => '?').join(',');
 
-            // Get all tags for these channels
+            // Get all tags for these channels, filtered by user if provided
             const tagRows = await this.db.all(`
                 SELECT DISTINCT e.channel_id, t.*
                 FROM tags t
                 JOIN episode_tags et ON t.id = et.tag_id
                 JOIN episodes e ON et.episode_id = e.id
                 WHERE e.channel_id IN (${placeholders}) AND e.is_deleted = 0
+                ${filters?.userId ? 'AND e.user_id = ? AND t.user_id = ?' : ''}
                 ORDER BY t.name ASC
-            `, channelIds);
+            `, [...channelIds, ...(filters?.userId ? [filters.userId, filters.userId] : [])]);
 
             // Group tags by channel_id
             const tagsByChannelId: Record<string, Tag[]> = {};

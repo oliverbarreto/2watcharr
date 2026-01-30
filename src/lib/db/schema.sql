@@ -1,9 +1,15 @@
 -- 2watcharr Database Schema
 -- SQLite database for managing media episodes (Videos and Podcasts)
 
--- Users table (for future multi-user support)
+-- Users table
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL,          -- Profile password
+  display_name TEXT,
+  emoji TEXT,                      -- Emoji for avatar
+  color TEXT,                      -- Hex color for avatar
+  is_admin BOOLEAN NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
@@ -23,18 +29,19 @@ CREATE TABLE IF NOT EXISTS channels (
 -- Tags table
 CREATE TABLE IF NOT EXISTS tags (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
   color TEXT,                       -- Hex color for UI
-  user_id TEXT,                     -- For future multi-user support
+  user_id TEXT NOT NULL,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(name, user_id)
 );
 
 -- Media episodes table (Videos and Podcast episodes)
 CREATE TABLE IF NOT EXISTS episodes (
   id TEXT PRIMARY KEY,              -- Auto-generated UUID
   type TEXT NOT NULL DEFAULT 'video', -- 'video' or 'podcast'
-  external_id TEXT NOT NULL UNIQUE, -- YouTube video ID or Podcast episode ID
+  external_id TEXT NOT NULL,        -- YouTube video ID or Podcast episode ID
   title TEXT NOT NULL,
   description TEXT,
   duration INTEGER,                 -- Duration in seconds
@@ -53,12 +60,13 @@ CREATE TABLE IF NOT EXISTS episodes (
   custom_order INTEGER,             -- For manual reordering
   
   -- Metadata
-  user_id TEXT,                     -- For future multi-user support
+  user_id TEXT NOT NULL,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   
   FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE SET NULL,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(external_id, user_id)
 );
 
 -- Episode-Tag relationship (many-to-many)

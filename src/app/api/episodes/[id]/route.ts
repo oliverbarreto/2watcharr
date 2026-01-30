@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
 import { MediaService } from '@/lib/services';
 import { z } from 'zod';
@@ -23,12 +25,18 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = (session.user as any).id;
+
         const db = await getDatabase();
         const mediaService = new MediaService(db);
 
         const episode = await mediaService.getEpisode(id);
 
-        if (!episode) {
+        if (!episode || episode.userId !== userId) {
             return NextResponse.json(
                 { error: 'Episode not found' },
                 { status: 404 }
@@ -60,11 +68,23 @@ export async function PATCH(
 ) {
     try {
         const { id } = await params;
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = (session.user as any).id;
+
         const body = await request.json();
         const data = updateEpisodeSchema.parse(body);
 
         const db = await getDatabase();
         const mediaService = new MediaService(db);
+
+        // Check ownership
+        const existing = await mediaService.getEpisode(id);
+        if (!existing || existing.userId !== userId) {
+             return NextResponse.json({ error: 'Episode not found' }, { status: 404 });
+        }
 
         // Extract tagIds separately
         const { tagIds, ...updates } = data;
@@ -111,8 +131,20 @@ export async function DELETE(
 ) {
     try {
         const { id } = await params;
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = (session.user as any).id;
+
         const db = await getDatabase();
         const mediaService = new MediaService(db);
+
+        // Check ownership
+        const existing = await mediaService.getEpisode(id);
+        if (!existing || existing.userId !== userId) {
+             return NextResponse.json({ error: 'Episode not found' }, { status: 404 });
+        }
 
         await mediaService.deleteEpisode(id);
 

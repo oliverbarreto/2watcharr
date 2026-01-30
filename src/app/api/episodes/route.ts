@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
 import { MediaService } from '@/lib/services';
 import { z } from 'zod';
@@ -16,13 +18,19 @@ const addEpisodeSchema = z.object({
  */
 export async function POST(request: NextRequest) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = (session.user as any).id;
+
         const body = await request.json();
         const { url, tagIds } = addEpisodeSchema.parse(body);
 
         const db = await getDatabase();
         const mediaService = new MediaService(db);
 
-        const episode = await mediaService.addEpisodeFromUrl(url, tagIds);
+        const episode = await mediaService.addEpisodeFromUrl(url, userId, tagIds);
 
         return NextResponse.json(episode, { status: 201 });
     } catch (error) {
@@ -64,6 +72,12 @@ export async function GET(request: NextRequest) {
         const channelId = searchParams.get('channelId') || undefined;
         const type = searchParams.get('type') as MediaType | undefined;
 
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = (session.user as any).id;
+
         const filters = {
             type,
             tagIds,
@@ -71,6 +85,7 @@ export async function GET(request: NextRequest) {
             watched: watchedParam ? watchedParam === 'true' : undefined,
             favorite: favoriteParam ? favoriteParam === 'true' : undefined,
             channelId,
+            userId,
         };
 
         // Parse sorting

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { UserManagement } from '@/components/features/users/user-management';
 
 interface Tag {
     id: string;
@@ -25,6 +27,9 @@ interface Tag {
 }
 
 export default function SettingsPage() {
+    const { data: session } = useSession();
+    const isAdmin = (session?.user as any)?.isAdmin;
+    
     const [tags, setTags] = useState<Tag[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [newTagName, setNewTagName] = useState('');
@@ -152,15 +157,14 @@ export default function SettingsPage() {
                 <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
                 <Tabs defaultValue="tags" className="w-full">
-                    {/* ... rest of the tabs ... */}
                     <TabsList className="mb-8">
                         <TabsTrigger value="tags">Tags Management</TabsTrigger>
                         <TabsTrigger value="general">General</TabsTrigger>
+                        {isAdmin && <TabsTrigger value="users">User Management</TabsTrigger>}
                     </TabsList>
 
                     <TabsContent value="tags">
                         <div className="grid gap-8">
-                            {/* Create Tag Card */}
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Create New Tag</CardTitle>
@@ -201,7 +205,6 @@ export default function SettingsPage() {
                                 </CardContent>
                             </Card>
 
-                            {/* Tags List Card */}
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Existing Tags</CardTitle>
@@ -329,6 +332,12 @@ export default function SettingsPage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
+
+                    {isAdmin && (
+                        <TabsContent value="users">
+                            <UserManagement />
+                        </TabsContent>
+                    )}
                 </Tabs>
             </div>
         </Layout>
