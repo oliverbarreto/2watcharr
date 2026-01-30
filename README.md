@@ -72,11 +72,11 @@ src/
 
 ## Documentation
 
-- [Setup Guide](docs/setup.md)
-- [API Documentation](docs/api.md)
-- [Development Guide](docs/development.md)
-- [Architecture Overview](docs/architecture.md)
-- [iOS Shortcut Setup](docs/ios-shortcut-setup.md)
+- [Setup Guide](docs/documentation/setup.md)
+- [API Documentation](docs/documentation/api.md)
+- [Development Guide](docs/documentation/development.md)
+- [Architecture Overview](docs/documentation/architecture.md)
+- [iOS Shortcut Setup](docs/documentation/ios-shortcut-setup.md)
 
 ## License
 

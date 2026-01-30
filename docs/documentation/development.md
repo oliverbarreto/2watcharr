@@ -34,8 +34,35 @@ Follow this workflow to add features (e.g., "Add Notes to Videos"):
 
 ## Testing
 
-- **Unit Tests**: Place alongside source files or in `__tests__`.
-- **Integration Tests**: Test API endpoints using Supertest or Next.js testing utils.
+We use **Vitest** for unit and integration testing.
+
+### Organization
+
+- **Unit Tests**: Located alongside the source files they test, with the `.test.ts` or `.test.tsx` extension.
+  - Example: `src/lib/services/video.service.test.ts` tests `src/lib/services/video.service.ts`.
+- **Infrastructure**: Shared testing utilities and database helpers are located in `src/lib/test/`.
+
+### Database Testing
+
+For database-related tests, we use an in-memory SQLite database to ensure tests are fast and isolated.
+The `createTestDb` helper in `src/lib/test/test-db.ts` initializes a fresh database with the project schema for each test.
+
+```typescript
+import { createTestDb } from '../test/test-db';
+
+beforeEach(async () => {
+    db = await createTestDb();
+    // ...
+});
+```
+
+### Running Tests
+
+Use the following commands to run tests:
+
+- `npm run test`: Runs all tests once.
+- `npm run test:watch`: Runs tests in watch mode, re-running on changes.
+- `npm run test:ui`: Opens the Vitest UI for a more interactive testing experience.
 
 ## Code Style
 
