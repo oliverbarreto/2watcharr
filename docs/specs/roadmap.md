@@ -5,6 +5,7 @@
 ### Core
 - [x] `./docs/specs/roadmap/completed/core-tests.md`                                20260128
 - [x] `./docs/specs/roadmap/completed/core-tracking-changelog-features-and-bugs.md` 20260128
+- [x] `.agent/workflows/test.md`                                                    20260130
 
 ### Features
 - [x] `./docs/specs/roadmap/completed/feature-video-management.md`                  20260127
