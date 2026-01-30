@@ -291,243 +291,288 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
             style={style}
             className={`group relative w-full border-b last:border-b-0 hover:bg-accent/30 transition-colors ${isDragging ? 'opacity-50 z-50' : ''} ${episode.watched ? 'opacity-60' : ''}`}
         >
-            <div className="flex items-center gap-3 p-2 cursor-default">
-                {/* Drag Handle */}
-                <div
-                    {...attributes}
-                    {...listeners}
-                    className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-                >
-                    <GripVertical className="h-5 w-5" />
-                </div>
-
-                {/* Clickable Area (Thumbnail + Metadata) */}
-                <div
-                    className="flex-1 min-w-0 flex items-center gap-3 cursor-pointer"
-                    onClick={handlePlay}
-                >
-                    {/* Thumbnail */}
-                    <div className="relative w-48 aspect-video flex-shrink-0 rounded-md overflow-hidden bg-muted">
-                        {episode.thumbnailUrl && (
-                            <img
-                                src={episode.thumbnailUrl}
-                                alt={episode.title}
-                                className="w-full h-full object-cover"
-                            />
-                        )}
-                        {episode.duration && (
-                            <Badge className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] px-1 py-0 h-4 border-none">
-                                {formatDuration(episode.duration)}
-                            </Badge>
-                        )}
-                        {episode.watched && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <Check className="h-8 w-8 text-white" />
-                            </div>
-                        )}
-                        {/* Media Type Icon */}
-                        <div className="absolute top-1 right-1">
-                            {episode.type === 'podcast' ? (
-                                <Mic className="h-3 w-3 text-white drop-shadow-md" />
-                            ) : (
-                                <Youtube className="h-3 w-3 text-white drop-shadow-md" />
-                            )}
-                        </div>
+            <div className="flex flex-col sm:flex-row w-full">
+                <div className="flex items-center gap-2 sm:gap-3 p-2 cursor-default flex-1 min-w-0">
+                    {/* Drag Handle */}
+                    <div
+                        {...attributes}
+                        {...listeners}
+                        className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                    >
+                        <GripVertical className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0 flex flex-col gap-1">
-                        <h3 className="font-semibold text-sm line-clamp-2 leading-tight hover:text-primary transition-colors" title={episode.title}>
-                            {episode.title}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                            <span
-                                className="font-medium hover:text-foreground truncate"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    window.location.href = `/channels?channelId=${episode.channelId}`;
-                                }}
-                            >
-                                {episode.channelName || 'Unknown Channel'}
-                            </span>
-                            <span>•</span>
-                            {episode.viewCount !== null && episode.type === 'video' && (
-                                <>
-                                    <span>{formatViews(episode.viewCount)}</span>
-                                    <span>•</span>
-                                </>
+                    {/* Clickable Area (Thumbnail + Metadata) */}
+                    <div
+                        className="flex-1 min-w-0 flex items-center gap-2 sm:gap-3 cursor-pointer"
+                        onClick={handlePlay}
+                    >
+                        {/* Thumbnail */}
+                        <div className="relative w-28 xs:w-32 sm:w-48 aspect-video flex-shrink-0 rounded-md overflow-hidden bg-muted">
+                            {episode.thumbnailUrl && (
+                                <img
+                                    src={episode.thumbnailUrl}
+                                    alt={episode.title}
+                                    className="w-full h-full object-cover"
+                                />
                             )}
-                            <span>{formatPublishedDate(episode.publishedDate)}</span>
-                            {formatEventDate() && (
-                                <>
-                                    <span>•</span>
-                                    <span className="text-primary/80 font-medium">{formatEventDate()}</span>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Tags Badges */}
-                        {episode.tags && episode.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                                {episode.tags.map((tag) => (
-                                    <Badge
-                                        key={tag.id}
-                                        variant="outline"
-                                        style={{
-                                            backgroundColor: `${tag.color}15`,
-                                            color: tag.color || 'inherit',
-                                            borderColor: `${tag.color}40`,
-                                        }}
-                                        className="text-[10px] px-1.5 py-0 h-4 font-medium"
-                                    >
-                                        {tag.name}
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Status Icons */}
-                        <div className="flex items-center gap-2 mt-0.5">
-                            {episode.favorite && (
-                                <Star className="h-3.5 w-3.5 fill-primary text-primary" />
-                            )}
-                            {episode.priority !== 'none' && (
-                                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-primary/30 text-primary">
-                                    {episode.priority}
+                            {episode.duration && (
+                                <Badge className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] px-1 py-0 h-4 border-none">
+                                    {formatDuration(episode.duration)}
                                 </Badge>
                             )}
+                            {episode.watched && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                    <Check className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+                                </div>
+                            )}
+                            {/* Media Type Icon */}
+                            <div className="absolute top-1 right-1">
+                                {episode.type === 'podcast' ? (
+                                    <Mic className="h-3 w-3 text-white drop-shadow-md" />
+                                ) : (
+                                    <Youtube className="h-3 w-3 text-white drop-shadow-md" />
+                                )}
+                            </div>
                         </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0 flex flex-col gap-0.5 sm:gap-1">
+                            <h3 className="font-semibold text-xs sm:text-sm line-clamp-2 leading-tight hover:text-primary transition-colors" title={episode.title}>
+                                {episode.title}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-x-1 sm:gap-x-2 gap-y-0.5 text-[10px] sm:text-xs text-muted-foreground">
+                                <span
+                                    className="font-medium hover:text-foreground truncate"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.location.href = `/channels?channelId=${episode.channelId}`;
+                                    }}
+                                >
+                                    {episode.channelName || 'Unknown Channel'}
+                                </span>
+                                <span>•</span>
+                                {episode.viewCount !== null && episode.type === 'video' && (
+                                    <>
+                                        <span>{formatViews(episode.viewCount)}</span>
+                                        <span>•</span>
+                                    </>
+                                )}
+                                <span>{formatPublishedDate(episode.publishedDate)}</span>
+                                {formatEventDate() && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="text-primary/80 font-medium">{formatEventDate()}</span>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Tags Badges (Only on desktop, mobile has them in the info row or we can keep them here) */}
+                            {episode.tags && episode.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-0.5 sm:mt-1">
+                                    {episode.tags.map((tag) => (
+                                        <Badge
+                                            key={tag.id}
+                                            variant="outline"
+                                            style={{
+                                                backgroundColor: `${tag.color}15`,
+                                                color: tag.color || 'inherit',
+                                                borderColor: `${tag.color}40`,
+                                            }}
+                                            className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-3.5 sm:h-4 font-medium"
+                                        >
+                                            {tag.name}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Status Icons */}
+                            <div className="flex items-center gap-2 mt-0.5">
+                                {episode.favorite && (
+                                    <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-primary text-primary" />
+                                )}
+                                {episode.priority !== 'none' && (
+                                    <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 py-0 h-3.5 sm:h-4 border-primary/30 text-primary">
+                                        {episode.priority}
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Actions (Outside the clickable play area) */}
+                    <div className="flex items-center gap-1 pr-1">
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 hidden sm:group-hover:flex"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleWatched(e);
+                            }}
+                            title={episode.watched ? "Mark as unwatched" : "Mark as watched"}
+                        >
+                            <Check className={`h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
+                        </Button>
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 hidden sm:group-hover:flex"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleFavorite(e);
+                            }}
+                            title={episode.favorite ? "Remove from favorites" : "Add to favorites"}
+                        >
+                            <Star className={`h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
+                        </Button>
+
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 hidden sm:group-hover:flex"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsTagPopoverOpen(true);
+                                fetchTags();
+                            }}
+                            title="Manage Tags"
+                        >
+                            <TagIcon className="h-4 w-4" />
+                        </Button>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem onSelect={(e) => {
+                                    e.preventDefault();
+                                    handleReorder('beginning');
+                                }}>
+                                    <ArrowUp className="mr-2 h-4 w-4" />
+                                    Move to beginning
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={(e) => {
+                                    e.preventDefault();
+                                    handleReorder('end');
+                                }}>
+                                    <ArrowDown className="mr-2 h-4 w-4" />
+                                    Move to end
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={(e) => {
+                                    e.preventDefault();
+                                    handleDelete();
+                                }} className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Remove from list
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 
-                {/* Actions (Outside the clickable play area) */}
-                <div className="flex items-center gap-1">
+                {/* Mobile Specific Actions Row */}
+                <div className="flex sm:hidden items-center border-t border-border/40 bg-accent/5 px-4 py-1 gap-1">
                     <Button
-                        size="icon"
                         variant="ghost"
-                        className="h-8 w-8 hidden group-hover:flex"
+                        size="sm"
+                        className="flex-1 h-8 text-[10px] gap-2 font-medium"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleToggleWatched(e);
                         }}
-                        title={episode.watched ? "Mark as unwatched" : "Mark as watched"}
                     >
-                        <Check className={`h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
+                        <Check className={`h-3.5 w-3.5 ${episode.watched ? 'text-primary' : ''}`} />
+                        {episode.watched ? 'Watched' : 'Mark Watched'}
                     </Button>
+                    <div className="w-px h-4 bg-border/40" />
                     <Button
-                        size="icon"
                         variant="ghost"
-                        className="h-8 w-8 hidden group-hover:flex"
+                        size="sm"
+                        className="flex-1 h-8 text-[10px] gap-2 font-medium"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleToggleFavorite(e);
                         }}
-                        title={episode.favorite ? "Remove from favorites" : "Add to favorites"}
                     >
-                        <Star className={`h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
+                        <Star className={`h-3.5 w-3.5 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
+                        {episode.favorite ? 'Favorited' : 'Favorite'}
                     </Button>
-
+                    <div className="w-px h-4 bg-border/40" />
                     <Button
-                        size="icon"
                         variant="ghost"
-                        className="h-8 w-8 hidden group-hover:flex"
+                        size="sm"
+                        className="flex-1 h-8 text-[10px] gap-2 font-medium"
                         onClick={(e) => {
                             e.stopPropagation();
                             setIsTagPopoverOpen(true);
                             fetchTags();
                         }}
-                        title="Manage Tags"
                     >
-                        <TagIcon className="h-4 w-4" />
+                        <TagIcon className="h-3.5 w-3.5" />
+                        Tags
                     </Button>
-
-                    <CommandDialog 
-                        open={isTagPopoverOpen} 
-                        onOpenChange={setIsTagPopoverOpen}
-                        title="Manage Tags"
-                        description="Search or create tags for this episode"
-                    >
-                        <CommandInput
-                            placeholder="Search or create tag..."
-                            value={searchQuery}
-                            onValueChange={setSearchQuery}
-                        />
-                        <CommandList>
-                            <CommandEmpty>
-                                {searchQuery.trim() && (
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full justify-start text-xs h-8"
-                                        onClick={() => handleCreateTag(searchQuery)}
-                                        disabled={isUpdatingTags}
-                                    >
-                                        <Plus className="h-3 w-3 mr-2" />
-                                        Create "{searchQuery}"
-                                    </Button>
-                                )}
-                                {!searchQuery.trim() && "No tags found."}
-                            </CommandEmpty>
-                            <CommandGroup heading="Recent Tags">
-                                {availableTags.map((tag) => {
-                                    const isSelected = episode.tags?.some(t => t.id === tag.id);
-                                    return (
-                                        <CommandItem
-                                            key={tag.id}
-                                            onSelect={() => handleToggleTag(tag.id)}
-                                            className="flex items-center justify-between"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <div
-                                                    className="w-2 h-2 rounded-full"
-                                                    style={{ backgroundColor: tag.color || '#94a3b8' }}
-                                                />
-                                                <span>{tag.name}</span>
-                                            </div>
-                                            {isSelected && <Check className="h-3 w-3" />}
-                                        </CommandItem>
-                                    );
-                                })}
-                            </CommandGroup>
-                        </CommandList>
-                    </CommandDialog>
-
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <MoreVertical className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuItem onSelect={(e) => {
-                                e.preventDefault();
-                                handleReorder('beginning');
-                            }}>
-                                <ArrowUp className="mr-2 h-4 w-4" />
-                                Move to beginning
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={(e) => {
-                                e.preventDefault();
-                                handleReorder('end');
-                            }}>
-                                <ArrowDown className="mr-2 h-4 w-4" />
-                                Move to end
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={(e) => {
-                                e.preventDefault();
-                                handleDelete();
-                            }} className="text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Remove from list
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
             </div>
+
+            <CommandDialog 
+                open={isTagPopoverOpen} 
+                onOpenChange={setIsTagPopoverOpen}
+                title="Manage Tags"
+                description="Search or create tags for this episode"
+            >
+                <CommandInput
+                    placeholder="Search or create tag..."
+                    value={searchQuery}
+                    onValueChange={setSearchQuery}
+                />
+                <CommandList>
+                    <CommandEmpty>
+                        {searchQuery.trim() && (
+                            <Button
+                                variant="ghost"
+                                className="w-full justify-start text-xs h-8"
+                                onClick={() => handleCreateTag(searchQuery)}
+                                disabled={isUpdatingTags}
+                            >
+                                <Plus className="h-3 w-3 mr-2" />
+                                Create "{searchQuery}"
+                            </Button>
+                        )}
+                        {!searchQuery.trim() && "No tags found."}
+                    </CommandEmpty>
+                    <CommandGroup heading="Recent Tags">
+                        {availableTags.map((tag) => {
+                            const isSelected = episode.tags?.some(t => t.id === tag.id);
+                            return (
+                                <CommandItem
+                                    key={tag.id}
+                                    onSelect={() => handleToggleTag(tag.id)}
+                                    className="flex items-center justify-between"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div
+                                            className="w-2 h-2 rounded-full"
+                                            style={{ backgroundColor: tag.color || '#94a3b8' }}
+                                        />
+                                        <span>{tag.name}</span>
+                                    </div>
+                                    {isSelected && <Check className="h-3 w-3" />}
+                                </CommandItem>
+                            );
+                        })}
+                    </CommandGroup>
+                </CommandList>
+            </CommandDialog>
         </div>
     );
 }

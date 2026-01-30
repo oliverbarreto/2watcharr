@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { Plus, Settings, LogOut, User, BarChart3 } from 'lucide-react';
+import { Plus, Settings, LogOut, User, BarChart3, Menu, Radio, Library } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
 import { AddEpisodeDialog } from '@/components/features/episodes/add-episode-dialog';
 import { useSession, signOut } from 'next-auth/react';
+import { cn } from '@/lib/utils';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,6 +13,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 
 export function Navbar() {
     const { data: session } = useSession();
@@ -25,15 +33,65 @@ export function Navbar() {
         signOut({ callbackUrl: '/login' });
     };
 
-    return (
-        <nav className="border-b bg-background">
-            <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-                    <img src="/icon.png" alt="2watcharr logo" className="h-8 w-8 rounded-lg" />
-                    <span>2watcharr</span>
-                </Link>
+    const NavLinks = ({ className, onClick }: { className?: string, onClick?: () => void }) => (
+        <>
+            <Link href="/" onClick={onClick}>
+                <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
+                    <Library className="mr-2 h-4 w-4 sm:hidden" />
+                    Watch List
+                </Button>
+            </Link>
+            <Link href="/channels" onClick={onClick}>
+                <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
+                    <Radio className="mr-2 h-4 w-4 sm:hidden" />
+                    Channels
+                </Button>
+            </Link>
+            <Link href="/stats" onClick={onClick}>
+                <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
+                    <BarChart3 className="mr-2 h-4 w-4 sm:hidden" />
+                    Stats
+                </Button>
+            </Link>
+        </>
+    );
 
-                <div className="flex items-center gap-3">
+    return (
+        <nav className="border-b bg-background sticky top-0 z-40">
+            <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon" className="sm:hidden -ml-2">
+                                <Menu className="h-6 w-6" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="w-[280px] sm:w-[350px]">
+                            <SheetHeader>
+                                <SheetTitle className="flex items-center gap-2 font-bold text-xl pt-4">
+                                    <img src="/icon.png" alt="2watcharr logo" className="h-8 w-8 rounded-lg" />
+                                    <span>2watcharr</span>
+                                </SheetTitle>
+                            </SheetHeader>
+                            <div className="flex flex-col gap-2 mt-8">
+                                <NavLinks className="text-lg py-6" onClick={() => {}} />
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+
+                    <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+                        <img src="/icon.png" alt="2watcharr logo" className="h-8 w-8 rounded-lg" />
+                        <span className="hidden xs:inline-block">2watcharr</span>
+                    </Link>
+                </div>
+
+                <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="hidden sm:flex items-center gap-1">
+                        <NavLinks />
+                    </div>
+
+                    <div className="h-8 w-px bg-border mx-1 hidden sm:block" />
+
                     <AddEpisodeDialog
                         onEpisodeAdded={handleEpisodeAdded}
                         trigger={
@@ -45,18 +103,9 @@ export function Navbar() {
                             </Button>
                         }
                     />
-                    <Link href="/">
-                        <Button variant="ghost" className="hidden sm:inline-flex">Watch List</Button>
-                    </Link>
-                    <Link href="/channels">
-                        <Button variant="ghost" className="hidden sm:inline-flex">Channels</Button>
-                    </Link>
-                    <Link href="/stats">
-                        <Button variant="ghost" className="hidden sm:inline-flex">Stats</Button>
-                    </Link>
                     
                     <Link href="/settings">
-                        <Button variant="ghost" size="icon" className="rounded-full">
+                        <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
                             <Settings className="h-5 w-5" />
                         </Button>
                     </Link>
