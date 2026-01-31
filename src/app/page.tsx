@@ -7,28 +7,37 @@ import { FilterBar, EpisodeList } from '@/components/features/episodes';
 import { Button } from '@/components/ui/button';
 import { X, List, LayoutGrid } from 'lucide-react';
 
+interface Filters {
+  search?: string;
+  watched?: boolean;
+  watchStatus?: 'unwatched' | 'pending' | 'watched';
+  tagIds?: string[];
+  channelId?: string;
+}
+
+interface Sort {
+  field: string;
+  order: 'asc' | 'desc';
+}
+
 function HomePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const channelId = searchParams.get('channelId');
-
-  const [filters, setFilters] = useState<any>({
-    channelId: channelId || undefined
-  });
-  const [sort, setSort] = useState<any>({ field: 'custom', order: 'asc' });
+  
+  // Initialize state directly from searchParams and localStorage to avoid setState in effect
+  const [filters, setFilters] = useState<Filters>(() => ({
+    channelId: searchParams.get('channelId') || undefined
+  }));
+  const [sort, setSort] = useState<Sort>({ field: 'custom', order: 'asc' });
   const [refreshKey, setRefreshKey] = useState(0);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-
-  useEffect(() => {
-    const savedViewMode = localStorage.getItem('episodeViewMode') as 'grid' | 'list';
-    const defaultView = localStorage.getItem('defaultView') as 'grid' | 'list';
-
-    if (savedViewMode) {
-      setViewMode(savedViewMode);
-    } else if (defaultView) {
-      setViewMode(defaultView);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedViewMode = localStorage.getItem('episodeViewMode') as 'grid' | 'list';
+      const defaultView = localStorage.getItem('defaultView') as 'grid' | 'list';
+      return savedViewMode || defaultView || 'list';
     }
-  }, []);
+    return 'list';
+  });
 
   const toggleViewMode = () => {
     const newMode = viewMode === 'grid' ? 'list' : 'grid';
@@ -36,13 +45,11 @@ function HomePageContent() {
     localStorage.setItem('episodeViewMode', newMode);
   };
 
-  useEffect(() => {
-    const channelId = searchParams.get('channelId');
-    setFilters((prev: any) => ({
-      ...prev,
-      channelId: channelId || undefined
-    }));
-  }, [searchParams]);
+  // Sync channelId from searchParams to filters state if it changes in the URL
+  const channelIdFromUrl = searchParams.get('channelId') || undefined;
+  if (filters.channelId !== channelIdFromUrl) {
+    setFilters(prev => ({ ...prev, channelId: channelIdFromUrl }));
+  }
 
   useEffect(() => {
     const handleAdded = () => setRefreshKey((prev) => prev + 1);

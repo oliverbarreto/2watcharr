@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
 import { MediaService } from '@/lib/services';
 import { z } from 'zod';
-import { MediaType } from '@/lib/domain/models';
+import { MediaType, SortField } from '@/lib/domain/models';
 
 // Request validation schema
 const addEpisodeSchema = z.object({
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const body = await request.json();
         const { url, tagIds } = addEpisodeSchema.parse(body);
@@ -70,14 +70,14 @@ export async function GET(request: NextRequest) {
         const watchedParam = searchParams.get('watched');
         const favoriteParam = searchParams.get('favorite');
         const channelId = searchParams.get('channelId') || undefined;
-        const watchStatus = searchParams.get('watchStatus') as any || undefined;
+        const watchStatus = searchParams.get('watchStatus') as 'unwatched' | 'pending' | 'watched' | undefined || undefined;
         const type = searchParams.get('type') as MediaType | undefined;
 
         const session = await getServerSession(authOptions);
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const filters = {
             type,
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
         const sortOrder = searchParams.get('order') || 'desc';
 
         const sort = {
-            field: sortField as any,
+            field: sortField as SortField,
             order: sortOrder as 'asc' | 'desc',
         };
 

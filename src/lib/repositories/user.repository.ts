@@ -63,7 +63,7 @@ export class UserRepository {
      */
     async update(id: string, updates: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>): Promise<User> {
         const fields: string[] = [];
-        const params: any[] = [];
+        const params: (string | number | null)[] = [];
         const now = Math.floor(Date.now() / 1000);
 
         Object.entries(updates).forEach(([key, value]) => {
@@ -110,30 +110,30 @@ export class UserRepository {
         return row.count;
     }
 
-    private mapRowToUser(row: any): User {
+    private mapRowToUser(row: Record<string, unknown>): User {
         return {
-            id: row.id,
-            username: row.username,
-            password: row.password,
-            displayName: row.display_name,
-            emoji: row.emoji,
-            color: row.color,
+            id: row.id as string,
+            username: row.username as string,
+            password: row.password as string,
+            displayName: row.display_name as string | null,
+            emoji: row.emoji as string | null,
+            color: row.color as string | null,
             isAdmin: Boolean(row.is_admin),
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
+            createdAt: row.created_at as number,
+            updatedAt: row.updated_at as number,
         };
     }
 
-    private mapRowToUserProfile(row: any): UserProfile {
+    private mapRowToUserProfile(row: Record<string, unknown>): UserProfile {
         return {
-            id: row.id,
-            username: row.username,
-            displayName: row.display_name,
-            emoji: row.emoji,
-            color: row.color,
+            id: row.id as string,
+            username: row.username as string,
+            displayName: row.display_name as string | null,
+            emoji: row.emoji as string | null,
+            color: row.color as string | null,
             isAdmin: Boolean(row.is_admin),
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
+            createdAt: row.created_at as number,
+            updatedAt: row.updated_at as number,
         };
     }
 }

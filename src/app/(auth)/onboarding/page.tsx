@@ -44,7 +44,7 @@ export default function OnboardingPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold tracking-tight">Welcome to 2watcharr</CardTitle>
           <CardDescription className="text-zinc-400">
-            Let's set up your admin account. You can rename "admin" and choose a password.
+            Let&apos;s set up your admin account. You can rename &quot;admin&quot; and choose a password.
           </CardDescription>
         </CardHeader>
         <CardContent>

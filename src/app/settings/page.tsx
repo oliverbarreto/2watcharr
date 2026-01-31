@@ -28,7 +28,7 @@ interface Tag {
 
 export default function SettingsPage() {
     const { data: session } = useSession();
-    const isAdmin = (session?.user as any)?.isAdmin;
+    const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin;
     
     const [tags, setTags] = useState<Tag[]>([]);
     const [isLoading, setIsLoading] = useState(true);

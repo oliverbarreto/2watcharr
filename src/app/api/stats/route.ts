@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const { searchParams } = new URL(request.url);
         const period = searchParams.get('period') as 'day' | 'week' | 'month' | 'year' || 'month';

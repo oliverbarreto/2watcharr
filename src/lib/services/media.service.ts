@@ -7,6 +7,7 @@ import {
     EpisodeFilters,
     SortOptions,
     Priority,
+    MediaEventType,
 } from '../domain/models';
 
 export class MediaService {
@@ -138,7 +139,7 @@ export class MediaService {
         const episode = await this.episodeRepo.update(id, updates);
         
         if (updates.watchStatus !== undefined) {
-             await this.episodeRepo.addEvent(id, updates.watchStatus as any);
+             await this.episodeRepo.addEvent(id, updates.watchStatus as MediaEventType);
         } else if (updates.watched !== undefined) {
              await this.episodeRepo.addEvent(id, updates.watched ? 'watched' : 'unwatched');
         }

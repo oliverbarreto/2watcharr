@@ -13,7 +13,7 @@ export async function DELETE(
 ) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user || !(session.user as any).isAdmin) {
+        if (!session?.user || !(session.user as { isAdmin?: boolean }).isAdmin) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

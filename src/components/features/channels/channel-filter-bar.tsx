@@ -14,8 +14,16 @@ import {
 import { Tag } from '@/lib/domain/models';
 
 interface ChannelFilterBarProps {
-    onFilterChange?: (filters: any) => void;
-    initialFilters?: any;
+    onFilterChange?: (filters: {
+        search?: string;
+        type?: 'video' | 'podcast';
+        tagIds?: string[];
+    }) => void;
+    initialFilters?: {
+        search?: string;
+        type?: 'all' | 'video' | 'podcast';
+        tagIds?: string[];
+    };
 }
 
 export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilterBarProps) {

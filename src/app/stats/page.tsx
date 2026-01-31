@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout';
 import { 
     Video, 
@@ -66,11 +66,7 @@ export default function StatsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
 
-    useEffect(() => {
-        fetchStats();
-    }, [period]);
-
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         setIsLoading(true);
         try {
             const response = await fetch(`/api/stats?period=${period}`);
@@ -83,7 +79,11 @@ export default function StatsPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [period]);
+
+    useEffect(() => {
+        fetchStats();
+    }, [fetchStats]);
 
     const formatDuration = (seconds: number) => {
         const hours = Math.floor(seconds / 3600);
@@ -156,7 +156,7 @@ export default function StatsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
+                        <Select value={period} onValueChange={(v: 'day' | 'week' | 'month' | 'year') => setPeriod(v)}>
                             <SelectTrigger className="w-[140px]">
                                 <SelectValue placeholder="Period" />
                             </SelectTrigger>
@@ -377,7 +377,16 @@ export default function StatsPage() {
     );
 }
 
-function StatCard({ title, value, icon, description, color, bg }: any) {
+interface StatCardProps {
+    title: string;
+    value: number;
+    icon: React.ReactNode;
+    description: string;
+    color: string;
+    bg: string;
+}
+
+function StatCard({ title, value, icon, description, color, bg }: StatCardProps) {
     return (
         <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all hover:translate-y-[-4px] bg-card/50 backdrop-blur-sm group">
             <CardContent className="p-6">
@@ -398,7 +407,15 @@ function StatCard({ title, value, icon, description, color, bg }: any) {
     );
 }
 
-function UsageItem({ label, value, icon, color, bg }: any) {
+interface UsageItemProps {
+    label: string;
+    value: number;
+    icon: React.ReactNode;
+    color: string;
+    bg: string;
+}
+
+function UsageItem({ label, value, icon, color, bg }: UsageItemProps) {
     return (
         <div className="flex items-center justify-between group cursor-default p-1 rounded-xl hover:bg-white/5 transition-colors">
             <div className="flex items-center gap-4">

@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         if (!session?.user) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const body = await request.json();
         const { url, tag } = addEpisodeSchema.parse(body);

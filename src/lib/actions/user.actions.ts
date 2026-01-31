@@ -3,6 +3,7 @@
 import { getDatabase } from "@/lib/db/database";
 import { UserService } from "@/lib/services/user.service";
 import { revalidatePath } from "next/cache";
+import { User } from "@/lib/domain/models";
 
 /**
  * Check if onboarding is required
@@ -114,7 +115,7 @@ export async function updateProfile(id: string, data: {
     const userService = new UserService(db);
     
     // Create updates object, only including provided fields
-    const updates: any = {};
+    const updates: Partial<User> = {};
     if (data.username !== undefined) updates.username = data.username;
     if (data.displayName !== undefined) updates.displayName = data.displayName;
     if (data.emoji !== undefined) updates.emoji = data.emoji;

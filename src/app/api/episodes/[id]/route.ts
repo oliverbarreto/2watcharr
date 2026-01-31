@@ -30,7 +30,7 @@ export async function GET(
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const db = await getDatabase();
         const mediaService = new MediaService(db);
@@ -73,7 +73,7 @@ export async function PATCH(
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const body = await request.json();
         const data = updateEpisodeSchema.parse(body);
@@ -136,7 +136,7 @@ export async function DELETE(
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const db = await getDatabase();
         const mediaService = new MediaService(db);

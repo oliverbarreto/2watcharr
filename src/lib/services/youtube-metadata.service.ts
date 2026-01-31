@@ -68,8 +68,10 @@ export class YouTubeMetadataService {
             let thumbnailUrl = '';
             if (rawData.thumbnails && rawData.thumbnails.length > 0) {
                 // Try to find a high quality thumbnail (avatar)
-                const avatar = rawData.thumbnails.find((t: any) => t.id === 'avatar_uncropped') ||
-                    rawData.thumbnails.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))[0];
+                interface Thumbnail { id?: string; width?: number; url: string; }
+                const thumbnails = rawData.thumbnails as Thumbnail[];
+                const avatar = thumbnails.find((t) => t.id === 'avatar_uncropped') ||
+                    [...thumbnails].sort((a, b) => (b.width || 0) - (a.width || 0))[0];
                 thumbnailUrl = avatar?.url || '';
             }
 

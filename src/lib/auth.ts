@@ -41,17 +41,19 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.isAdmin = (user as any).isAdmin;
-        token.emoji = (user as any).image;
+        const customUser = user as { id: string; isAdmin?: boolean; image?: string | null };
+        token.id = customUser.id;
+        token.isAdmin = customUser.isAdmin;
+        token.emoji = customUser.image;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).isAdmin = token.isAdmin;
-        (session.user as any).emoji = token.emoji;
+        const user = session.user as { id: string; isAdmin?: unknown; emoji?: unknown; name?: string | null; email?: string | null; image?: string | null };
+        user.id = token.id as string;
+        user.isAdmin = token.isAdmin;
+        user.emoji = token.emoji;
       }
       return session;
     },

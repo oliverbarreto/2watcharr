@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Plus, Settings, LogOut, User, BarChart3, Menu, Radio, Library } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
@@ -21,9 +22,37 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 
+interface NavLinksProps {
+    className?: string;
+    onClick?: () => void;
+}
+
+const NavLinks = ({ className, onClick }: NavLinksProps) => (
+    <>
+        <Link href="/" onClick={onClick}>
+            <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
+                <Library className="mr-2 h-4 w-4 sm:hidden" />
+                Watch List
+            </Button>
+        </Link>
+        <Link href="/channels" onClick={onClick}>
+            <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
+                <Radio className="mr-2 h-4 w-4 sm:hidden" />
+                Channels
+            </Button>
+        </Link>
+        <Link href="/stats" onClick={onClick}>
+            <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
+                <BarChart3 className="mr-2 h-4 w-4 sm:hidden" />
+                Stats
+            </Button>
+        </Link>
+    </>
+);
+
 export function Navbar() {
     const { data: session } = useSession();
-    const user = session?.user as any;
+    const user = session?.user as { id?: string; name?: string | null; email?: string | null; image?: string | null; emoji?: string | null; isAdmin?: boolean; color?: string | null } | undefined;
 
     const handleEpisodeAdded = () => {
         window.dispatchEvent(new CustomEvent('episode-added'));
@@ -32,29 +61,6 @@ export function Navbar() {
     const handleSignOut = () => {
         signOut({ callbackUrl: '/login' });
     };
-
-    const NavLinks = ({ className, onClick }: { className?: string, onClick?: () => void }) => (
-        <>
-            <Link href="/" onClick={onClick}>
-                <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
-                    <Library className="mr-2 h-4 w-4 sm:hidden" />
-                    Watch List
-                </Button>
-            </Link>
-            <Link href="/channels" onClick={onClick}>
-                <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
-                    <Radio className="mr-2 h-4 w-4 sm:hidden" />
-                    Channels
-                </Button>
-            </Link>
-            <Link href="/stats" onClick={onClick}>
-                <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
-                    <BarChart3 className="mr-2 h-4 w-4 sm:hidden" />
-                    Stats
-                </Button>
-            </Link>
-        </>
-    );
 
     return (
         <nav className="border-b bg-background sticky top-0 z-40">
@@ -69,7 +75,7 @@ export function Navbar() {
                         <SheetContent side="left" className="w-[280px] sm:w-[350px]">
                             <SheetHeader>
                                 <SheetTitle className="flex items-center gap-2 font-bold text-xl pt-4">
-                                    <img src="/icon.png" alt="2watcharr logo" className="h-8 w-8 rounded-lg" />
+                                    <Image src="/icon.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
                                     <span>2watcharr</span>
                                 </SheetTitle>
                             </SheetHeader>
@@ -80,7 +86,7 @@ export function Navbar() {
                     </Sheet>
 
                     <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-                        <img src="/icon.png" alt="2watcharr logo" className="h-8 w-8 rounded-lg" />
+                        <Image src="/icon.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
                         <span className="hidden xs:inline-block">2watcharr</span>
                     </Link>
                 </div>

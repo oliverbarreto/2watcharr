@@ -1,5 +1,5 @@
 import Parser from 'rss-parser';
-import { CreateEpisodeDto, CreateChannelDto, MediaType } from '../domain/models';
+import { CreateEpisodeDto, CreateChannelDto } from '../domain/models';
 
 export interface PodcastMetadata {
     episode: Partial<CreateEpisodeDto>;

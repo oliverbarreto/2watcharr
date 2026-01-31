@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MediaEpisode } from '@/lib/domain/models';
 import { EpisodeCard } from './episode-card';
 import { EpisodeListRow } from './episode-list-row';
@@ -50,7 +50,7 @@ export function EpisodeList({ filters, sort, viewMode }: EpisodeListProps) {
         })
     );
 
-    const fetchEpisodes = async () => {
+    const fetchEpisodes = useCallback(async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
@@ -76,11 +76,11 @@ export function EpisodeList({ filters, sort, viewMode }: EpisodeListProps) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filters, sort]);
 
     useEffect(() => {
         fetchEpisodes();
-    }, [filters, sort]);
+    }, [fetchEpisodes]);
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;

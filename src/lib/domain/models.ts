@@ -25,7 +25,7 @@ export interface User {
     updatedAt: number;
 }
 
-export interface UserProfile extends Omit<User, 'password'> {}
+export type UserProfile = Omit<User, 'password'>;
 
 export interface MediaEpisode {
     id: string;

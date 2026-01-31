@@ -22,9 +22,19 @@ import { Tag } from '@/lib/domain/models';
 import { useEffect } from 'react';
 
 interface FilterBarProps {
-    onFilterChange?: (filters: any) => void;
-    onSortChange?: (sort: any) => void;
-    initialFilters?: any;
+    onFilterChange?: (filters: {
+        search?: string;
+        watched?: boolean;
+        watchStatus?: 'unwatched' | 'pending' | 'watched';
+        tagIds?: string[];
+    }) => void;
+    onSortChange?: (sort: { field: string; order: 'asc' | 'desc' }) => void;
+    initialFilters?: {
+        search?: string;
+        watched?: boolean;
+        watchStatus?: 'unwatched' | 'pending' | 'watched';
+        tagIds?: string[];
+    };
     initialSort?: {
         field: string;
         order: 'asc' | 'desc';
@@ -66,7 +76,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         onFilterChange?.({
             search: currentSearch || undefined,
             watched: currentWatchedFilter === 'watched' ? true : (currentWatchedFilter === 'all' ? undefined : false),
-            watchStatus: currentWatchedFilter === 'all' ? undefined : (currentWatchedFilter === 'watched' ? 'watched' : currentWatchedFilter),
+            watchStatus: (currentWatchedFilter === 'all' ? undefined : (currentWatchedFilter === 'watched' ? 'watched' : currentWatchedFilter)) as 'unwatched' | 'pending' | 'watched' | undefined,
             tagIds: currentTagIds.length > 0 ? currentTagIds : undefined,
         });
     };

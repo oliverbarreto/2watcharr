@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { MediaEpisode, Tag } from '@/lib/domain/models';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
 
             toast.success(episode.watched ? 'Marked as unwatched' : 'Marked as watched');
             onUpdate?.();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update episode');
         }
     };
@@ -94,7 +95,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
 
             toast.success(episode.favorite ? 'Removed from favorites' : 'Added to favorites');
             onUpdate?.();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update episode');
         }
     };
@@ -109,7 +110,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
 
             toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} removed from list`);
             onDelete?.();
-        } catch (error) {
+        } catch {
             toast.error('Failed to remove episode');
         }
     };
@@ -126,7 +127,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
 
             toast.success(`Moved to ${position}`);
             onUpdate?.();
-        } catch (error) {
+        } catch {
             toast.error('Failed to reorder episode');
         }
     };
@@ -162,7 +163,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
 
             toast.success('Tags updated');
             onUpdate?.();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update tags');
         } finally {
             setIsUpdatingTags(false);
@@ -261,7 +262,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
         if (!dateStr) return '';
         try {
             return formatDistanceToNow(new Date(dateStr), { addSuffix: true });
-        } catch (e) {
+        } catch {
             return dateStr;
         }
     };
@@ -310,10 +311,12 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
                         {/* Thumbnail */}
                         <div className="relative w-28 xs:w-32 sm:w-48 aspect-video flex-shrink-0 rounded-md overflow-hidden bg-muted">
                             {episode.thumbnailUrl && (
-                                <img
+                                <Image
                                     src={episode.thumbnailUrl}
                                     alt={episode.title}
-                                    className="w-full h-full object-cover"
+                                    fill
+                                    className="object-cover"
+                                    unoptimized
                                 />
                             )}
                             {episode.duration && (
@@ -545,7 +548,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
                                 disabled={isUpdatingTags}
                             >
                                 <Plus className="h-3 w-3 mr-2" />
-                                Create "{searchQuery}"
+                                Create &quot;{searchQuery}&quot;
                             </Button>
                         )}
                         {!searchQuery.trim() && "No tags found."}

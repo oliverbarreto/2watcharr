@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Image from 'next/image';
 import { MediaEpisode, Tag } from '@/lib/domain/models';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +19,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import {
-    Play,
     Check,
     Star,
     MoreVertical,
@@ -83,7 +83,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
 
             toast.success(episode.watched ? 'Marked as unwatched' : 'Marked as watched');
             onUpdate?.();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update episode');
         }
     };
@@ -100,7 +100,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
 
             toast.success(episode.favorite ? 'Removed from favorites' : 'Added to favorites');
             onUpdate?.();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update episode');
         }
     };
@@ -116,7 +116,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
             toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} removed from list`);
             setIsDeleteDialogOpen(false);
             onDelete?.();
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete episode');
         }
     };
@@ -133,7 +133,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
 
             toast.success(`Moved to ${position}`);
             onUpdate?.();
-        } catch (error) {
+        } catch {
             toast.error('Failed to reorder episode');
         }
     };
@@ -192,7 +192,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
 
             toast.success('Tags updated');
             onUpdate?.();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update tags');
         } finally {
             setIsUpdatingTags(false);
@@ -272,7 +272,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
         if (!dateStr) return '';
         try {
             return formatDistanceToNow(new Date(dateStr), { addSuffix: true });
-        } catch (e) {
+        } catch {
             return dateStr;
         }
     };
@@ -314,10 +314,12 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
                         {/* Thumbnail */}
                         <div className="relative aspect-video mb-3 rounded-md overflow-hidden bg-muted cursor-pointer" onClick={handlePlay}>
                             {episode.thumbnailUrl && (
-                                <img
+                                <Image
                                     src={episode.thumbnailUrl}
                                     alt={episode.title}
-                                    className="w-full h-full object-cover"
+                                    fill
+                                    className="object-cover"
+                                    unoptimized
                                 />
                             )}
 
@@ -516,7 +518,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
                                                 disabled={isUpdatingTags}
                                             >
                                                 <Plus className="h-3 w-3 mr-2" />
-                                                Create "{searchQuery}"
+                                                Create &quot;{searchQuery}&quot;
                                             </Button>
                                         )}
                                         {!searchQuery.trim() && "No tags found."}
@@ -594,7 +596,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
                     <DialogHeader>
                         <DialogTitle>Remove from list</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to remove "{episode.title}"? This action cannot be undone.
+                            Are you sure you want to remove &quot;{episode.title}&quot;? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

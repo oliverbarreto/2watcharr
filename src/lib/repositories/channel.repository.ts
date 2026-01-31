@@ -1,5 +1,5 @@
 import { Database } from 'sqlite';
-import { Channel, CreateChannelDto, Tag, ChannelFilters } from '../domain/models';
+import { Channel, CreateChannelDto, Tag, ChannelFilters, MediaType } from '../domain/models';
 
 export class ChannelRepository {
     constructor(private db: Database) { }
@@ -54,7 +54,7 @@ export class ChannelRepository {
      */
     async update(id: string, dto: Partial<CreateChannelDto>): Promise<Channel> {
         const updates: string[] = [];
-        const params: any[] = [];
+        const params: (string | number | null)[] = [];
 
         if (dto.name !== undefined) {
             updates.push('name = ?');
@@ -66,7 +66,7 @@ export class ChannelRepository {
         }
         if (dto.thumbnail_url !== undefined || dto.thumbnailUrl !== undefined) {
             updates.push('thumbnail_url = ?');
-            params.push(dto.thumbnail_url || dto.thumbnailUrl);
+            params.push((dto.thumbnail_url || dto.thumbnailUrl) ?? null);
         }
         if (dto.url !== undefined) {
             updates.push('url = ?');
@@ -94,7 +94,7 @@ export class ChannelRepository {
      * Get channel with episode count
      */
     async getChannelsWithEpisodeCount(filters?: ChannelFilters): Promise<Array<Channel & { episodeCount: number; tags: Tag[] }>> {
-        const params: any[] = [];
+        const params: (string | number | null)[] = [];
         const conditions: string[] = [];
 
         let query = `
@@ -146,9 +146,9 @@ export class ChannelRepository {
 
         const rows = await this.db.all(query, params);
 
-        const channels = rows.map((row: any) => ({
+        const channels = rows.map((row: Record<string, unknown>) => ({
             ...this.mapRowToChannel(row),
-            episodeCount: row.episode_count,
+            episodeCount: row.episode_count as number,
             tags: [] as Tag[],
         }));
 
@@ -169,16 +169,16 @@ export class ChannelRepository {
 
             // Group tags by channel_id
             const tagsByChannelId: Record<string, Tag[]> = {};
-            tagRows.forEach((row: any) => {
-                if (!tagsByChannelId[row.channel_id]) {
-                    tagsByChannelId[row.channel_id] = [];
+            tagRows.forEach((row: Record<string, unknown>) => {
+                if (!tagsByChannelId[row.channel_id as string]) {
+                    tagsByChannelId[row.channel_id as string] = [];
                 }
-                tagsByChannelId[row.channel_id].push({
-                    id: row.id,
-                    name: row.name,
-                    color: row.color,
-                    userId: row.user_id,
-                    createdAt: row.created_at,
+                tagsByChannelId[row.channel_id as string].push({
+                    id: row.id as string,
+                    name: row.name as string,
+                    color: row.color as string | null,
+                    userId: row.user_id as string,
+                    createdAt: row.created_at as number,
                 });
             });
 
@@ -198,16 +198,16 @@ export class ChannelRepository {
         await this.db.run('DELETE FROM channels WHERE id = ?', id);
     }
 
-    private mapRowToChannel(row: any): Channel {
+    private mapRowToChannel(row: Record<string, unknown>): Channel {
         return {
-            id: row.id,
-            type: row.type || 'video',
-            name: row.name,
-            description: row.description,
-            thumbnailUrl: row.thumbnail_url || row.thumbnailUrl, // Handle both snake and camel if needed during transition
-            url: row.url || row.channel_url,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
+            id: row.id as string,
+            type: (row.type as MediaType) || 'video',
+            name: row.name as string,
+            description: row.description as string | null,
+            thumbnailUrl: (row.thumbnail_url || row.thumbnailUrl) as string | null,
+            url: (row.url || row.channel_url) as string,
+            createdAt: row.created_at as number,
+            updatedAt: row.updated_at as number,
         };
     }
 }

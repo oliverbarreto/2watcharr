@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MediaService } from './media.service';
 import { createTestDb } from '../test/test-db';
 import { Database } from 'sqlite';

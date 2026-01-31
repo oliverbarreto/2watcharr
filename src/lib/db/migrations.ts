@@ -362,7 +362,7 @@ export async function runMigrations(db: Database): Promise<void> {
                 await db.run("INSERT OR IGNORE INTO migrations (name) VALUES ('add_podcast_support')");
                 await db.run('PRAGMA foreign_keys = ON');
             } else {
-                try { await db.run('ROLLBACK'); } catch (e) { }
+                try { await db.run('ROLLBACK'); } catch { }
                 await db.run('PRAGMA foreign_keys = ON');
                 console.error('Error running add_podcast_support migration:', error);
                 throw error;
@@ -485,7 +485,7 @@ export async function runMigrations(db: Database): Promise<void> {
       `);
       console.log('add_user_management migration completed.');
     } catch (error) {
-      try { await db.run('ROLLBACK'); } catch (e) {}
+      try { await db.run('ROLLBACK'); } catch {}
       console.error('Error running add_user_management migration:', error);
       throw error;
     } finally {

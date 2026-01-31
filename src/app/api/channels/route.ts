@@ -14,11 +14,11 @@ export async function GET(request: NextRequest) {
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const { searchParams } = new URL(request.url);
         const search = searchParams.get('search') || undefined;
-        const type = (searchParams.get('type') as any) || undefined;
+        const type = (searchParams.get('type') as 'video' | 'podcast') || undefined;
         const tagIds = searchParams.get('tagIds')?.split(',') || undefined;
 
         const db = await getDatabase();

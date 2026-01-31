@@ -23,7 +23,7 @@ export async function PATCH(
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const { id } = await params;
         const body = await request.json();
@@ -68,7 +68,7 @@ export async function DELETE(
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const { id } = await params;
         const db = await getDatabase();

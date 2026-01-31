@@ -7,6 +7,10 @@ import {
     EpisodeFilters,
     SortOptions,
     MediaEventType,
+    MediaType,
+    WatchStatus,
+    Priority,
+    Tag,
 } from '../domain/models';
 
 export class EpisodeRepository {
@@ -115,7 +119,7 @@ export class EpisodeRepository {
             FROM episodes e
         `;
         query += ' LEFT JOIN channels c ON e.channel_id = c.id';
-        const params: any[] = [];
+        const params: (string | number | null)[] = [];
 
         // Join with episode_tags if filtering by tags
         if (filters?.tagIds && filters.tagIds.length > 0) {
@@ -203,17 +207,17 @@ export class EpisodeRepository {
             `, episodeIds);
 
             // Group tags by episode_id
-            const tagsByEpisodeId: Record<string, any[]> = {};
-            tagRows.forEach(row => {
-                if (!tagsByEpisodeId[row.episode_id]) {
-                    tagsByEpisodeId[row.episode_id] = [];
+            const tagsByEpisodeId: Record<string, Tag[]> = {};
+            tagRows.forEach((row: Record<string, unknown>) => {
+                if (!tagsByEpisodeId[row.episode_id as string]) {
+                    tagsByEpisodeId[row.episode_id as string] = [];
                 }
-                tagsByEpisodeId[row.episode_id].push({
-                    id: row.id,
-                    name: row.name,
-                    color: row.color,
-                    userId: row.user_id,
-                    createdAt: row.created_at,
+                tagsByEpisodeId[row.episode_id as string].push({
+                    id: row.id as string,
+                    name: row.name as string,
+                    color: row.color as string | null,
+                    userId: row.user_id as string,
+                    createdAt: row.created_at as number,
                 });
             });
 
@@ -231,7 +235,7 @@ export class EpisodeRepository {
      */
     async update(id: string, dto: UpdateEpisodeDto): Promise<MediaEpisode> {
         const updates: string[] = [];
-        const params: any[] = [];
+        const params: (string | number | null)[] = [];
 
         if (dto.title !== undefined) {
             updates.push('title = ?');
@@ -398,7 +402,7 @@ export class EpisodeRepository {
             'SELECT tag_id FROM episode_tags WHERE episode_id = ?',
             episodeId
         );
-        return rows.map((row: any) => row.tag_id);
+        return rows.map((row: Record<string, unknown>) => row.tag_id as string);
     }
 
     private buildOrderBy(sort: SortOptions): string {
@@ -430,35 +434,35 @@ export class EpisodeRepository {
         }
     }
 
-    private mapRowToEpisode(row: any): MediaEpisode {
+    private mapRowToEpisode(row: Record<string, unknown>): MediaEpisode {
         return {
-            id: row.id,
-            type: row.type,
-            externalId: row.external_id,
-            title: row.title,
-            description: row.description,
-            duration: row.duration,
-            thumbnailUrl: row.thumbnail_url,
-            url: row.url,
-            uploadDate: row.upload_date,
-            publishedDate: row.published_date,
-            viewCount: row.view_count,
-            channelId: row.channel_id,
-            channelName: row.channel_name,
+            id: row.id as string,
+            type: row.type as MediaType,
+            externalId: row.external_id as string,
+            title: row.title as string,
+            description: row.description as string | null,
+            duration: row.duration as number | null,
+            thumbnailUrl: row.thumbnail_url as string | null,
+            url: row.url as string,
+            uploadDate: row.upload_date as string | null,
+            publishedDate: row.published_date as string | null,
+            viewCount: row.view_count as number | null,
+            channelId: row.channel_id as string,
+            channelName: row.channel_name as string | undefined,
             watched: Boolean(row.watched),
-            watchStatus: row.watch_status,
+            watchStatus: row.watch_status as WatchStatus,
             favorite: Boolean(row.favorite),
             isDeleted: Boolean(row.is_deleted),
-            priority: row.priority,
-            customOrder: row.custom_order,
-            userId: row.user_id,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            lastAddedAt: row.last_added_at || undefined,
-            lastWatchedAt: row.last_watched_at || undefined,
-            lastPendingAt: row.last_pending_at || undefined,
-            lastFavoritedAt: row.last_favorited_at || undefined,
-            lastRemovedAt: row.last_removed_at || undefined,
+            priority: row.priority as Priority,
+            customOrder: row.custom_order as number | null,
+            userId: row.user_id as string,
+            createdAt: row.created_at as number,
+            updatedAt: row.updated_at as number,
+            lastAddedAt: (row.last_added_at as number) || undefined,
+            lastWatchedAt: (row.last_watched_at as number) || undefined,
+            lastPendingAt: (row.last_pending_at as number) || undefined,
+            lastFavoritedAt: (row.last_favorited_at as number) || undefined,
+            lastRemovedAt: (row.last_removed_at as number) || undefined,
         };
     }
 }

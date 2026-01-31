@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const body = await request.json();
         const data = createTagSchema.parse(body);
@@ -63,13 +63,13 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/tags - List all tags with episode counts
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = (session.user as any).id;
+        const userId = (session.user as { id: string }).id;
 
         const db = await getDatabase();
         const tagRepo = new TagRepository(db);

@@ -76,7 +76,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 p-4 text-zinc-100">
-      <h1 className="mb-12 text-5xl font-bold tracking-tight">Who's watching?</h1>
+      <h1 className="mb-12 text-5xl font-bold tracking-tight">Who&apos;s watching?</h1>
       
       {!selectedProfile ? (
         <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-4">

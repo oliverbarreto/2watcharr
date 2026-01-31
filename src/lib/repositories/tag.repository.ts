@@ -45,7 +45,7 @@ export class TagRepository {
      */
     async findAll(userId?: string): Promise<Tag[]> {
         let query = 'SELECT * FROM tags';
-        const params: any[] = [];
+        const params: (string | number | null)[] = [];
         if (userId) {
             query += ' WHERE user_id = ?';
             params.push(userId);
@@ -60,7 +60,7 @@ export class TagRepository {
      */
     async update(id: string, dto: Partial<CreateTagDto>): Promise<Tag> {
         const updates: string[] = [];
-        const values: any[] = [];
+        const values: (string | number | null)[] = [];
 
         if (dto.name !== undefined) {
             updates.push('name = ?');
@@ -107,7 +107,7 @@ export class TagRepository {
             FROM tags t
             LEFT JOIN episode_tags et ON t.id = et.tag_id
         `;
-        const params: any[] = [];
+        const params: (string | number | null)[] = [];
         if (userId) {
             query += ' WHERE t.user_id = ?';
             params.push(userId);
@@ -119,19 +119,19 @@ export class TagRepository {
 
         const rows = await this.db.all(query, params);
 
-        return rows.map((row: any) => ({
+        return rows.map((row: Record<string, unknown>) => ({
             ...this.mapRowToTag(row),
-            episodeCount: row.episode_count,
+            episodeCount: row.episode_count as number,
         }));
     }
 
-    private mapRowToTag(row: any): Tag {
+    private mapRowToTag(row: Record<string, unknown>): Tag {
         return {
-            id: row.id,
-            name: row.name,
-            color: row.color,
-            userId: row.user_id,
-            createdAt: row.created_at,
+            id: row.id as string,
+            name: row.name as string,
+            color: row.color as string | null,
+            userId: row.user_id as string,
+            createdAt: row.created_at as number,
         };
     }
 }

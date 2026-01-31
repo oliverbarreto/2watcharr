@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import Image from 'next/image';
 import { Layout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trash2, RefreshCw, Youtube, Mic, Filter } from 'lucide-react';
+import { Trash2, RefreshCw, Youtube, Mic } from 'lucide-react';
 import { ChannelFilterBar } from '@/components/features/channels/channel-filter-bar';
-import { Channel as ChannelModel, Tag as TagModel } from '@/lib/domain/models';
 import { toast } from 'sonner';
 import {
     Dialog,
@@ -37,6 +37,12 @@ interface Channel {
     tags?: Tag[];
 }
 
+interface Filters {
+    search?: string;
+    type?: 'video' | 'podcast';
+    tagIds?: string[];
+}
+
 function ChannelsPageContent() {
     const searchParams = useSearchParams();
     const highlightId = searchParams.get('channelId');
@@ -44,9 +50,9 @@ function ChannelsPageContent() {
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
     const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
-    const [filters, setFilters] = useState<any>({});
+    const [filters, setFilters] = useState<Filters>({});
 
-    const fetchChannels = async (currentFilters = filters) => {
+    const fetchChannels = useCallback(async (currentFilters = filters) => {
         try {
             const params = new URLSearchParams();
             if (currentFilters.search) params.set('search', currentFilters.search);
@@ -64,13 +70,13 @@ function ChannelsPageContent() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filters]);
 
     useEffect(() => {
         fetchChannels();
-    }, []);
+    }, [fetchChannels]);
 
-    const handleFilterChange = (newFilters: any) => {
+    const handleFilterChange = (newFilters: Filters) => {
         setFilters(newFilters);
         fetchChannels(newFilters);
     };
@@ -199,10 +205,12 @@ function ChannelsPageContent() {
                                 <CardHeader className="p-6 flex flex-row items-center gap-4">
                                     <div className="h-16 w-16 rounded-full overflow-hidden bg-muted flex-shrink-0 border-2 border-primary/10 group-hover:border-primary/30 transition-colors">
                                         {channel.thumbnailUrl ? (
-                                            <img
+                                            <Image
                                                 src={channel.thumbnailUrl}
                                                 alt={channel.name}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                fill
+                                                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                                unoptimized
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-muted-foreground text-2xl font-bold bg-accent">

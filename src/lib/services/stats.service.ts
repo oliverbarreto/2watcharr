@@ -1,5 +1,5 @@
 import { Database } from 'sqlite';
-import { MediaType } from '../domain/models';
+
 
 export interface DashboardStats {
     counts: {

@@ -16,6 +16,14 @@ export type ChartConfig = {
   )
 }
 
+interface ChartPayloadItem {
+  dataKey?: string | number
+  name?: string
+  value?: number
+  color?: string
+  payload: Record<string, unknown>
+}
+
 type ChartContextProps = {
   config: ChartConfig
 }
@@ -78,7 +86,7 @@ ChartContainer.displayName = "Chart"
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
-    ([_, config]) => config.theme || config.color
+    ([, config]) => config.theme || config.color
   )
 
   if (!colorConfig.length) {
@@ -113,11 +121,11 @@ const ChartTooltipContent = React.forwardRef<
     nameKey?: string
     labelKey?: string
     active?: boolean
-    payload?: any[]
-    label?: any
-    labelFormatter?: (label: any, payload: any[]) => React.ReactNode
+    payload?: ChartPayloadItem[]
+    label?: unknown
+    labelFormatter?: (label: unknown, payload: ChartPayloadItem[]) => React.ReactNode
     labelClassName?: string
-    formatter?: (value: any, name: any, item: any, index: number, payload: any[]) => React.ReactNode
+    formatter?: (value: unknown, name: unknown, item: ChartPayloadItem, index: number, payload: ChartPayloadItem[]) => React.ReactNode
   }
 >(
   (
@@ -145,12 +153,12 @@ const ChartTooltipContent = React.forwardRef<
         return null
       }
 
-      const [item] = payload
+      const [item] = payload as ChartPayloadItem[]
       const key = `${labelKey || item.dataKey || item.name || "value"}`
       const itemConfig = getPayloadConfigFromCustomKey(config, item, key)
       const value =
         !labelKey && typeof label === "string"
-          ? (config[label as keyof typeof config] as any)?.label || label
+          ? (config[label as keyof typeof config] as { label?: React.ReactNode })?.label || label
           : itemConfig?.label
 
       if (labelFormatter) {
@@ -165,7 +173,7 @@ const ChartTooltipContent = React.forwardRef<
         return null
       }
 
-      return <div className={cn("font-medium", labelClassName)}>{value || label}</div>
+      return <div className={cn("font-medium", labelClassName)}>{(value || label) as React.ReactNode}</div>
     }, [
       label,
       labelFormatter,
@@ -192,7 +200,7 @@ const ChartTooltipContent = React.forwardRef<
       >
         {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
-          {payload.map((item, index) => {
+          {(payload as ChartPayloadItem[]).map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromCustomKey(config, item, key)
             const indicatorColor = color || item.payload.fill || item.color
@@ -268,7 +276,7 @@ const ChartLegend = RechartsPrimitive.Legend
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    payload?: any[]
+    payload?: ChartPayloadItem[]
     verticalAlign?: "top" | "bottom" | "middle"
     hideIcon?: boolean
     nameKey?: string
@@ -330,25 +338,25 @@ function getPayloadConfigFromCustomKey(
   }
 
   const payloadPayload =
-    "payload" in payload &&
-    typeof (payload as any).payload === "object" &&
-    (payload as any).payload !== null
-      ? (payload as any).payload
+    "payload" in (payload as Record<string, unknown>) &&
+    typeof (payload as Record<string, unknown>).payload === "object" &&
+    (payload as Record<string, unknown>).payload !== null
+      ? ((payload as Record<string, unknown>).payload as Record<string, unknown>)
       : undefined
 
   let configLabelKey: string = key
 
   if (
-    key in payload &&
-    typeof (payload as any)[key] === "string"
+    key in (payload as Record<string, unknown>) &&
+    typeof (payload as Record<string, unknown>)[key] === "string"
   ) {
-    configLabelKey = (payload as any)[key]
+    configLabelKey = (payload as Record<string, unknown>)[key] as string
   } else if (
     payloadPayload &&
     key in payloadPayload &&
     typeof payloadPayload[key] === "string"
   ) {
-    configLabelKey = payloadPayload[key]
+    configLabelKey = payloadPayload[key] as string
   }
 
   return configLabelKey in config
