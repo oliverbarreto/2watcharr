@@ -52,7 +52,11 @@ docker-compose logs -f
 
 # Stop
 docker-compose down
+
+# Launch Application in production
+docker compose -f docker-compose.prod.yml up -d
 ```
+
 
 ## Project Structure
 

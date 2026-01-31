@@ -9,10 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Edit User functionality in User Management settings (allows changing icon, color, name, username, and password).
-- Initial project setup with Next.js v15, TypeScript, and Tailwind CSS
-- SQLite database support with `sqlite3` and promise-based wrapper
-- shadcn/ui component library integration
-- Clean Architecture project structure
+- Responsive Navbar with a mobile sheet menu for improved navigation on small screens.
+- 'Pending Confirmation' status for episodes when opened, with visual feedback.
+- Dedicated Stats page with library metrics and activity visualization using Area Charts.
+- Support for Episode management and Podcast media types, extending core functionality.
+- Channel filtering system (by name, tags, and media type) for better organization.
+- Integrated Vitest testing framework with an initial suite of core tests.
+- User management system including authentication, onboarding, and multiple user profiles.
+- Production-ready Docker configuration with Nginx Proxy Manager support and security hardening.
+- Initial project setup with Next.js v15, TypeScript, and Tailwind CSS.
+- SQLite database support with `sqlite3` and promise-based wrapper.
+- Shadcn/ui component library integration. Using now charts and other components.
+- Clean Architecture project structure.
 - Default view setting (Grid/List) in general settings with persistent preference.
 - Soft delete functionality for videos with `is_deleted` flag.
 - Restore functionality for previously deleted videos when re-added, updating metadata and resetting watched status.
