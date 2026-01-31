@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refined watchlist layout for improved responsiveness on mobile devices (search and filters on separate rows).
 
 ### Fixed
+- Resolve linter errors by updating image components, simplifying error handling, and standardizing string literals across the codebase.
 - Resolved "Failed to fetch videos" runtime error in `video-list.tsx`.
 - Fixed build errors related to server-side data fetching and hydration issues.
 - Docker environment configuration for local development and iOS sharesheet testing.
