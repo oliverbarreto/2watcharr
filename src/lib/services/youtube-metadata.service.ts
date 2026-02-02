@@ -20,7 +20,7 @@ export class YouTubeMetadataService {
         const command = `yt-dlp --no-download --dump-json "${url}"`;
 
         try {
-            const { stdout } = await execAsync(command);
+            const { stdout } = await execAsync(command, { maxBuffer: 10 * 1024 * 1024 });
             const rawData = JSON.parse(stdout);
 
             const channel: CreateChannelDto = {
@@ -62,7 +62,7 @@ export class YouTubeMetadataService {
         const command = `yt-dlp --no-download --dump-single-json --flat-playlist "${url}"`;
 
         try {
-            const { stdout } = await execAsync(command);
+            const { stdout } = await execAsync(command, { maxBuffer: 10 * 1024 * 1024 });
             const rawData = JSON.parse(stdout);
 
             let thumbnailUrl = '';

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import Image from 'next/image';
 import { Layout } from '@/components/layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Trash2, RefreshCw, Youtube, Mic } from 'lucide-react';
@@ -19,6 +19,23 @@ import {
 } from "@/components/ui/dialog";
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    rectSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Tag {
     id: string;
@@ -35,6 +52,7 @@ interface Channel {
     url: string;
     episodeCount: number;
     tags?: Tag[];
+    customOrder: number | null;
 }
 
 interface Filters {
@@ -43,14 +61,170 @@ interface Filters {
     tagIds?: string[];
 }
 
+interface ChannelCardProps {
+    channel: Channel;
+    highlightId: string | null;
+    isSyncing: boolean;
+    onDelete: (channel: Channel) => void;
+    onSync: (channelId: string, channelUrl: string) => void;
+}
+
+function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync }: ChannelCardProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: channel.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 50 : 0,
+    };
+
+    return (
+        <Card
+            ref={setNodeRef}
+            style={style}
+            className={`group relative hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border-muted-foreground/10 aspect-square min-h-[320px] ${highlightId === channel.id ? 'ring-2 ring-primary ring-offset-2' : ''} ${isDragging ? 'opacity-50' : ''}`}
+            onClick={(e) => {
+                // If the click was on the channel link or a button, don't navigate
+                if ((e.target as HTMLElement).closest('a') || (e.target as HTMLElement).closest('button')) {
+                    return;
+                }
+                window.location.href = `/?channelId=${channel.id}`;
+            }}
+        >
+            {/* Background Image */}
+            <div className="absolute inset-0 z-0">
+                {channel.thumbnailUrl ? (
+                    <Image
+                        src={channel.thumbnailUrl}
+                        alt={channel.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        unoptimized
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-4xl font-bold bg-accent/20">
+                        {channel.name[0]}
+                    </div>
+                )}
+                {/* Subtle vignette */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+            </div>
+
+            {/* Top Buttons (Delete & Sync) */}
+            <div className="absolute top-2 right-2 left-2 z-30 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSync(channel.id, channel.url);
+                    }}
+                    disabled={isSyncing}
+                    className={`p-2 bg-black/60 hover:bg-primary hover:text-white rounded-full backdrop-blur-md transition-colors text-white/90 border border-white/10 shadow-lg ${isSyncing ? 'cursor-not-allowed opacity-50' : ''}`}
+                    title="Sync Metadata"
+                >
+                    <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                </button>
+
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(channel);
+                    }}
+                    className="p-2 bg-black/60 hover:bg-destructive hover:text-white rounded-full backdrop-blur-md transition-colors text-white/90 border border-white/10 shadow-lg"
+                    title="Delete Source"
+                >
+                    <Trash2 className="h-4 w-4" />
+                </button>
+            </div>
+
+            {/* Channel Info Overlay - Full Screen on Hover */}
+            <div className="absolute inset-x-0 bottom-0 z-20 h-1/3 p-5 bg-black/40 backdrop-blur-md border border-white/10 group-hover:h-full group-hover:bg-black/70 transition-all duration-300 flex flex-col">
+                <div className="flex-1 overflow-hidden group-hover:pt-12 transition-all duration-300">
+                    <a
+                        href={channel.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xl font-bold text-red-600 hover:text-red-500 transition-colors line-clamp-1 block mb-1 leading-none relative z-10"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {channel.name}
+                    </a>
+                    <div className="flex items-center gap-2 mb-2">
+                        {channel.type === 'podcast' ? (
+                            <Mic className="h-4 w-4 text-purple-500" />
+                        ) : (
+                            <div className="bg-red-600 rounded-sm p-0.5 flex items-center justify-center">
+                                <Youtube className="h-3 w-3 text-white fill-current" />
+                            </div>
+                        )}
+                        <span className="text-sm font-bold text-red-600">
+                            {channel.episodeCount} {channel.episodeCount === 1 ? 'episode' : 'episodes'}
+                        </span>
+                    </div>
+
+                    {channel.description && channel.description !== "No description available. Sync metadata to refresh." && (
+                        <p className="text-[12px] text-white/90 line-clamp-2 md:group-hover:line-clamp-none group-active:line-clamp-none leading-tight transition-all duration-300">
+                            {channel.description}
+                        </p>
+                    )}
+                </div>
+
+                {channel.tags && channel.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2 group-hover:mt-4 transition-all duration-300">
+                        {channel.tags.map((tag, idx) => (
+                            <Badge
+                                key={tag.id}
+                                variant="outline"
+                                className={`text-[10px] px-3 py-0.5 h-6 rounded-full border-none font-medium bg-[#3d2b1f] text-[#f59e0b] border border-[#f59e0b]/20 ${idx >= 2 ? 'hidden group-hover:flex' : ''}`}
+                                style={tag.color ? {
+                                    backgroundColor: `${tag.color}20`,
+                                    color: tag.color,
+                                    borderColor: `${tag.color}40`,
+                                    borderWidth: '1px'
+                                } : undefined}
+                            >
+                                {tag.name}
+                            </Badge>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Drag Handle - Bottom as requested, visible only on hover */}
+            <div
+                {...attributes}
+                {...listeners}
+                className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600 opacity-0 group-hover:opacity-100 transition-all duration-300 z-40 cursor-grab active:cursor-grabbing"
+            />
+        </Card>
+    );
+}
+
 function ChannelsPageContent() {
     const searchParams = useSearchParams();
     const highlightId = searchParams.get('channelId');
     const [channels, setChannels] = useState<Channel[]>([]);
     const [loading, setLoading] = useState(true);
-    const [syncing, setSyncing] = useState(false);
+    const [syncingChannelId, setSyncingChannelId] = useState<string | null>(null);
     const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
     const [filters, setFilters] = useState<Filters>({});
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     const fetchChannels = useCallback(async (currentFilters = filters) => {
         try {
@@ -81,20 +255,27 @@ function ChannelsPageContent() {
         fetchChannels(newFilters);
     };
 
-    const handleSyncChannels = async () => {
-        setSyncing(true);
+    const handleSyncChannel = async (channelId: string, channelUrl: string) => {
+        setSyncingChannelId(channelId);
         try {
-            const response = await fetch('/api/channels/sync', { method: 'POST' });
-            if (!response.ok) throw new Error('Sync failed');
+            const response = await fetch(`/api/channels/${channelId}/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: channelUrl })
+            });
 
-            const data = await response.json();
-            toast.success(data.message || 'Metadata synced successfully');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Sync failed');
+            }
+
+            toast.success('Channel metadata synced successfully');
             fetchChannels();
         } catch (error) {
-            console.error('Error syncing channels:', error);
-            toast.error('Failed to sync channel metadata');
+            console.error('Error syncing channel:', error);
+            toast.error(error instanceof Error ? error.message : 'Failed to sync channel metadata');
         } finally {
-            setSyncing(false);
+            setSyncingChannelId(null);
         }
     };
 
@@ -118,6 +299,31 @@ function ChannelsPageContent() {
         }
     };
 
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (active.id !== over?.id) {
+            setChannels((items) => {
+                const oldIndex = items.findIndex((i) => i.id === active.id);
+                const newIndex = items.findIndex((i) => i.id === over?.id);
+
+                const newItems = arrayMove(items, oldIndex, newIndex);
+
+                // Persist the new order
+                const channelIds = newItems.map(c => c.id);
+                fetch('/api/channels/reorder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channelIds }),
+                }).catch(() => {
+                    toast.error('Failed to save order');
+                });
+
+                return newItems;
+            });
+        }
+    };
+
     if (loading) {
         return (
             <Layout>
@@ -128,21 +334,17 @@ function ChannelsPageContent() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {[...Array(8)].map((_, i) => (
-                            <Card key={i}>
-                                <CardHeader className="flex flex-row items-center gap-4">
-                                    <Skeleton className="h-16 w-16 rounded-full flex-shrink-0" />
-                                    <div className="flex-1 min-w-0 space-y-2">
-                                        <Skeleton className="h-6 w-3/4" />
-                                        <div className="flex gap-1">
-                                            <Skeleton className="h-4 w-12" />
-                                            <Skeleton className="h-4 w-16" />
+                            <Card key={i} className="aspect-square min-h-[320px] relative overflow-hidden">
+                                <div className="absolute inset-x-0 bottom-0 h-1/3 p-4 bg-muted/20 backdrop-blur-sm border-t border-white/5">
+                                    <div className="flex items-start gap-3 h-full items-center">
+                                        <Skeleton className="h-8 w-8 rounded-lg" />
+                                        <div className="flex-1 space-y-2">
+                                            <Skeleton className="h-5 w-3/4" />
+                                            <Skeleton className="h-4 w-1/2" />
                                         </div>
                                     </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <Skeleton className="h-4 w-full mb-2" />
-                                    <Skeleton className="h-4 w-2/3" />
-                                </CardContent>
+                                </div>
+                                <div className="absolute bottom-0 left-0 w-full h-1.5 bg-muted/30 z-30" />
                             </Card>
                         ))}
                     </div>
@@ -161,15 +363,6 @@ function ChannelsPageContent() {
                             All sources from your saved content
                         </p>
                     </div>
-                    <Button
-                        variant="outline"
-                        onClick={handleSyncChannels}
-                        disabled={syncing}
-                        className="gap-2"
-                    >
-                        <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-                        {syncing ? 'Syncing...' : 'Sync Metadata'}
-                    </Button>
                 </div>
 
                 <ChannelFilterBar onFilterChange={handleFilterChange} initialFilters={filters} />
@@ -182,95 +375,29 @@ function ChannelsPageContent() {
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {channels.map((channel) => (
-                            <Card
-                                key={channel.id}
-                                className={`group relative hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border-muted-foreground/10 ${highlightId === channel.id ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-                                onClick={() => window.location.href = `/?channelId=${channel.id}`}
-                            >
-                                <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setChannelToDelete(channel);
-                                        }}
-                                        className="p-1.5 bg-background/80 hover:bg-destructive hover:text-white rounded-full backdrop-blur-sm transition-colors"
-                                        title="Delete Source"
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </button>
-                                </div>
-
-                                <CardHeader className="p-6 flex flex-row items-center gap-4">
-                                    <div className="h-16 w-16 rounded-full overflow-hidden bg-muted flex-shrink-0 border-2 border-primary/10 group-hover:border-primary/30 transition-colors">
-                                        {channel.thumbnailUrl ? (
-                                            <Image
-                                                src={channel.thumbnailUrl}
-                                                alt={channel.name}
-                                                fill
-                                                className="object-cover group-hover:scale-110 transition-transform duration-500"
-                                                unoptimized
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-2xl font-bold bg-accent">
-                                                {channel.name[0]}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
-                                            <div className="flex items-center gap-2">
-                                                {channel.type === 'podcast' ? (
-                                                    <Mic className="h-4 w-4 text-purple-600" />
-                                                ) : (
-                                                    <Youtube className="h-4 w-4 text-red-600" />
-                                                )}
-                                                <a
-                                                    href={channel.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="transition-colors hover:text-primary"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    {channel.name}
-                                                </a>
-                                            </div>
-                                        </CardTitle>
-                                        <Badge variant="secondary" className="mt-1 bg-primary/5 text-primary hover:bg-primary/10 border-none px-2 py-0">
-                                            {channel.episodeCount} {channel.episodeCount === 1 ? 'episode' : 'episodes'}
-                                        </Badge>
-                                        {channel.tags && channel.tags.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 mt-2">
-                                                {channel.tags.map((tag) => (
-                                                    <Badge
-                                                        key={tag.id}
-                                                        variant="outline"
-                                                        className="text-[10px] px-1.5 py-0 h-4"
-                                                        style={tag.color ? {
-                                                            backgroundColor: `${tag.color}15`,
-                                                            color: tag.color,
-                                                            borderColor: `${tag.color}30`
-                                                        } : undefined}
-                                                    >
-                                                        {tag.name}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardHeader>
-
-                                <CardContent className="px-6 pb-6 pt-0">
-                                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                                        {channel.description || "No description available. Sync metadata to refresh."}
-                                    </p>
-                                </CardContent>
-
-                                <div className="absolute bottom-0 left-0 w-full h-1 bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </Card>
-                        ))}
-                    </div>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={channels.map(c => c.id)}
+                            strategy={rectSortingStrategy}
+                        >
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {channels.map((channel) => (
+                                    <SortableChannelCard
+                                        key={channel.id}
+                                        channel={channel}
+                                        highlightId={highlightId}
+                                        isSyncing={syncingChannelId === channel.id}
+                                        onDelete={setChannelToDelete}
+                                        onSync={handleSyncChannel}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
                 )}
             </div>
 
@@ -308,21 +435,17 @@ export default function ChannelsPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {[...Array(8)].map((_, i) => (
-                            <Card key={i}>
-                                <CardHeader className="flex flex-row items-center gap-4">
-                                    <Skeleton className="h-16 w-16 rounded-full flex-shrink-0" />
-                                    <div className="flex-1 min-w-0 space-y-2">
-                                        <Skeleton className="h-6 w-3/4" />
-                                        <div className="flex gap-1">
-                                            <Skeleton className="h-4 w-12" />
-                                            <Skeleton className="h-4 w-16" />
+                            <Card key={i} className="aspect-square min-h-[320px] relative overflow-hidden">
+                                <div className="absolute inset-x-0 bottom-0 h-1/3 p-4 bg-muted/20 backdrop-blur-sm border-t border-white/5">
+                                    <div className="flex items-start gap-3 h-full items-center">
+                                        <Skeleton className="h-8 w-8 rounded-lg" />
+                                        <div className="flex-1 space-y-2">
+                                            <Skeleton className="h-5 w-3/4" />
+                                            <Skeleton className="h-4 w-1/2" />
                                         </div>
                                     </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <Skeleton className="h-4 w-full mb-2" />
-                                    <Skeleton className="h-4 w-2/3" />
-                                </CardContent>
+                                </div>
+                                <div className="absolute bottom-0 left-0 w-full h-1.5 bg-muted/30 z-30" />
                             </Card>
                         ))}
                     </div>

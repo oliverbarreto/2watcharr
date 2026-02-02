@@ -16,11 +16,11 @@ export class MediaService {
     private tagRepo: TagRepository;
     private metadataService: MetadataService;
 
-    constructor(db: Database) {
+    constructor(db: Database, metadataService?: MetadataService) {
         this.episodeRepo = new EpisodeRepository(db);
         this.channelRepo = new ChannelRepository(db);
         this.tagRepo = new TagRepository(db);
-        this.metadataService = new MetadataService();
+        this.metadataService = metadataService || new MetadataService();
     }
 
     /**
@@ -280,17 +280,9 @@ export class MediaService {
         for (const channel of channels) {
             try {
                 // Only sync video (YouTube) channels for now as podcast metadata might be harder to sync individually without an episode
-                if (channel.type === 'video') {
-                    const metadata = await this.metadataService.extractChannelMetadata(channel.url);
-                    if (metadata.name) {
-                        await this.channelRepo.update(channel.id, {
-                            name: metadata.name,
-                            description: metadata.description,
-                            thumbnailUrl: metadata.thumbnailUrl,
-                            url: metadata.url,
-                        });
-                        synced++;
-                    }
+                if (channel.type === 'video' && channel.url) {
+                    const success = await this.syncChannelMetadata(channel.id, channel.url);
+                    if (success) synced++;
                 }
             } catch (error) {
                 console.error(`Failed to sync channel ${channel.id}:`, error);
@@ -298,5 +290,22 @@ export class MediaService {
         }
 
         return { total: channels.length, synced };
+    }
+
+    /**
+     * Sync metadata for a single channel
+     */
+    async syncChannelMetadata(id: string, url: string): Promise<boolean> {
+        const metadata = await this.metadataService.extractChannelMetadata(url);
+        if (metadata.name) {
+            await this.channelRepo.update(id, {
+                name: metadata.name,
+                description: metadata.description,
+                thumbnailUrl: metadata.thumbnailUrl,
+                url: metadata.url,
+            });
+            return true;
+        }
+        return false;
     }
 }

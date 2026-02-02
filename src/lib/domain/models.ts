@@ -66,6 +66,7 @@ export interface Channel {
     description: string | null;
     thumbnailUrl: string | null;
     url: string;
+    customOrder: number | null;
     createdAt: number;
     updatedAt: number;
 }

@@ -141,7 +141,7 @@ export class ChannelRepository {
 
         query += `
             GROUP BY c.id
-            ORDER BY c.name ASC
+            ORDER BY COALESCE(c.custom_order, 999999) ASC, c.name ASC
         `;
 
         const rows = await this.db.all(query, params);
@@ -206,6 +206,7 @@ export class ChannelRepository {
             description: row.description as string | null,
             thumbnailUrl: (row.thumbnail_url || row.thumbnailUrl) as string | null,
             url: (row.url || row.channel_url) as string,
+            customOrder: row.custom_order as number | null,
             createdAt: row.created_at as number,
             updatedAt: row.updated_at as number,
         };

@@ -521,6 +521,32 @@ export async function runMigrations(db: Database): Promise<void> {
           'add_watch_status'
         );
         console.log('watch_status column already existed, migration marked as completed.');
+      }
+    }
+  }
+
+  // Check if add_channel_order migration has been applied
+  const migration9 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_channel_order'
+  );
+
+  if (!migration9) {
+    console.log('Running add_channel_order migration...');
+    try {
+      await db.run('ALTER TABLE channels ADD COLUMN custom_order INTEGER');
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'add_channel_order'
+      );
+      console.log('add_channel_order migration completed.');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('duplicate column name')) {
+        await db.run(
+          'INSERT INTO migrations (name) VALUES (?)',
+          'add_channel_order'
+        );
+        console.log('custom_order column already existed, migration marked as completed.');
       } else {
         throw error;
       }
