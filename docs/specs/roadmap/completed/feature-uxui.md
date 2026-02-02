@@ -9,6 +9,8 @@
     - [x] Move Grid/List view toggle to the page header next to the title.
     - [x] Implement red "handle" line at the bottom of video cards for better drag-and-drop UX.
     - [x] Update channel cards: link channel name to YouTube, remove share icon.
+    - [x] Add metadata sync button to individual channel cards for easy updates.
+    - [x] Implement responsive navbar with a mobile sheet menu for better small-screen navigation.
     - [x] Use Lucide Play icons for watched/unwatched status filters.
     - [x] Optimize mobile layout for filters and search bar.
     - [x] Add default view setting (Grid/List) in the settings menu.

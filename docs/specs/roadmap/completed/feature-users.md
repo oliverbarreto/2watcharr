@@ -13,6 +13,7 @@ The scope of this feature is to add user management to the app. Here is the desc
     - for every additional user, it asks for a user profile name and a user password, and an emoji and a color to represent the user avatar. We should create a user profile with all the needed pieces in the database: user, watch list, tags, priority to be differentiated in the database.
 
 - When a user logs in, they must pick a user from a list of users and will access the app with that user profile. It should be nice page with all the profiles (eg: like appletv or disney plus user selection page). You can see the image as example of the appletv app showing all users profiles to selct one at the begginign of every new session.
-- Settings should have a section for user management where the admin user can add/remove/edit users and their profiles.
-- Add an icon to select current user profile in navigation bar.
-- Should we allow a way for a specific user to save in local storage its user and always use that user profile? In that case we should add a "remember me" checkbox in the login page and when checked, it should save the user in local storage and always use that user profile. If unchecked, it should ask the user to pick a user from a list of users and will access the app with that user profile. However we should add a valid period no greater thatn 15 days for the user to be remembered. 
+- [x] Settings should have a section for user management where the admin user can add/remove/edit users and their profiles.
+- [x] Add an icon to select current user profile in navigation bar.
+- [x] Add user profile editing functionality (icon, color, name, username, password).
+- [ ] Should we allow a way for a specific user to save in local storage its user and always use that user profile? In that case we should add a "remember me" checkbox in the login page and when checked, it should save the user in local storage and always use that user profile. If unchecked, it should ask the user to pick a user from a list of users and will access the app with that user profile. However we should add a valid period no greater thatn 15 days for the user to be remembered. 

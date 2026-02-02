@@ -13,6 +13,7 @@ Improve external integrations (iOS Shortcut) and the deployment/development envi
 - [x] **Docker Refinement**
     - [x] Configure Docker setup for local testing, especially for external connections (like the iOS Shortcut).
     - [x] Ensure persistent storage for the SQLite database within the container.
+    - [x] Add production ready Docker Compose configuration with custom .env variables, bind mounted folders, Nginx Proxy Manager support and comprehensive deployment documentation.
 - [ ] **API Documentation**
     - [ ] Create basic documentation for the API endpoints used by the shortcut.
 - [ ] **Mobile App / PWA**

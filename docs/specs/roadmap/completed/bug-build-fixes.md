@@ -15,6 +15,12 @@ Tracking and resolving critical bugs that prevent the application from building 
 - [x] **Metadata Extraction Issues**
     - **Description:** Some YouTube videos failing to extract metadata correctly.
     - **Fix:** Updated `yt-dlp` calls and added better error handling for private/unavailable videos.
+- [x] **Linter Errors cleanup**
+    - **Description:** General linter errors in standard formatting and React components.
+    - **Fix:** Resolve linter errors by updating image components, simplifying error handling, and standardizing string literals.
+- [x] **'Pending' watch status for episodes**
+    - **Description:** Episodes watch status were lost.
+    - **Fix:** Implement fix for 'pending' watch status for episodes, adding filtering capabilities and UI feedback.
 
 ## Known Issues
 - [ ] **Large Database Performance**

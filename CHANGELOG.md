@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2026-02-02
 
 ### Added
 - Edit User functionality in User Management settings (allows changing icon, color, name, username, and password).
@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 'Pending Confirmation' status for episodes when opened, with visual feedback.
 - Dedicated Stats page with library metrics and activity visualization using Area Charts.
 - Support for Episode management and Podcast media types, extending core functionality.
+- Individual channel card metadata synchronization button for quick updates.
 - Channel filtering system (by name, tags, and media type) for better organization.
 - Integrated Vitest testing framework with an initial suite of core tests.
 - User management system including authentication, onboarding, and multiple user profiles.
