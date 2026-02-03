@@ -9,6 +9,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
     Dialog,
@@ -572,6 +573,34 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
                                         <ArrowDown className="mr-2 h-4 w-4" />
                                         Move to end
                                     </DropdownMenuItem>
+                                    
+                                    <DropdownMenuSeparator />
+                                    
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleToggleWatched();
+                                    }}>
+                                        <Check className={`mr-2 h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
+                                        {episode.watched ? 'Mark unwatched' : 'Mark watched'}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        setIsTagPopoverOpen(true);
+                                        fetchTags();
+                                    }}>
+                                        <TagIcon className="mr-2 h-4 w-4" />
+                                        Add tags
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleToggleFavorite();
+                                    }}>
+                                        <Star className={`mr-2 h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
+                                        {episode.favorite ? 'Remove favorite' : 'Add favorite'}
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuSeparator />
+
                                     <DropdownMenuItem onSelect={(e) => {
                                         e.preventDefault();
                                         setIsDeleteDialogOpen(true);

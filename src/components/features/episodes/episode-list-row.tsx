@@ -10,6 +10,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
     Check,
@@ -409,7 +410,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
                         <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 hidden sm:group-hover:flex"
+                            className="h-8 w-8 flex"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleToggleWatched(e);
@@ -421,7 +422,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
                         <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 hidden sm:group-hover:flex"
+                            className="h-8 w-8 flex"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleToggleFavorite(e);
@@ -434,7 +435,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
                         <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 hidden sm:group-hover:flex"
+                            className="h-8 w-8 flex"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setIsTagPopoverOpen(true);
@@ -471,6 +472,34 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
                                     <ArrowDown className="mr-2 h-4 w-4" />
                                     Move to end
                                 </DropdownMenuItem>
+                                
+                                <DropdownMenuSeparator />
+                                
+                                <DropdownMenuItem onSelect={(e) => {
+                                    e.preventDefault();
+                                    handleToggleWatched(e as any);
+                                }}>
+                                    <Check className={`mr-2 h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
+                                    {episode.watched ? 'Mark unwatched' : 'Mark watched'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={(e) => {
+                                    e.preventDefault();
+                                    setIsTagPopoverOpen(true);
+                                    fetchTags();
+                                }}>
+                                    <TagIcon className="mr-2 h-4 w-4" />
+                                    Add tags
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={(e) => {
+                                    e.preventDefault();
+                                    handleToggleFavorite(e as any);
+                                }}>
+                                    <Star className={`mr-2 h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
+                                    {episode.favorite ? 'Remove favorite' : 'Add favorite'}
+                                </DropdownMenuItem>
+
+                                <DropdownMenuSeparator />
+
                                 <DropdownMenuItem onSelect={(e) => {
                                     e.preventDefault();
                                     handleDelete();
