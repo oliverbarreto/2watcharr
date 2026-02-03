@@ -1,6 +1,4 @@
-# Task: Day Week Month Year Chart and Stats Table
-
-## Description:
+# Task: Improve stats page
 
 We need to extend the current functionality that shows the chat in the stats page. 
 

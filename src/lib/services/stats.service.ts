@@ -26,22 +26,31 @@ export interface DashboardStats {
         added: number;
         watched: number;
     }[];
+    detailedStats: {
+        title: string;
+        type: string;
+        event_type: string;
+        created_at: number;
+    }[];
 }
 
 export class StatsService {
     constructor(private db: Database) { }
 
-    async getDashboardStats(userId: string, options?: { period?: 'day' | 'week' | 'month' | 'year' }): Promise<DashboardStats> {
+    async getDashboardStats(userId: string, options?: { period?: 'day' | 'week' | 'month' | 'year' | 'total' }): Promise<DashboardStats> {
+        const period = options?.period || 'month';
         const counts = await this.getCounts(userId);
-        const usage = await this.getUsage(userId, options?.period || 'month');
+        const usage = await this.getUsage(userId, period);
         const playTime = await this.getPlayTimeStats(userId);
-        const activityTimeSeries = await this.getActivityTimeSeries(userId);
+        const activityTimeSeries = await this.getActivityTimeSeries(userId, period);
+        const detailedStats = await this.getDetailedStats(userId, period);
 
         return {
             counts,
             usage,
             playTime,
-            activityTimeSeries
+            activityTimeSeries,
+            detailedStats
         };
     }
 
@@ -73,7 +82,12 @@ export class StatsService {
         if (period === 'day') threshold = now - 86400;
         else if (period === 'week') threshold = now - 604800;
         else if (period === 'month') threshold = now - 2592000;
-        else if (period === 'year') threshold = now - 31536000;
+        else if (period === 'year') {
+            const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+            threshold = Math.floor(startOfYear.getTime() / 1000);
+        } else if (period === 'total') {
+            threshold = 0;
+        }
 
         const events = await this.db.all(`
             SELECT me.type, COUNT(*) as count 
@@ -125,26 +139,97 @@ export class StatsService {
         };
     }
 
-    private async getActivityTimeSeries(userId: string) {
-        // Last 30 days
-        const limit = 30;
-        const rows = await this.db.all(`
-            SELECT 
-                date(me.created_at, 'unixepoch') as day,
-                COUNT(CASE WHEN me.type = 'added' THEN 1 END) as added,
-                COUNT(CASE WHEN me.type = 'watched' THEN 1 END) as watched
-            FROM media_events me
-            JOIN episodes e ON me.episode_id = e.id
-            WHERE e.user_id = ?
-            GROUP BY day
-            ORDER BY day DESC
-            LIMIT ?
-        `, [userId, limit]);
+    private async getActivityTimeSeries(userId: string, period: string) {
+        let query = '';
+        let params: any[] = [userId];
+
+        if (period === 'day') {
+            // Last 24 hours, grouped by hour
+            query = `
+                SELECT 
+                    strftime('%Y-%m-%dT%H:00:00', me.created_at, 'unixepoch') as time_bucket,
+                    COUNT(CASE WHEN me.type = 'added' THEN 1 END) as added,
+                    COUNT(CASE WHEN me.type = 'watched' THEN 1 END) as watched
+                FROM media_events me
+                JOIN episodes e ON me.episode_id = e.id
+                WHERE e.user_id = ? AND me.created_at >= ?
+                GROUP BY time_bucket
+                ORDER BY time_bucket ASC
+            `;
+            const now = Math.floor(Date.now() / 1000);
+            params.push(now - 86400);
+        } else if (period === 'week' || period === 'month') {
+            // Grouped by day
+            const limit = period === 'week' ? 7 : 30;
+            query = `
+                SELECT 
+                    date(me.created_at, 'unixepoch') as time_bucket,
+                    COUNT(CASE WHEN me.type = 'added' THEN 1 END) as added,
+                    COUNT(CASE WHEN me.type = 'watched' THEN 1 END) as watched
+                FROM media_events me
+                JOIN episodes e ON me.episode_id = e.id
+                WHERE e.user_id = ?
+                GROUP BY time_bucket
+                ORDER BY time_bucket DESC
+                LIMIT ?
+            `;
+            params.push(limit);
+        } else if (period === 'year' || period === 'total') {
+            // Grouped by month
+            let threshold = 0;
+            if (period === 'year') {
+                const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+                threshold = Math.floor(startOfYear.getTime() / 1000);
+            }
+            
+            query = `
+                SELECT 
+                    strftime('%Y-%m', me.created_at, 'unixepoch') as time_bucket,
+                    COUNT(CASE WHEN me.type = 'added' THEN 1 END) as added,
+                    COUNT(CASE WHEN me.type = 'watched' THEN 1 END) as watched
+                FROM media_events me
+                JOIN episodes e ON me.episode_id = e.id
+                WHERE e.user_id = ? AND me.created_at >= ?
+                GROUP BY time_bucket
+                ORDER BY time_bucket ASC
+            `;
+            params.push(threshold);
+        }
+
+        const rows = await this.db.all(query, params);
 
         return rows.map(r => ({
-            date: r.day,
+            date: r.time_bucket,
             added: r.added,
             watched: r.watched
-        })).reverse();
+        })).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    async getDetailedStats(userId: string, period: string) {
+        let threshold = 0;
+        const now = Math.floor(Date.now() / 1000);
+        
+        if (period === 'day') threshold = now - 86400;
+        else if (period === 'week') threshold = now - 604800;
+        else if (period === 'month') threshold = now - 2592000;
+        else if (period === 'year') {
+            const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+            threshold = Math.floor(startOfYear.getTime() / 1000);
+        }
+
+        const events = await this.db.all(`
+            SELECT 
+                e.title,
+                e.type,
+                me.type as event_type,
+                me.created_at
+            FROM media_events me
+            JOIN episodes e ON me.episode_id = e.id
+            WHERE e.user_id = ? AND me.created_at >= ?
+            ORDER BY me.created_at DESC
+            LIMIT 100
+        `, [userId, threshold]);
+
+        return events;
     }
 }

@@ -20,6 +20,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+    Table, 
+    TableHeader, 
+    TableBody, 
+    TableHead, 
+    TableRow, 
+    TableCell 
+} from '@/components/ui/table';
 import { toast } from 'sonner';
 import { 
     ChartContainer, 
@@ -59,12 +67,18 @@ interface DashboardStats {
         added: number;
         watched: number;
     }[];
+    detailedStats: {
+        title: string;
+        type: string;
+        event_type: string;
+        created_at: number;
+    }[];
 }
 
 export default function StatsPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
+    const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year' | 'total'>('month');
 
     const fetchStats = useCallback(async () => {
         setIsLoading(true);
@@ -146,27 +160,21 @@ export default function StatsPage() {
         },
     };
 
+    const periodLabels = {
+        day: "Last 24 Hours",
+        week: "This Week",
+        month: "This Month",
+        year: "This Year",
+        total: "All Time"
+    };
+
     return (
         <Layout>
-            <div className="animate-in fade-in duration-500">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div className="animate-in fade-in duration-500 pb-20">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Usage Statistics</h1>
                         <p className="text-muted-foreground">Detailed insights into your watch history and library.</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <Select value={period} onValueChange={(v: 'day' | 'week' | 'month' | 'year') => setPeriod(v)}>
-                            <SelectTrigger className="w-[140px]">
-                                <SelectValue placeholder="Period" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="day">Today</SelectItem>
-                                <SelectItem value="week">This Week</SelectItem>
-                                <SelectItem value="month">This Month</SelectItem>
-                                <SelectItem value="year">This Year</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
                 </div>
 
@@ -207,14 +215,14 @@ export default function StatsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Usage Stats (Side List) */}
-                    <Card className="lg:col-span-1 border-none bg-card/50 backdrop-blur-sm self-start">
+                    {/* Activity Summary (Side List) */}
+                    <Card className="lg:col-span-1 border-none bg-card/50 backdrop-blur-sm self-start shadow-xl">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg font-bold">
                                 <TrendingUp className="h-5 w-5 text-primary" />
                                 Activity Summary
                             </CardTitle>
-                            <CardDescription>Metrics for this {period}</CardDescription>
+                            <CardDescription>{periodLabels[period]}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-5">
                             <UsageItem 
@@ -258,7 +266,7 @@ export default function StatsPage() {
                     {/* Charts Section */}
                     <div className="lg:col-span-2 space-y-8">
                         {/* Play Time Stats */}
-                        <Card className="border-none bg-card/50 backdrop-blur-sm overflow-hidden">
+                        <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-lg font-bold">
                                     <Clock className="h-5 w-5 text-primary" />
@@ -284,24 +292,24 @@ export default function StatsPage() {
                         </Card>
 
                         {/* Activity Timeline Chart */}
-                        <Card className="border-none bg-card/50 backdrop-blur-sm overflow-hidden">
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle className="text-lg font-bold">Daily Activity</CardTitle>
-                                        <CardDescription>Visualizing your engagement over the last 30 days</CardDescription>
-                                    </div>
-                                    <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                                            <span className="text-muted-foreground">Added</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                                            <span className="text-muted-foreground">Watched</span>
-                                        </div>
-                                    </div>
+                        <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
+                            <CardHeader className="flex items-center gap-2 space-y-0 border-b border-border/10 py-5 sm:flex-row">
+                                <div className="grid flex-1 gap-1">
+                                    <CardTitle className="text-lg font-bold">Activity Trend</CardTitle>
+                                    <CardDescription>{periodLabels[period]} visualization</CardDescription>
                                 </div>
+                                <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
+                                    <SelectTrigger className="w-[160px] rounded-lg bg-muted/20 border-border/50">
+                                        <SelectValue placeholder="Select period" />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl bg-zinc-950/90 backdrop-blur-md border-zinc-800">
+                                        <SelectItem value="day" className="rounded-lg">Today</SelectItem>
+                                        <SelectItem value="week" className="rounded-lg">Last 7 days</SelectItem>
+                                        <SelectItem value="month" className="rounded-lg">Last 30 days</SelectItem>
+                                        <SelectItem value="year" className="rounded-lg">This Year</SelectItem>
+                                        <SelectItem value="total" className="rounded-lg">All Time</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </CardHeader>
                             <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
                                 <ChartContainer config={chartConfig} className="aspect-[16/6] w-full">
@@ -327,6 +335,12 @@ export default function StatsPage() {
                                             tickMargin={8}
                                             tickFormatter={(value) => {
                                                 const date = new Date(value);
+                                                if (period === 'day') {
+                                                    return date.toLocaleTimeString("en-US", { hour: 'numeric' });
+                                                }
+                                                if (period === 'year' || period === 'total') {
+                                                    return date.toLocaleDateString("en-US", { month: 'short', year: '2-digit' });
+                                                }
                                                 return date.toLocaleDateString("en-US", {
                                                     month: "short",
                                                     day: "numeric",
@@ -372,6 +386,63 @@ export default function StatsPage() {
                         </Card>
                     </div>
                 </div>
+
+                {/* Detailed Stats Table */}
+                <Card className="mt-8 border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg font-bold">
+                            <BarChart3 className="h-5 w-5 text-primary" />
+                            Detailed History
+                        </CardTitle>
+                        <CardDescription>Most recent events for {periodLabels[period]}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent border-border/50">
+                                    <TableHead className="font-bold uppercase tracking-wider text-[10px]">Title</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-wider text-[10px]">Type</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-wider text-[10px]">Action</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Date</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {stats.detailedStats.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                                            No activity found for this period.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    stats.detailedStats.map((event, i) => (
+                                        <TableRow key={i} className="border-border/20 hover:bg-white/5 transition-colors">
+                                            <TableCell className="font-medium max-w-[300px] truncate">{event.title}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1.5">
+                                                    {event.type === 'video' ? <Video className="h-3 w-3 text-red-400" /> : <Mic className="h-3 w-3 text-purple-400" />}
+                                                    <span className="capitalize text-xs">{event.type}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${
+                                                    event.event_type === 'watched' ? 'bg-green-500/10 text-green-500' : 
+                                                    event.event_type === 'added' ? 'bg-blue-500/10 text-blue-500' :
+                                                    event.event_type === 'favorited' ? 'bg-amber-500/10 text-amber-500' :
+                                                    'bg-muted text-muted-foreground'
+                                                }`}>
+                                                    {event.event_type}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right text-xs text-muted-foreground">
+                                                {new Date(event.created_at * 1000).toLocaleDateString()}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
             </div>
         </Layout>
     );

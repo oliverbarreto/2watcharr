@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         const userId = (session.user as { id: string }).id;
 
         const { searchParams } = new URL(request.url);
-        const period = searchParams.get('period') as 'day' | 'week' | 'month' | 'year' || 'month';
+        const period = searchParams.get('period') as 'day' | 'week' | 'month' | 'year' | 'total' || 'month';
 
         const db = await getDatabase();
         const statsService = new StatsService(db);
