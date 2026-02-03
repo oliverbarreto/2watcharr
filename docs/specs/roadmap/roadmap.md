@@ -3,14 +3,17 @@
 ## Feature Requests
 
 Working:
+- [ ] Analysis: `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md` 
 
 To be done:
 - [ ] `./docs/specs/roadmap/BUGFIX-faviconerror-on-browser-console.md`
-- [ ] `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
 - [ ] `./docs/specs/roadmap/FEATURE-import-playlist-data.md`
 
 ### Implemented Features
 20260203:
+- [x] `docs/specs/roadmap/completed/UI-improve-stats-cards.md`
+- [x] add debounce to search in stats table
+- [x] `docs/specs/roadmap/completed/FEATURE-add-pagination-to-stats-table.md`
 - [x] `./docs/specs/roadmap/completed/BUGFIX-podcasts-showing-wrong-metadata-but-link-works.md`
 - [x] `./docs/specs/roadmap/completed/BUGFIX-channel-card-improvement-on-mobile.md`
 - [x] `./docs/specs/roadmap/completed/UI-modify-confirm-watched-special-buttons.md`           

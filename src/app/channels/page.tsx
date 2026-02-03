@@ -91,7 +91,7 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
         <Card
             ref={setNodeRef}
             style={style}
-            className={`group relative hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border-muted-foreground/10 aspect-square min-h-[320px] ${highlightId === channel.id ? 'ring-2 ring-primary ring-offset-2' : ''} ${isDragging ? 'opacity-50' : ''}`}
+            className={`group relative hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border-muted-foreground/10 aspect-square min-h-[280px] ${highlightId === channel.id ? 'ring-2 ring-primary ring-offset-2' : ''} ${isDragging ? 'opacity-50' : ''}`}
             onClick={(e) => {
                 // If the click was on the channel link or a button, don't navigate
                 if ((e.target as HTMLElement).closest('a') || (e.target as HTMLElement).closest('button')) {
@@ -354,7 +354,7 @@ function ChannelsPageContent() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {[...Array(8)].map((_, i) => (
-                            <Card key={i} className="aspect-square min-h-[320px] relative overflow-hidden">
+                            <Card key={i} className="aspect-square min-h-[280px] relative overflow-hidden">
                                 <div className="absolute inset-x-0 bottom-0 h-1/3 p-4 bg-muted/20 backdrop-blur-sm border-t border-white/5">
                                     <div className="flex items-start gap-3 h-full items-center">
                                         <Skeleton className="h-8 w-8 rounded-lg" />
@@ -455,7 +455,7 @@ export default function ChannelsPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {[...Array(8)].map((_, i) => (
-                            <Card key={i} className="aspect-square min-h-[320px] relative overflow-hidden">
+                            <Card key={i} className="aspect-square min-h-[280px] relative overflow-hidden">
                                 <div className="absolute inset-x-0 bottom-0 h-1/3 p-4 bg-muted/20 backdrop-blur-sm border-t border-white/5">
                                     <div className="flex items-start gap-3 h-full items-center">
                                         <Skeleton className="h-8 w-8 rounded-lg" />

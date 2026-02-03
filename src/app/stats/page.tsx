@@ -88,8 +88,18 @@ export default function StatsPage() {
     const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year' | 'total'>('month');
     const [sortConfig, setSortConfig] = useState<{ key: keyof DashboardStats['detailedStats'][0], direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(20);
+
+    // Handle search debouncing
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const fetchStats = useCallback(async () => {
         setIsLoading(true);
@@ -151,8 +161,8 @@ export default function StatsPage() {
 
     // Filter by search query
     const filteredStats = stats?.detailedStats ? stats.detailedStats.filter((event) => {
-        if (!searchQuery) return true;
-        return event.title.toLowerCase().includes(searchQuery.toLowerCase());
+        if (!debouncedSearchQuery) return true;
+        return event.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
     }) : [];
 
     // Sort the filtered results
@@ -171,10 +181,10 @@ export default function StatsPage() {
     const endIndex = startIndex + rowsPerPage;
     const paginatedStats = sortedDetailedStats.slice(startIndex, endIndex);
 
-    // Reset to page 1 when search query or rows per page changes
+    // Reset to page 1 when debounced search query or rows per page changes
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, rowsPerPage]);
+    }, [debouncedSearchQuery, rowsPerPage]);
 
     if (isLoading && !stats) {
         return (
@@ -237,7 +247,7 @@ export default function StatsPage() {
                     <StatCard 
                         title="Total Videos" 
                         value={stats.counts.totalVideos} 
-                        icon={<Video className="h-5 w-5" />}
+                        icon={<Video className="h-7 w-7" />}
                         description="Videos in your watch list"
                         color="text-red-500"
                         bg="bg-red-500/10"
@@ -245,7 +255,7 @@ export default function StatsPage() {
                     <StatCard 
                         title="Total Podcasts" 
                         value={stats.counts.totalPodcasts} 
-                        icon={<Mic className="h-5 w-5" />}
+                        icon={<Mic className="h-7 w-7" />}
                         description="Podcasts in your watch list"
                         color="text-purple-500"
                         bg="bg-purple-500/10"
@@ -253,7 +263,7 @@ export default function StatsPage() {
                     <StatCard 
                         title="Channels" 
                         value={stats.counts.totalChannels} 
-                        icon={<Users className="h-5 w-5" />}
+                        icon={<Users className="h-7 w-7" />}
                         description="Followed sources"
                         color="text-blue-500"
                         bg="bg-blue-500/10"
@@ -261,7 +271,7 @@ export default function StatsPage() {
                     <StatCard 
                         title="Tags" 
                         value={stats.counts.totalTags} 
-                        icon={<Hash className="h-5 w-5" />}
+                        icon={<Hash className="h-7 w-7" />}
                         description="Unique categories"
                         color="text-emerald-500"
                         bg="bg-emerald-500/10"
@@ -611,18 +621,18 @@ interface StatCardProps {
 function StatCard({ title, value, icon, description, color, bg }: StatCardProps) {
     return (
         <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all hover:translate-y-[-4px] bg-card/50 backdrop-blur-sm group">
-            <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <div className={`p-4 rounded-2xl ${bg} ${color} shadow-sm transition-transform group-hover:scale-110 group-hover:rotate-3`}>
-                        {icon}
-                    </div>
-                </div>
-                <div>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 mb-1">{title}</h3>
-                    <div className="flex items-baseline gap-2">
+            <CardContent className="p-3 lg:p-5">
+                <div className="flex flex-row lg:flex-col items-center lg:items-start justify-start gap-6 lg:gap-4">
+                    <div className="flex items-center gap-3 lg:mb-3">
+                        <div className={`p-2.5 lg:p-3 rounded-2xl ${bg} ${color} shadow-sm transition-transform group-hover:scale-110 group-hover:rotate-3`}>
+                            {icon}
+                        </div>
                         <span className="text-4xl font-black tabular-nums tracking-tighter">{value}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-3 font-semibold group-hover:text-foreground transition-colors">{description}</p>
+                    <div className="flex flex-col items-start text-left">
+                        <h3 className="text-[11px] lg:text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/70 mb-0.5">{title}</h3>
+                        <p className="text-[13px] lg:text-xs text-muted-foreground font-semibold group-hover:text-foreground transition-colors leading-tight">{description}</p>
+                    </div>
                 </div>
             </CardContent>
         </Card>
