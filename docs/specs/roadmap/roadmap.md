@@ -10,7 +10,8 @@ To be done:
 - [ ] `./docs/specs/roadmap/FEATURE-import-playlist-data.md`
 
 ### Implemented Features
-20260203:
+20260203 - Release 0.2.0:
+- [x] Tag and release 0.2.0
 - [x] `docs/specs/roadmap/completed/UI-improve-stats-cards.md`
 - [x] add debounce to search in stats table
 - [x] `docs/specs/roadmap/completed/FEATURE-add-pagination-to-stats-table.md`

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-02-03
+
+### Added
+- Pagination and search functionality to the stats table for better data management.
+- Column sorting in the Detailed History table on the stats page.
+- Enhanced activity charts with period filtering (Today, Week, Month, Year, All Time).
+- "Watched", "Favorite", and "Tag" options in episode dropdowns for easier access.
+- Action buttons are now always visible in list rows for faster interaction.
+- Support for individual metadata synchronization per channel card.
+- Responsive navbar with a mobile sheet menu for better mobile navigation.
+
+### Changed
+- Improved stats card UI with more compact layouts on mobile.
+- Refined episode card grid view UI, including a zoom effect on hover.
+- Standardized 'Pending Confirmation' logic and UI feedback across the platform.
+
+### Fixed
+- Podcast metadata retrieval now correctly identifies podcasts when given a search URL.
+- Resolved various linter errors and standardized string literals.
+- Fixed 'pending' watch status filtering and UI inconsistencies.
+
 ## [0.1.0] - 2026-02-02
 
 ### Added
