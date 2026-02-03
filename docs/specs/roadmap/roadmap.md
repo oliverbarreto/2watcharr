@@ -3,15 +3,24 @@
 ## Feature Requests
 
 Working:
-- [ ] Analysis: `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md` 
 
 To be done:
 - [ ] `./docs/specs/roadmap/BUGFIX-faviconerror-on-browser-console.md`
 - [ ] `./docs/specs/roadmap/FEATURE-import-playlist-data.md`
+- [ ] `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md` 
+
+- [ ] `docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`
+- [ ] `docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
+- [ ] `docs/specs/roadmap/FEATURE-async-request-and-client-ui.md`
+- [ ] `docs/specs/roadmap/FEATURE-deleted-episodes-page.md`
+- [ ] `docs/specs/roadmap/FEATURE-import-playlist-data.md`
+
 
 ### Implemented Features
+
 20260203 - Release 0.2.0:
 - [x] Tag and release 0.2.0
+- [x] Analysis done: `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md` 
 - [x] `docs/specs/roadmap/completed/UI-improve-stats-cards.md`
 - [x] add debounce to search in stats table
 - [x] `docs/specs/roadmap/completed/FEATURE-add-pagination-to-stats-table.md`
@@ -20,7 +29,7 @@ To be done:
 - [x] `./docs/specs/roadmap/completed/UI-modify-confirm-watched-special-buttons.md`           
 - [x] `./docs/specs/roadmap/completed/FEATURE-day-week-month-year-chart-and-stats-table.md`
 
-20260131:
+20260131 - Release 0.1.0:
 - [x] `./docs/specs/roadmap/feature-stats.md`                                       
 - [x] `./docs/specs/roadmap/feature-users.md`                                       
 
