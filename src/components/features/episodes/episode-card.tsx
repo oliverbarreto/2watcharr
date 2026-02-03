@@ -301,7 +301,49 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
     return (
         <div ref={setNodeRef} style={style} className="h-full">
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <Card className={`group relative h-full flex flex-col overflow-hidden ${episode.watched ? 'opacity-60' : ''} ${episode.watchStatus === 'pending' ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}>
+                <Card className={`group relative h-full flex flex-col overflow-hidden p-0 gap-0 ${episode.watched ? 'opacity-60' : ''}`}>
+                    {/* Thumbnail */}
+                    <div className="relative aspect-video overflow-hidden bg-muted cursor-pointer" onClick={handlePlay}>
+                        {episode.thumbnailUrl && (
+                            <Image
+                                src={episode.thumbnailUrl}
+                                alt={episode.title}
+                                fill
+                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                unoptimized
+                            />
+                        )}
+
+                        {/* Media Type Icon */}
+                        <div className="absolute top-2 right-2">
+                            {episode.type === 'podcast' ? (
+                                <Badge className="bg-purple-600 text-white border-none px-1.5 py-0.5">
+                                    <Mic className="h-3 w-3 mr-1" />
+                                    Podcast
+                                </Badge>
+                            ) : (
+                                <Badge className="bg-red-600 text-white border-none px-1.5 py-0.5">
+                                    <Youtube className="h-3 w-3 mr-1" />
+                                    Video
+                                </Badge>
+                            )}
+                        </div>
+
+                        {/* Duration Badge */}
+                        {episode.duration && (
+                            <Badge className="absolute bottom-2 right-2 bg-black/80 text-white border-none">
+                                {formatDuration(episode.duration)}
+                            </Badge>
+                        )}
+
+                        {/* Watched Overlay */}
+                        {episode.watched && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                <Check className="h-12 w-12 text-white" />
+                            </div>
+                        )}
+                    </div>
+
                     <CardContent className="p-4 flex-1 flex flex-col">
                         {/* Drag Handle */}
                         <div
@@ -310,70 +352,6 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
                             className="absolute left-2 top-2 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-black/50 p-1 rounded-sm"
                         >
                             <GripVertical className="h-4 w-4 text-white" />
-                        </div>
-
-                        {/* Thumbnail */}
-                        <div className="relative aspect-video mb-3 rounded-md overflow-hidden bg-muted cursor-pointer" onClick={handlePlay}>
-                            {episode.thumbnailUrl && (
-                                <Image
-                                    src={episode.thumbnailUrl}
-                                    alt={episode.title}
-                                    fill
-                                    className="object-cover"
-                                    unoptimized
-                                />
-                            )}
-
-                            {/* Media Type Icon */}
-                            <div className="absolute top-2 right-2">
-                                {episode.type === 'podcast' ? (
-                                    <Badge className="bg-purple-600 text-white border-none px-1.5 py-0.5">
-                                        <Mic className="h-3 w-3 mr-1" />
-                                        Podcast
-                                    </Badge>
-                                ) : (
-                                    <Badge className="bg-red-600 text-white border-none px-1.5 py-0.5">
-                                        <Youtube className="h-3 w-3 mr-1" />
-                                        Video
-                                    </Badge>
-                                )}
-                            </div>
-
-                            {/* Duration Badge */}
-                            {episode.duration && (
-                                <Badge className="absolute bottom-2 right-2 bg-black/80 text-white border-none">
-                                    {formatDuration(episode.duration)}
-                                </Badge>
-                            )}
-
-                            {/* Watched Overlay */}
-                            {episode.watched && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                    <Check className="h-12 w-12 text-white" />
-                                </div>
-                            )}
-
-                            {/* Pending Overlay */}
-                            {episode.watchStatus === 'pending' && !episode.watched && (
-                                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] group/pending">
-                                    <div className="bg-primary text-primary-foreground px-3 py-1.5 rounded-full flex items-center gap-2 font-semibold shadow-lg animate-pulse mb-3">
-                                        <Clock className="h-4 w-4" />
-                                        Watched?
-                                    </div>
-                                    <Button 
-                                        size="sm" 
-                                        variant="default" 
-                                        className="h-8 shadow-md opacity-0 group-hover/pending:opacity-100 transition-opacity"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleToggleWatched();
-                                        }}
-                                    >
-                                        <Check className="h-4 w-4 mr-2" />
-                                        Confirm
-                                    </Button>
-                                </div>
-                            )}
                         </div>
 
                         {/* Title and Channel */}
@@ -415,21 +393,9 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
 
                         {/* Badges */}
                         <div className="flex flex-wrap gap-2 mb-auto pb-3">
-                            {episode.favorite && (
-                                <Badge variant="secondary" className="gap-1">
-                                    <Star className="h-3 w-3 fill-current" />
-                                    Favorite
-                                </Badge>
-                            )}
                             {episode.priority !== 'none' && (
                                 <Badge className={getPriorityColor(episode.priority)}>
                                     {episode.priority.charAt(0).toUpperCase() + episode.priority.slice(1)}
-                                </Badge>
-                            )}
-                            {episode.watchStatus === 'pending' && (
-                                <Badge variant="default" className="gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    Pending Confirmation
                                 </Badge>
                             )}
                             {episode.tags?.map((tag) => (
@@ -452,12 +418,12 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
                         <div className="flex items-center gap-2 mt-2">
                             <Button
                                 size="sm"
-                                variant={episode.watchStatus === 'pending' ? 'default' : (episode.watched ? 'secondary' : 'outline')}
+                                variant={episode.watchStatus === 'pending' ? 'outline' : (episode.watched ? 'secondary' : 'outline')}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleToggleWatched();
                                 }}
-                                className="flex-1"
+                                className={`flex-1 ${episode.watchStatus === 'pending' ? 'text-red-600 border-red-600 dark:text-red-500 dark:border-red-500 hover:bg-red-500/10' : ''}`}
                                 title={episode.watchStatus === 'pending' ? "Confirm watched" : (episode.watched ? "Mark as unwatched" : "Mark as watched")}
                             >
                                 {episode.watchStatus === 'pending' ? (
