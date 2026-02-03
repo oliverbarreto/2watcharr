@@ -1,0 +1,22 @@
+# Task: Extend Stats Page Functionality
+
+- [x] Research and Planning [/]
+    - [x] Analyze current stats page implementation
+    - [x] Analyze API implementation for stats
+- [x] Backend Updates [/]
+    - [x] Update `/api/stats` to support 'total' range
+    - [x] Ensure data aggregation for different time ranges is correct
+- [x] Frontend Updates [/]
+    - [x] Install/Verify necessary Shadcn components (Radio Group, Table)
+    - [x] Replace Period Select with Radio Group
+    - [x] Implement Stats Table using Shadcn
+    - [x] Update Chart to reflect selected time range (Day, Week, Month, Year, Total)
+- [x] UI Refinement [x]
+    - [x] Replace RadioGroup with Select dropdown in Chart Header
+    - [x] Reposition period selection to be within the Chart Card
+    - [x] Ensure all components (Summary, Chart, Table) still sync with the selected period
+- [x] Table Sorting [x]
+    - [x] Implement client-side sorting for the Detailed History table
+    - [x] Add sort icons and click handlers to table headers
+    - [x] Add state for sort configuration
+- [x] Verification and Polish [x]

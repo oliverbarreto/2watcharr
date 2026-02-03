@@ -3,7 +3,6 @@
 ## Feature Requests
 
 Working:
-- [ ] `./docs/specs/roadmap/FEATURE-day-week-month-year-chart-and-stats-table.md`
 
 To be done:
 - [ ] `./docs/specs/roadmap/BUGFIX-faviconerror-on-browser-console.md`
@@ -12,7 +11,8 @@ To be done:
 
 ### Implemented Features
 20260203:
-- [x] `./docs/specs/roadmap/UI-modify-confirm-watched-special-buttons.md`           
+- [x] `./docs/specs/roadmap/completed/UI-modify-confirm-watched-special-buttons.md`           
+- [x] `./docs/specs/roadmap/completed/FEATURE-day-week-month-year-chart-and-stats-table.md`
 
 20260131:
 - [x] `./docs/specs/roadmap/feature-stats.md`                                       

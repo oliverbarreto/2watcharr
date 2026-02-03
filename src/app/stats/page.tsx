@@ -15,7 +15,10 @@ import {
     Plus,
     Star,
     Trash2,
-    Tag as TagIcon
+    Tag as TagIcon,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -79,6 +82,7 @@ export default function StatsPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year' | 'total'>('month');
+    const [sortConfig, setSortConfig] = useState<{ key: keyof DashboardStats['detailedStats'][0], direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
 
     const fetchStats = useCallback(async () => {
         setIsLoading(true);
@@ -121,6 +125,30 @@ export default function StatsPage() {
 
         return parts.join(' ');
     };
+
+    const handleSort = (key: keyof DashboardStats['detailedStats'][0]) => {
+        setSortConfig((prev) => {
+            if (prev?.key === key) {
+                return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+            }
+            return { key, direction: 'desc' };
+        });
+    };
+
+    const getSortIcon = (key: keyof DashboardStats['detailedStats'][0]) => {
+        if (sortConfig?.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+        return sortConfig.direction === 'asc' 
+            ? <ArrowUp className="ml-2 h-4 w-4 text-primary" /> 
+            : <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+    };
+
+    const sortedDetailedStats = stats?.detailedStats ? [...stats.detailedStats].sort((a, b) => {
+        if (!sortConfig) return 0;
+        const { key, direction } = sortConfig;
+        if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
+        if (a[key] > b[key]) return direction === 'asc' ? 1 : -1;
+        return 0;
+    }) : [];
 
     if (isLoading && !stats) {
         return (
@@ -400,21 +428,53 @@ export default function StatsPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent border-border/50">
-                                    <TableHead className="font-bold uppercase tracking-wider text-[10px]">Title</TableHead>
-                                    <TableHead className="font-bold uppercase tracking-wider text-[10px]">Type</TableHead>
-                                    <TableHead className="font-bold uppercase tracking-wider text-[10px]">Action</TableHead>
-                                    <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Date</TableHead>
+                                    <TableHead 
+                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
+                                        onClick={() => handleSort('title')}
+                                    >
+                                        <div className="flex items-center">
+                                            Title
+                                            {getSortIcon('title')}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead 
+                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
+                                        onClick={() => handleSort('type')}
+                                    >
+                                        <div className="flex items-center">
+                                            Type
+                                            {getSortIcon('type')}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead 
+                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
+                                        onClick={() => handleSort('event_type')}
+                                    >
+                                        <div className="flex items-center">
+                                            Action
+                                            {getSortIcon('event_type')}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead 
+                                        className="font-bold uppercase tracking-wider text-[10px] text-right cursor-pointer hover:text-foreground transition-colors"
+                                        onClick={() => handleSort('created_at')}
+                                    >
+                                        <div className="flex items-center justify-end">
+                                            Date
+                                            {getSortIcon('created_at')}
+                                        </div>
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {stats.detailedStats.length === 0 ? (
+                                {sortedDetailedStats.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                                             No activity found for this period.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    stats.detailedStats.map((event, i) => (
+                                    sortedDetailedStats.map((event, i) => (
                                         <TableRow key={i} className="border-border/20 hover:bg-white/5 transition-colors">
                                             <TableCell className="font-medium max-w-[300px] truncate">{event.title}</TableCell>
                                             <TableCell>

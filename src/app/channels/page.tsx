@@ -6,7 +6,7 @@ import { Layout } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trash2, RefreshCw, Youtube, Mic } from 'lucide-react';
+import { Trash2, RefreshCw, Youtube, Mic, ChevronUp, ChevronDown } from 'lucide-react';
 import { ChannelFilterBar } from '@/components/features/channels/channel-filter-bar';
 import { toast } from 'sonner';
 import {
@@ -79,6 +79,8 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
         isDragging,
     } = useSortable({ id: channel.id });
 
+    const [isExpanded, setIsExpanded] = useState(false);
+
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
@@ -143,18 +145,20 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
                 </button>
             </div>
 
-            {/* Channel Info Overlay - Full Screen on Hover */}
-            <div className="absolute inset-x-0 bottom-0 z-20 h-1/3 p-5 bg-black/40 backdrop-blur-md border border-white/10 group-hover:h-full group-hover:bg-black/70 transition-all duration-300 flex flex-col">
-                <div className="flex-1 overflow-hidden group-hover:pt-12 transition-all duration-300">
-                    <a
-                        href={channel.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xl font-bold text-red-600 hover:text-red-500 transition-colors line-clamp-1 block mb-1 leading-none relative z-10"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {channel.name}
-                    </a>
+            {/* Channel Info Overlay - Full Screen on Hover/Expanded */}
+            <div className={`absolute inset-x-0 bottom-0 z-20 p-5 bg-black/40 backdrop-blur-md border border-white/10 transition-all duration-300 flex flex-col ${isExpanded ? 'h-full bg-black/70' : 'h-[40%] group-hover:h-full group-hover:bg-black/70'}`}>
+                <div className={`flex-1 overflow-hidden transition-all duration-300 ${isExpanded ? 'pt-12' : 'group-hover:pt-12'}`}>
+                    <div className="flex justify-between items-start">
+                        <a
+                            href={channel.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xl font-bold text-red-600 hover:text-red-500 transition-colors line-clamp-1 block mb-1 leading-none relative z-10 flex-1"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {channel.name}
+                        </a>
+                    </div>
                     <div className="flex items-center gap-2 mb-2">
                         {channel.type === 'podcast' ? (
                             <Mic className="h-4 w-4 text-purple-500" />
@@ -169,19 +173,19 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
                     </div>
 
                     {channel.description && channel.description !== "No description available. Sync metadata to refresh." && (
-                        <p className="text-[12px] text-white/90 line-clamp-2 md:group-hover:line-clamp-none group-active:line-clamp-none leading-tight transition-all duration-300">
+                        <p className={`text-[12px] text-white/90 leading-tight transition-all duration-300 ${isExpanded ? 'line-clamp-none' : 'line-clamp-2 md:group-hover:line-clamp-none group-active:line-clamp-none'}`}>
                             {channel.description}
                         </p>
                     )}
                 </div>
 
                 {channel.tags && channel.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2 group-hover:mt-4 transition-all duration-300">
+                    <div className={`flex flex-wrap gap-2 mt-2 transition-all duration-300 ${isExpanded ? 'mt-4' : 'group-hover:mt-4'}`}>
                         {channel.tags.map((tag, idx) => (
                             <Badge
                                 key={tag.id}
                                 variant="outline"
-                                className={`text-[10px] px-3 py-0.5 h-6 rounded-full border-none font-medium bg-[#3d2b1f] text-[#f59e0b] border border-[#f59e0b]/20 ${idx >= 2 ? 'hidden group-hover:flex' : ''}`}
+                                className={`text-[10px] px-3 py-0.5 h-6 rounded-full border-none font-medium bg-[#3d2b1f] text-[#f59e0b] border border-[#f59e0b]/20 ${idx >= 2 ? (isExpanded ? 'flex' : 'hidden group-hover:flex') : ''}`}
                                 style={tag.color ? {
                                     backgroundColor: `${tag.color}20`,
                                     color: tag.color,
@@ -194,6 +198,22 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
                         ))}
                     </div>
                 )}
+
+                {/* Mobile Toggle Button - Bottom Right */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsExpanded(!isExpanded);
+                    }}
+                    className="md:hidden absolute bottom-5 right-5 z-30 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-all text-white shadow-lg active:scale-90"
+                    aria-label={isExpanded ? "Collapse" : "Expand"}
+                >
+                    {isExpanded ? (
+                        <ChevronDown className="h-8 w-8 stroke-[3]" />
+                    ) : (
+                        <ChevronUp className="h-8 w-8 stroke-[3]" />
+                    )}
+                </button>
             </div>
 
             {/* Drag Handle - Bottom as requested, visible only on hover */}
