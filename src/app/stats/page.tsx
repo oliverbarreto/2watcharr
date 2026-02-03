@@ -18,7 +18,10 @@ import {
     Tag as TagIcon,
     ArrowUpDown,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    Search,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +47,7 @@ import {
     YAxis, 
     CartesianGrid
 } from 'recharts';
+import { Input } from '@/components/ui/input';
 
 interface DashboardStats {
     counts: {
@@ -83,6 +87,9 @@ export default function StatsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year' | 'total'>('month');
     const [sortConfig, setSortConfig] = useState<{ key: keyof DashboardStats['detailedStats'][0], direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(20);
 
     const fetchStats = useCallback(async () => {
         setIsLoading(true);
@@ -142,13 +149,32 @@ export default function StatsPage() {
             : <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
     };
 
-    const sortedDetailedStats = stats?.detailedStats ? [...stats.detailedStats].sort((a, b) => {
+    // Filter by search query
+    const filteredStats = stats?.detailedStats ? stats.detailedStats.filter((event) => {
+        if (!searchQuery) return true;
+        return event.title.toLowerCase().includes(searchQuery.toLowerCase());
+    }) : [];
+
+    // Sort the filtered results
+    const sortedDetailedStats = [...filteredStats].sort((a, b) => {
         if (!sortConfig) return 0;
         const { key, direction } = sortConfig;
         if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
         if (a[key] > b[key]) return direction === 'asc' ? 1 : -1;
         return 0;
-    }) : [];
+    });
+
+    // Calculate pagination
+    const totalRows = sortedDetailedStats.length;
+    const totalPages = Math.ceil(totalRows / rowsPerPage);
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const paginatedStats = sortedDetailedStats.slice(startIndex, endIndex);
+
+    // Reset to page 1 when search query or rows per page changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, rowsPerPage]);
 
     if (isLoading && !stats) {
         return (
@@ -425,6 +451,38 @@ export default function StatsPage() {
                         <CardDescription>Most recent events for {periodLabels[period]}</CardDescription>
                     </CardHeader>
                     <CardContent>
+                        {/* Search and Pagination Controls */}
+                        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search by title..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-10 bg-muted/20 border-border/50"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page:</span>
+                                <Select 
+                                    value={rowsPerPage.toString()} 
+                                    onValueChange={(v) => setRowsPerPage(Number(v))}
+                                >
+                                    <SelectTrigger className="w-[100px] bg-muted/20 border-border/50">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl bg-zinc-950/90 backdrop-blur-md border-zinc-800">
+                                        <SelectItem value="10" className="rounded-lg">10</SelectItem>
+                                        <SelectItem value="20" className="rounded-lg">20</SelectItem>
+                                        <SelectItem value="50" className="rounded-lg">50</SelectItem>
+                                        <SelectItem value="100" className="rounded-lg">100</SelectItem>
+                                        <SelectItem value="200" className="rounded-lg">200</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
                         <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent border-border/50">
@@ -467,14 +525,14 @@ export default function StatsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {sortedDetailedStats.length === 0 ? (
+                                {paginatedStats.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                                            No activity found for this period.
+                                            {searchQuery ? 'No results found for your search.' : 'No activity found for this period.'}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    sortedDetailedStats.map((event, i) => (
+                                    paginatedStats.map((event, i) => (
                                         <TableRow key={i} className="border-border/20 hover:bg-white/5 transition-colors">
                                             <TableCell className="font-medium max-w-[300px] truncate">{event.title}</TableCell>
                                             <TableCell>
@@ -501,6 +559,39 @@ export default function StatsPage() {
                                 )}
                             </TableBody>
                         </Table>
+
+                        {/* Pagination Info and Navigation */}
+                        {totalRows > 0 && (
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+                                <div className="text-sm text-muted-foreground">
+                                    Showing {startIndex + 1} to {Math.min(endIndex, totalRows)} of {totalRows} {totalRows === 1 ? 'entry' : 'entries'}
+                                    {searchQuery && ` (filtered from ${stats?.detailedStats.length || 0} total)`}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                        className="h-8 w-8 p-0"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <div className="text-sm font-medium">
+                                        Page {currentPage} of {totalPages}
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="h-8 w-8 p-0"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
