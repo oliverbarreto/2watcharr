@@ -154,6 +154,7 @@ export interface SortOptions {
 }
 
 export interface ChannelFilters {
+    id?: string;
     search?: string;
     tagIds?: string[];
     type?: MediaType;

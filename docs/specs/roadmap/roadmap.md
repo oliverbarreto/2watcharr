@@ -2,28 +2,31 @@
 
 ## Feature Requests
 
-Working:
+Working on:
+20260204:
+- [ ] `./docs/specs/roadmap/FEATURE-channel-detials-page.md`
 
 To be done:
-- [ ] `./docs/specs/roadmap/BUGFIX-faviconerror-on-browser-console.md`
 - [ ] `./docs/specs/roadmap/FEATURE-import-playlist-data.md`
 - [ ] `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md` 
 
-- [ ] `docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`
-- [ ] `docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
-- [ ] `docs/specs/roadmap/FEATURE-async-request-and-client-ui.md`
-- [ ] `docs/specs/roadmap/FEATURE-deleted-episodes-page.md`
-- [ ] `docs/specs/roadmap/FEATURE-import-playlist-data.md`
+- [ ] `./docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`
+- [ ] `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
+- [ ] `./docs/specs/roadmap/FEATURE-async-request-and-client-ui.md`
+- [ ] `./docs/specs/roadmap/FEATURE-deleted-episodes-page.md`
+- [ ] `./docs/specs/roadmap/FEATURE-import-playlist-data.md`
 
+Pending Analysis:
+- [ ] `./docs/specs/roadmap/BUGFIX-faviconerror-on-browser-console.md`
 
 ### Implemented Features
 
 20260203 - Release 0.2.0:
 - [x] Tag and release 0.2.0
 - [x] Analysis done: `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md` 
-- [x] `docs/specs/roadmap/completed/UI-improve-stats-cards.md`
+- [x] `./docs/specs/roadmap/completed/UI-improve-stats-cards.md`
 - [x] add debounce to search in stats table
-- [x] `docs/specs/roadmap/completed/FEATURE-add-pagination-to-stats-table.md`
+- [x] `./docs/specs/roadmap/completed/FEATURE-add-pagination-to-stats-table.md`
 - [x] `./docs/specs/roadmap/completed/BUGFIX-podcasts-showing-wrong-metadata-but-link-works.md`
 - [x] `./docs/specs/roadmap/completed/BUGFIX-channel-card-improvement-on-mobile.md`
 - [x] `./docs/specs/roadmap/completed/UI-modify-confirm-watched-special-buttons.md`           

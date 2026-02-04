@@ -97,7 +97,7 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
                 if ((e.target as HTMLElement).closest('a') || (e.target as HTMLElement).closest('button')) {
                     return;
                 }
-                window.location.href = `/?channelId=${channel.id}`;
+                window.location.href = `/channels/${channel.id}`;
             }}
         >
             {/* Background Image */}

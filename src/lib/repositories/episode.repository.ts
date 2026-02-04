@@ -308,6 +308,46 @@ export class EpisodeRepository {
     }
 
     /**
+     * Bulk update watch status for all episodes in a channel
+     */
+    async bulkUpdateWatchStatus(channelId: string, userId: string, watched: boolean): Promise<void> {
+        const now = Math.floor(Date.now() / 1000);
+        const watchStatus = watched ? 'watched' : 'unwatched';
+        const watchedInt = watched ? 1 : 0;
+
+        // Get all applicable episodes first to create events
+        const episodes = await this.findAll({ channelId, userId, isDeleted: false });
+
+        await this.db.run('BEGIN TRANSACTION');
+
+        try {
+            await this.db.run(
+                `UPDATE episodes 
+                 SET watched = ?, watch_status = ?, updated_at = ? 
+                 WHERE channel_id = ? AND user_id = ? AND is_deleted = 0`,
+                [watchedInt, watchStatus, now, channelId, userId]
+            );
+
+            // Add events for each episode
+            const eventType = watched ? 'watched' : 'unwatched';
+            for (const episode of episodes) {
+                if (episode.watched !== watched) {
+                    const eventId = uuidv4();
+                    await this.db.run(
+                        'INSERT INTO media_events (id, episode_id, type, created_at) VALUES (?, ?, ?, ?)',
+                        [eventId, episode.id, eventType, now]
+                    );
+                }
+            }
+
+            await this.db.run('COMMIT');
+        } catch (error) {
+            await this.db.run('ROLLBACK');
+            throw error;
+        }
+    }
+
+    /**
      * Delete episode (soft delete)
      */
     async delete(id: string): Promise<void> {

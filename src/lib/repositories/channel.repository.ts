@@ -97,19 +97,22 @@ export class ChannelRepository {
         const params: (string | number | null)[] = [];
         const conditions: string[] = [];
 
+        const joinType = (filters?.userId && !filters?.id) ? 'INNER JOIN' : 'LEFT JOIN';
+
         let query = `
             SELECT c.*, COUNT(e.id) as episode_count
             FROM channels c
-            LEFT JOIN episodes e ON c.id = e.channel_id AND e.is_deleted = 0
+            ${joinType} episodes e ON c.id = e.channel_id AND e.is_deleted = 0
         `;
 
         if (filters?.userId) {
-            query = `
-                SELECT c.*, COUNT(e.id) as episode_count
-                FROM channels c
-                INNER JOIN episodes e ON c.id = e.channel_id AND e.is_deleted = 0 AND e.user_id = ?
-            `;
+            query += ' AND e.user_id = ?';
             params.push(filters.userId);
+        }
+
+        if (filters?.id) {
+            conditions.push('c.id = ?');
+            params.push(filters.id);
         }
 
         if (filters?.search) {
