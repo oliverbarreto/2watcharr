@@ -17,8 +17,10 @@ Pending Analysis:
 - [ ] `./docs/specs/roadmap/BUGFIX-faviconerror-on-browser-console.md`
 
 ### Implemented Features
-
 20260205:
+
+
+20260205: Release 0.3.0:
 - [x] Modify settings to make the "General" tab the default tab in Settings
 - [x] `./docs/specs/roadmap/completed/FEATURE-deleted-episodes-page.md`
 - [x] `./docs/specs/roadmap/completed/UI-only-allow-grid-view-in-mobile-prompt-v1.md`
