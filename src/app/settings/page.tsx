@@ -167,12 +167,77 @@ export default function SettingsPage() {
             <div className="max-w-4xl mx-auto">
                 <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
-                <Tabs defaultValue="tags" className="w-full">
+                <Tabs defaultValue="general" className="w-full">
                     <TabsList className="mb-8">
-                        <TabsTrigger value="tags">Tags Management</TabsTrigger>
                         <TabsTrigger value="general">General</TabsTrigger>
+                        <TabsTrigger value="tags">Tags Management</TabsTrigger>
                         {isAdmin && <TabsTrigger value="users">User Management</TabsTrigger>}
                     </TabsList>
+
+                    <TabsContent value="general">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>General Settings</CardTitle>
+                                <CardDescription>
+                                    Main application settings and preferences.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="defaultView">Default View</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Choose which view to use by default when loading the list.
+                                    </p>
+                                    <Select 
+                                        value={defaultView} 
+                                        onValueChange={(value) => handleDefaultViewChange(value as 'grid' | 'list')}
+                                    >
+                                        <SelectTrigger id="defaultView" className="w-[180px]">
+                                            <SelectValue placeholder="Select view" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="grid">Grid View</SelectItem>
+                                            <SelectItem value="list">List View</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="watchAction">Default Watch Action</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Action to take when opening a video from the list.
+                                    </p>
+                                    <Select 
+                                        value={watchAction} 
+                                        onValueChange={(value) => handleWatchActionChange(value as 'none' | 'watched' | 'pending')}
+                                    >
+                                        <SelectTrigger id="watchAction" className="w-[180px]">
+                                            <SelectValue placeholder="Select action" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">None</SelectItem>
+                                            <SelectItem value="watched">Mark as Watched</SelectItem>
+                                            <SelectItem value="pending">Mark as Pending</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2 pt-4 border-t">
+                                    <Label>Deleted Episodes</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        View and manage episodes that have been removed from your watch list.
+                                    </p>
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => window.location.href = '/deleted'}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        View Deleted Episodes
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
                     <TabsContent value="tags">
                         <div className="grid gap-8">
@@ -313,70 +378,6 @@ export default function SettingsPage() {
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="general">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>General Settings</CardTitle>
-                                <CardDescription>
-                                    Main application settings and preferences.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="defaultView">Default View</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Choose which view to use by default when loading the list.
-                                    </p>
-                                    <Select 
-                                        value={defaultView} 
-                                        onValueChange={(value) => handleDefaultViewChange(value as 'grid' | 'list')}
-                                    >
-                                        <SelectTrigger id="defaultView" className="w-[180px]">
-                                            <SelectValue placeholder="Select view" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="grid">Grid View</SelectItem>
-                                            <SelectItem value="list">List View</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="watchAction">Default Watch Action</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Action to take when opening a video from the list.
-                                    </p>
-                                    <Select 
-                                        value={watchAction} 
-                                        onValueChange={(value) => handleWatchActionChange(value as 'none' | 'watched' | 'pending')}
-                                    >
-                                        <SelectTrigger id="watchAction" className="w-[180px]">
-                                            <SelectValue placeholder="Select action" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">None</SelectItem>
-                                            <SelectItem value="watched">Mark as Watched</SelectItem>
-                                            <SelectItem value="pending">Mark as Pending</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2 pt-4 border-t">
-                                    <Label>Deleted Episodes</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        View and manage episodes that have been removed from your watch list.
-                                    </p>
-                                    <Button 
-                                        variant="outline" 
-                                        onClick={() => window.location.href = '/deleted'}
-                                        className="w-full sm:w-auto"
-                                    >
-                                        View Deleted Episodes
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
 
                     {isAdmin && (
                         <TabsContent value="users">
