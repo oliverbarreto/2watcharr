@@ -14,11 +14,13 @@ Pending Analysis:
 - [ ] `./docs/specs/roadmap/BUGFIX-faviconerror-on-browser-console.md`
 
 ### Implemented Features
-20260205:
+20260205 - Release 0.3.1:
 - [x] `./docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`
-- [x] `./docs/specs/roadmap/completed/UI-improve-ui-overlay-button-in-mobile-prompt-v1.md`
+- [x] BUGFIX: Safari compatibility (custom dialogs, autofill fixes)
+- [x] FEATURE: "Paste from clipboard" in add episode modal
+- [x] FEATURE: Tags toggle in add episode modal for mobile
 
-20260205: Release 0.3.0:
+20260205 - Release 0.3.0:
 - [x] Modify settings to make the "General" tab the default tab in Settings
 - [x] `./docs/specs/roadmap/completed/FEATURE-deleted-episodes-page.md`
 - [x] `./docs/specs/roadmap/completed/UI-only-allow-grid-view-in-mobile-prompt-v1.md`

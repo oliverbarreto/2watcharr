@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-02-05
+
+### Added
+- **API Tokens**: Individual API tokens for users to authenticate external workflows (e.g., Apple Shortcuts).
+- **Paste from Clipboard**: Added a button in the add episode dialog to paste URLs directly from the clipboard.
+
+### Fixed
+- **iOS Workflow**: Resolved issues with the iOS Shortcut integration by supporting token-based authentication.
+- **Safari Compatibility**: Replaced `window.confirm` with custom dialogs and fixed autofill issues in user management.
+
+### Improved
+- **Add Episode Modal**: Added a toggle for tags on mobile devices to save screen space while keeping them accessible.
+
 ## [0.3.0] - 2026-02-05
 
 ### Added
