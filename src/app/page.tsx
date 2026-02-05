@@ -86,7 +86,7 @@ function HomePageContent() {
                 Clear Channel Filter
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={toggleViewMode} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={toggleViewMode} className="gap-2 hidden md:flex">
               {viewMode === 'grid' ? (
                 <>
                   <List className="h-4 w-4" />

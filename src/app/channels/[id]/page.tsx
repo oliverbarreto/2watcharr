@@ -319,7 +319,7 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
                     <EpisodeList 
                         key={`${refreshEpisodesKey}-${id}`}
                         filters={{ channelId: id }} 
-                        viewMode="list" 
+                        viewMode="grid" 
                     />
                 </div>
             </div>

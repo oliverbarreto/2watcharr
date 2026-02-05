@@ -205,13 +205,13 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
                         e.stopPropagation();
                         setIsExpanded(!isExpanded);
                     }}
-                    className="md:hidden absolute bottom-5 right-5 z-30 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-all text-white shadow-lg active:scale-90"
+                    className="md:hidden absolute bottom-5 right-5 z-30 w-6 h-6 flex items-center justify-center bg-black/60 hover:bg-black/80 rounded-full transition-all text-white shadow-lg active:scale-90"
                     aria-label={isExpanded ? "Collapse" : "Expand"}
                 >
                     {isExpanded ? (
-                        <ChevronDown className="h-8 w-8 stroke-[3]" />
+                        <ChevronDown className="h-4 w-4 stroke-[3]" />
                     ) : (
-                        <ChevronUp className="h-8 w-8 stroke-[3]" />
+                        <ChevronUp className="h-4 w-4 stroke-[3]" />
                     )}
                 </button>
             </div>

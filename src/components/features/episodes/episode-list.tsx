@@ -39,9 +39,23 @@ interface EpisodeListProps {
     viewMode: 'grid' | 'list';
 }
 
-export function EpisodeList({ filters, sort, viewMode }: EpisodeListProps) {
+export function EpisodeList({ filters, sort, viewMode: initialViewMode }: EpisodeListProps) {
     const [episodes, setEpisodes] = useState<MediaEpisode[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    const viewMode = isMobile ? 'grid' : initialViewMode;
+
 
     const sensors = useSensors(
         useSensor(PointerSensor),
