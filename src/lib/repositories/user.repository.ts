@@ -14,8 +14,8 @@ export class UserRepository {
 
         await this.db.run(
             `INSERT INTO users (
-                id, username, password, display_name, emoji, color, is_admin, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                id, username, password, display_name, emoji, color, is_admin, api_token, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 id,
                 user.username,
@@ -24,6 +24,7 @@ export class UserRepository {
                 user.emoji || null,
                 user.color || null,
                 user.isAdmin ? 1 : 0,
+                user.apiToken || null,
                 now,
                 now,
             ]
@@ -54,7 +55,7 @@ export class UserRepository {
      * Get all user profiles (excluding passwords)
      */
     async findAllProfiles(): Promise<UserProfile[]> {
-        const rows = await this.db.all('SELECT id, username, display_name, emoji, color, is_admin, created_at, updated_at FROM users ORDER BY created_at ASC');
+        const rows = await this.db.all('SELECT id, username, display_name, emoji, color, is_admin, api_token, created_at, updated_at FROM users ORDER BY created_at ASC');
         return rows.map(this.mapRowToUserProfile);
     }
 
@@ -102,12 +103,16 @@ export class UserRepository {
         await this.db.run('DELETE FROM users WHERE id = ?', id);
     }
 
-    /**
-     * Count users
-     */
     async count(): Promise<number> {
         const row = await this.db.get('SELECT COUNT(*) as count FROM users');
         return row.count;
+    }
+    /**
+     * Find user by API token
+     */
+    async findByApiToken(token: string): Promise<User | null> {
+        const row = await this.db.get('SELECT * FROM users WHERE api_token = ?', token);
+        return row ? this.mapRowToUser(row) : null;
     }
 
     private mapRowToUser(row: Record<string, unknown>): User {
@@ -119,6 +124,7 @@ export class UserRepository {
             emoji: row.emoji as string | null,
             color: row.color as string | null,
             isAdmin: Boolean(row.is_admin),
+            apiToken: row.api_token as string | null,
             createdAt: row.created_at as number,
             updatedAt: row.updated_at as number,
         };
@@ -132,6 +138,7 @@ export class UserRepository {
             emoji: row.emoji as string | null,
             color: row.color as string | null,
             isAdmin: Boolean(row.is_admin),
+            apiToken: row.api_token as string | null,
             createdAt: row.created_at as number,
             updatedAt: row.updated_at as number,
         };

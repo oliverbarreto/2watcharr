@@ -2,6 +2,7 @@ import { Database } from 'sqlite';
 import { UserRepository } from '../repositories';
 import { User, UserProfile } from '../domain/models';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 export class UserService {
     private userRepo: UserRepository;
@@ -31,9 +32,11 @@ export class UserService {
      */
     async createUser(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
         const hashedPassword = await bcrypt.hash(data.password!, 10);
+        const apiToken = crypto.randomBytes(32).toString('hex');
         return this.userRepo.create({
             ...data,
             password: hashedPassword,
+            apiToken,
         });
     }
 
@@ -100,6 +103,7 @@ export class UserService {
                 emoji: emoji || '👤',
                 color: color || '#FF0000',
                 isAdmin: true,
+                apiToken: null,
             });
         }
     }
@@ -116,5 +120,14 @@ export class UserService {
      */
     async deleteUser(id: string): Promise<void> {
         await this.userRepo.delete(id);
+    }
+
+    /**
+     * Generate a new API token for a user
+     */
+    async generateApiToken(id: string): Promise<string> {
+        const token = crypto.randomBytes(32).toString('hex');
+        await this.userRepo.update(id, { apiToken: token });
+        return token;
     }
 }

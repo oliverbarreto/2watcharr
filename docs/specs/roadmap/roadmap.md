@@ -6,9 +6,6 @@ Working on:
 
 To be done:
 - [ ] `./docs/specs/roadmap/FEATURE-import-playlist-data.md`
-- [ ] `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md` 
-
-- [ ] `./docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`
 - [ ] `./docs/specs/roadmap/FEATURE-async-request-and-client-ui.md`
 - [ ] `./docs/specs/roadmap/FEATURE-import-playlist-data.md`
 - [ ] `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
@@ -18,7 +15,8 @@ Pending Analysis:
 
 ### Implemented Features
 20260205:
-
+- [x] `./docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`
+- [x] `./docs/specs/roadmap/completed/UI-improve-ui-overlay-button-in-mobile-prompt-v1.md`
 
 20260205: Release 0.3.0:
 - [x] Modify settings to make the "General" tab the default tab in Settings

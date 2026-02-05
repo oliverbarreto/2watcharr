@@ -73,6 +73,7 @@ export async function createProfile(data: {
         emoji: data.emoji,
         color: data.color,
         isAdmin: data.isAdmin,
+        apiToken: null,
     });
     revalidatePath("/settings");
     revalidatePath("/profiles");
@@ -136,4 +137,20 @@ export async function updateProfile(id: string, data: {
     console.error("Error updating profile:", error);
     return { error: "Failed to update profile" };
   }
+}
+
+/**
+ * Regenerate API token for a user (Admin only)
+ */
+export async function refreshApiToken(userId: string) {
+    try {
+        const db = await getDatabase();
+        const userService = new UserService(db);
+        const token = await userService.generateApiToken(userId);
+        revalidatePath("/settings");
+        return { success: true, token };
+    } catch (error) {
+        console.error("Error refreshing API token:", error);
+        return { error: "Failed to refresh API token" };
+    }
 }

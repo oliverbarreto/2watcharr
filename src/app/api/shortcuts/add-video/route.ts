@@ -8,13 +8,13 @@ import { TagRepository, UserRepository } from '@/lib/repositories';
 import { z } from 'zod';
 
 // Request validation schema
-const addEpisodeSchema = z.object({
+const addVideoSchema = z.object({
     url: z.string().url('Invalid URL'),
     tag: z.string().optional(), // Tag name (will be created if doesn't exist)
 });
 
 /**
- * POST /api/shortcuts/add-episode - Add episode from iOS Shortcut
+ * POST /api/shortcuts/add-video - Add video from iOS Shortcut
  */
 export async function POST(request: NextRequest) {
     try {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { url, tag } = addEpisodeSchema.parse(body);
+        const { url, tag } = addVideoSchema.parse(body);
 
         const mediaService = new MediaService(db);
         const tagRepo = new TagRepository(db);

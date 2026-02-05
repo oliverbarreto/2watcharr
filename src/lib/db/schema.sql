@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   emoji TEXT,                      -- Emoji for avatar
   color TEXT,                      -- Hex color for avatar
   is_admin BOOLEAN NOT NULL DEFAULT 0,
+  api_token TEXT UNIQUE,           -- API Token for external access (Shortcuts)
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );

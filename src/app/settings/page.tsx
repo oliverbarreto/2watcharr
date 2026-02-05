@@ -11,6 +11,14 @@ import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Layout } from '@/components/layout';
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -39,6 +47,7 @@ export default function SettingsPage() {
     const [editColor, setEditColor] = useState('');
     const [defaultView, setDefaultView] = useState<'grid' | 'list'>('list');
     const [watchAction, setWatchAction] = useState<'none' | 'watched' | 'pending'>('pending');
+    const [deletingTag, setDeletingTag] = useState<{ id: string, name: string } | null>(null);
 
     useEffect(() => {
         fetchTags();
@@ -95,10 +104,7 @@ export default function SettingsPage() {
     };
 
     const handleDeleteTag = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this tag? This will remove it from all episodes.')) {
-            return;
-        }
-
+        setDeletingTag(null);
         try {
             const response = await fetch(`/api/tags/${id}`, {
                 method: 'DELETE',
@@ -362,7 +368,7 @@ export default function SettingsPage() {
                                                                     size="icon"
                                                                     variant="ghost"
                                                                     className="h-8 w-8 text-destructive"
-                                                                    onClick={() => handleDeleteTag(tag.id)}
+                                                                    onClick={() => setDeletingTag({ id: tag.id, name: tag.name })}
                                                                 >
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </Button>
@@ -386,6 +392,27 @@ export default function SettingsPage() {
                     )}
                 </Tabs>
             </div>
+
+            {/* Confirmation Dialog for Tag Deletion */}
+            <Dialog open={!!deletingTag} onOpenChange={(open) => !open && setDeletingTag(null)}>
+                <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle>Delete Tag</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Are you sure you want to delete the tag <strong>{deletingTag?.name}</strong>? 
+                            This will remove it from all episodes.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={() => setDeletingTag(null)} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button onClick={() => deletingTag && handleDeleteTag(deletingTag.id)} className="bg-red-600 hover:bg-red-700 text-white">
+                            Delete Tag
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Layout>
     );
 }

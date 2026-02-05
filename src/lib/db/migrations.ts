@@ -552,4 +552,33 @@ export async function runMigrations(db: Database): Promise<void> {
       }
     }
   }
+
+  // Check if add_api_token migration has been applied
+  const migration10 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_api_token'
+  );
+
+  if (!migration10) {
+    console.log('Running add_api_token migration...');
+    try {
+      await db.run('ALTER TABLE users ADD COLUMN api_token TEXT');
+      await db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_api_token ON users(api_token)');
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'add_api_token'
+      );
+      console.log('add_api_token migration completed.');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('duplicate column name')) {
+        await db.run(
+          'INSERT INTO migrations (name) VALUES (?)',
+          'add_api_token'
+        );
+        console.log('api_token column already existed, migration marked as completed.');
+      } else {
+        throw error;
+      }
+    }
+  }
 }

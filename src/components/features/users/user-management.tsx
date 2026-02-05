@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProfiles, createProfile, deleteProfile, updateProfile } from "@/lib/actions/user.actions";
+import { getProfiles, createProfile, deleteProfile, updateProfile, refreshApiToken } from "@/lib/actions/user.actions";
 import { UserProfile } from "@/lib/domain/models";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Trash2, UserPlus } from "lucide-react";
+import { Pencil, Trash2, UserPlus, Key, RefreshCw, Copy } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -25,6 +25,8 @@ export function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
+  const [confirmingRefresh, setConfirmingRefresh] = useState<{ id: string, username: string } | null>(null);
+  const [deletingProfile, setDeletingProfile] = useState<{ id: string, username: string } | null>(null);
   
   // New user state
   const [newUsername, setNewUsername] = useState("");
@@ -107,15 +109,8 @@ export function UserManagement() {
     setIsDialogOpen(true);
   };
 
-  const handleDeleteUser = async (id: string, username: string) => {
-    if (username === 'admin') {
-        toast.error("Cannot delete the default admin account");
-        return;
-    }
-    if (!confirm(`Are you sure you want to delete user "${username}"? All their data (watchlist, tags) will be permanently lost.`)) {
-      return;
-    }
-
+  const handleDeleteUser = async (id: string) => {
+    setDeletingProfile(null);
     const result = await deleteProfile(id);
     if (result.success) {
       toast.success("User deleted successfully");
@@ -133,6 +128,22 @@ export function UserManagement() {
     setNewColor("#3B82F6");
     setNewIsAdmin(false);
     setEditingProfile(null);
+  };
+
+  const handleRefreshApiToken = async (userId: string) => {
+    setConfirmingRefresh(null);
+    const result = await refreshApiToken(userId);
+    if (result.success) {
+        toast.success("API token regenerated successfully");
+        fetchProfiles();
+    } else {
+        toast.error(result.error || "Failed to regenerate API token");
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
   };
 
   return (
@@ -275,18 +286,108 @@ export function UserManagement() {
                         size="icon" 
                         variant="ghost" 
                         className="text-zinc-500 hover:text-red-500 hover:bg-red-500/10 shrink-0"
-                        onClick={() => handleDeleteUser(profile.id, profile.username)}
-                        disabled={profile.username === 'admin'}
+                        onClick={() => {
+                          if (profile.username === 'admin') {
+                            toast.error("Cannot delete the default admin account");
+                          } else {
+                            setDeletingProfile({ id: profile.id, username: profile.username });
+                          }
+                        }}
                     >
                         <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
+                </div>
+                
+                {/* API Token Section */}
+                <div className="mt-4 pt-4 border-t border-zinc-800">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                      <Key className="h-3 w-3" />
+                      API Token
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 text-zinc-500 hover:text-white"
+                      onClick={() => setConfirmingRefresh({ id: profile.id, username: profile.username })}
+                      title="Regenerate Token"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      readOnly
+                      value={profile.apiToken || 'No token generated'}
+                      autoComplete="off"
+                      data-1p-ignore
+                      data-lpignore="true"
+                      className="h-8 flex-1 bg-zinc-950 border-zinc-800 font-mono text-xs text-zinc-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                    {profile.apiToken && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-zinc-500 hover:text-white"
+                        onClick={() => copyToClipboard(profile.apiToken!)}
+                        title="Copy to clipboard"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-zinc-600 mt-2 italic">
+                    Use this token in the `X-API-Token` header for iOS Shortcuts.
+                  </p>
                 </div>
               </CardContent>
             </Card>
           ))
         )}
       </div>
+
+      {/* Confirmation Dialog for API Token Refresh */}
+      <Dialog open={!!confirmingRefresh} onOpenChange={(open) => !open && setConfirmingRefresh(null)}>
+        <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle>Regenerate API Token</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Are you sure you want to regenerate the API token for <strong>@{confirmingRefresh?.username}</strong>? 
+              The old token will stop working immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setConfirmingRefresh(null)} className="text-zinc-400 hover:text-white">
+              Cancel
+            </Button>
+            <Button onClick={() => confirmingRefresh && handleRefreshApiToken(confirmingRefresh.id)} className="bg-red-600 hover:bg-red-700 text-white">
+              Regenerate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog for User Deletion */}
+      <Dialog open={!!deletingProfile} onOpenChange={(open) => !open && setDeletingProfile(null)}>
+        <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle>Delete User Profile</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Are you sure you want to delete user <strong>@{deletingProfile?.username}</strong>? 
+              All their data (watchlist, tags) will be <strong>permanently lost</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setDeletingProfile(null)} className="text-zinc-400 hover:text-white">
+              Cancel
+            </Button>
+            <Button onClick={() => deletingProfile && handleDeleteUser(deletingProfile.id)} className="bg-red-600 hover:bg-red-700 text-white">
+              Delete Profile
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

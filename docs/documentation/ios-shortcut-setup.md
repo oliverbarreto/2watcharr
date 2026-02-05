@@ -6,7 +6,11 @@ This guide will help you set up a robust iOS Shortcut to save YouTube videos to 
 
 1. Your **2watcharr** server must be running and accessible from your iOS device.
    - If running locally on your Mac, your iPhone must be on the **same Wi-Fi network**.
-   - Use your Mac's local IP address (e.g., `192.168.1.100`) instead of `localhost`.
+   - Use your Mac's local IP address (e.g., `192.168.1.100`).
+2. **Get your API Token**:
+    - Go to **Settings > User Management**.
+    - Find your profile and copy the **API Token**.
+    - If you don't have one, click the refresh icon to generate it.
 
 ## Step-by-Step Setup
 
@@ -25,9 +29,11 @@ Follow these steps to add error handling and progress feedback:
     - Title: `2watcharr`
     - Body: `Añadiendo video: VideoURL...`
 4.  **Get Contents of URL**:
-    - URL: `http://YOUR_MAC_IP:3000/api/shortcuts/add-video`
+    - URL: `http://YOUR_MAC_IP:3000/api/shortcuts/add-episode`
     - Method: `POST`
-    - Headers: `Content-Type: application/json`
+    - Headers:
+        - `Content-Type: application/json`
+        - `X-API-Token: YOUR_API_TOKEN` (Paste your token here)
     - Request Body: `JSON`
     - Add Field: `url` (Value: `VideoURL`)
 5.  **Get Dictionary from Input**: (Pass the result of the previous action).
@@ -61,3 +67,18 @@ If you are testing on your Mac using the Shortcuts app:
 
 - **Connection Refused**: Double check the IP address. In Terminal, run `ipconfig getifaddr en0` to find your Mac's local IP.
 - **Wait Time**: Large video metadata might take a few seconds to process. The progress notification helps confirm it's working.
+
+
+## Environment Configuration
+
+For local development use the following variable in the iOS Workflow:
+
+```bash
+URL: http://localhost:3000/api/shortcuts/add-episode
+```
+
+For production use:
+
+```bash
+URL: https://yourdomain.com/api/shortcuts/add-episode
+```

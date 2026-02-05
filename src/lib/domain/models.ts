@@ -21,6 +21,7 @@ export interface User {
     emoji: string | null;
     color: string | null;
     isAdmin: boolean;
+    apiToken: string | null;
     createdAt: number;
     updatedAt: number;
 }
