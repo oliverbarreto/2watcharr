@@ -125,6 +125,8 @@ export async function PATCH(
 
 /**
  * DELETE /api/episodes/[id] - Delete an episode
+ * Query params:
+ *   - permanent=true: Permanently delete the episode (hard delete)
  */
 export async function DELETE(
     request: NextRequest,
@@ -147,7 +149,15 @@ export async function DELETE(
              return NextResponse.json({ error: 'Episode not found' }, { status: 404 });
         }
 
-        await mediaService.deleteEpisode(id);
+        // Check if this is a permanent delete
+        const { searchParams } = new URL(request.url);
+        const isPermanent = searchParams.get('permanent') === 'true';
+
+        if (isPermanent) {
+            await mediaService.hardDeleteEpisode(id);
+        } else {
+            await mediaService.deleteEpisode(id);
+        }
 
         return NextResponse.json({ success: true });
     } catch (error) {

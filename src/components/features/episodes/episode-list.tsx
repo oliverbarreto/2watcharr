@@ -31,6 +31,7 @@ interface EpisodeListProps {
         channelId?: string;
         tagIds?: string[];
         watchStatus?: 'unwatched' | 'pending' | 'watched';
+        isDeleted?: boolean;
     };
     sort?: {
         field: string;
@@ -77,6 +78,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode }: Episod
                 params.append('tags', filters.tagIds.join(','));
             }
             if (filters?.watchStatus) params.append('watchStatus', filters.watchStatus);
+            if (filters?.isDeleted !== undefined) params.append('isDeleted', String(filters.isDeleted));
             if (sort?.field) params.append('sort', sort.field);
             if (sort?.order) params.append('order', sort.order);
 

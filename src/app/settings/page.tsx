@@ -360,6 +360,20 @@ export default function SettingsPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
+
+                                <div className="space-y-2 pt-4 border-t">
+                                    <Label>Deleted Episodes</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        View and manage episodes that have been removed from your watch list.
+                                    </p>
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => window.location.href = '/deleted'}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        View Deleted Episodes
+                                    </Button>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>

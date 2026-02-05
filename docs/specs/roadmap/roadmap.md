@@ -10,7 +10,6 @@ To be done:
 
 - [ ] `./docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`
 - [ ] `./docs/specs/roadmap/FEATURE-async-request-and-client-ui.md`
-- [ ] `./docs/specs/roadmap/FEATURE-deleted-episodes-page.md`
 - [ ] `./docs/specs/roadmap/FEATURE-import-playlist-data.md`
 - [ ] `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
 
@@ -20,6 +19,7 @@ Pending Analysis:
 ### Implemented Features
 
 20260205:
+- [x] `./docs/specs/roadmap/completed/FEATURE-deleted-episodes-page.md`
 - [x] `./docs/specs/roadmap/completed/UI-only-allow-grid-view-in-mobile-prompt-v1.md`
 - [x] `./docs/specs/roadmap/completed/UI-improve-ui-overlay-button-in-mobile-prompt-v1.md`
 

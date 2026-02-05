@@ -358,6 +358,31 @@ export class EpisodeRepository {
     }
 
     /**
+     * Permanently delete episode (hard delete)
+     * Removes the episode and all associated data from the database
+     */
+    async hardDelete(id: string): Promise<void> {
+        await this.db.run('BEGIN TRANSACTION');
+
+        try {
+            // Delete associated tags
+            await this.db.run('DELETE FROM episode_tags WHERE episode_id = ?', id);
+
+            // Delete associated events
+            await this.db.run('DELETE FROM media_events WHERE episode_id = ?', id);
+
+            // Delete the episode itself
+            await this.db.run('DELETE FROM episodes WHERE id = ?', id);
+
+            await this.db.run('COMMIT');
+        } catch (error) {
+            await this.db.run('ROLLBACK');
+            throw error;
+        }
+    }
+
+
+    /**
      * Add a media event
      */
     async addEvent(episodeId: string, type: MediaEventType): Promise<void> {

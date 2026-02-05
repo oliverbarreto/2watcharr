@@ -116,6 +116,39 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
         }
     };
 
+    const handleHardDelete = async () => {
+        try {
+            const response = await fetch(`/api/episodes/${episode.id}?permanent=true`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) throw new Error('Failed to permanently delete episode');
+
+            toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} permanently deleted`);
+            onDelete?.();
+        } catch {
+            toast.error('Failed to permanently delete episode');
+        }
+    };
+
+    const handleRestore = async () => {
+        try {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isDeleted: false }),
+            });
+
+            if (!response.ok) throw new Error('Failed to restore episode');
+
+            toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} restored to watch list`);
+            window.dispatchEvent(new Event('episode-restored'));
+            onUpdate?.();
+        } catch {
+            toast.error('Failed to restore episode');
+        }
+    };
+
     const handleReorder = async (position: 'beginning' | 'end') => {
         try {
             const response = await fetch(`/api/episodes/${episode.id}/reorder`, {
@@ -500,13 +533,32 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
 
                                 <DropdownMenuSeparator />
 
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
-                                    handleDelete();
-                                }} className="text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Remove from list
-                                </DropdownMenuItem>
+                                {episode.isDeleted ? (
+                                    <>
+                                        <DropdownMenuItem onSelect={(e) => {
+                                            e.preventDefault();
+                                            handleRestore();
+                                        }} className="text-green-600 font-medium">
+                                            <Check className="mr-2 h-4 w-4" />
+                                            Restore to watch list
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={(e) => {
+                                            e.preventDefault();
+                                            handleHardDelete();
+                                        }} className="text-destructive font-medium">
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Remove permanently
+                                        </DropdownMenuItem>
+                                    </>
+                                ) : (
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleDelete();
+                                    }} className="text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Remove from list
+                                    </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>

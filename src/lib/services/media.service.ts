@@ -166,6 +166,14 @@ export class MediaService {
     }
 
     /**
+     * Permanently delete an episode (hard delete)
+     */
+    async hardDeleteEpisode(id: string): Promise<void> {
+        await this.episodeRepo.hardDelete(id);
+    }
+
+
+    /**
      * Toggle watched status
      */
     async toggleWatched(id: string): Promise<MediaEpisode> {

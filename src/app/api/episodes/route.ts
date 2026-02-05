@@ -88,7 +88,9 @@ export async function GET(request: NextRequest) {
             favorite: favoriteParam ? favoriteParam === 'true' : undefined,
             channelId,
             userId,
+            isDeleted: searchParams.get('isDeleted') === 'true' ? true : undefined,
         };
+
 
         // Parse sorting
         const sortField = searchParams.get('sort') || 'created_at';
