@@ -19,8 +19,12 @@ Pending Analysis:
 
 ### Implemented Features
 
+20260205:
+- [x] `./docs/specs/roadmap/completed/UI-only-allow-grid-view-in-mobile-prompt-v1.md`
+- [x] `./docs/specs/roadmap/completed/UI-improve-ui-overlay-button-in-mobile-prompt-v1.md`
+
 20260204:
-- [ ] `./docs/specs/roadmap/FEATURE-channel-details-page.md`
+- [x] `./docs/specs/roadmap/completed/FEATURE-channel-details-page.md`
 
 20260203 - Release 0.2.0:
 - [x] Tag and release 0.2.0
