@@ -19,6 +19,7 @@ Pending Analysis:
 ### Implemented Features
 
 20260205:
+- [x] Modify settings to make the "General" tab the default tab in Settings
 - [x] `./docs/specs/roadmap/completed/FEATURE-deleted-episodes-page.md`
 - [x] `./docs/specs/roadmap/completed/UI-only-allow-grid-view-in-mobile-prompt-v1.md`
 - [x] `./docs/specs/roadmap/completed/UI-improve-ui-overlay-button-in-mobile-prompt-v1.md`
