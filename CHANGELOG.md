@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-05
+
+### Added
+- **Deleted Episodes Page**: New page to manage soft-deleted episodes, allowing permanent removal or restoration.
+- **Channel Details Page**: Dedicated page for viewing channel information, stats, and episodes.
+- "Remove permanently" option in episode card dropdowns.
+
+### Changed
+- **Mobile Experience**: Enforced grid view on mobile channel pages for better usability.
+- **Settings**: General tab is now the default active tab.
+- **Channel Cards**: Improved chevron button size for overlay toggling on mobile.
+
 ## [0.2.0] - 2026-02-03
 
 ### Added
