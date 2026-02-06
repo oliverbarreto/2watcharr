@@ -33,7 +33,8 @@
 
 ## Implemented Features
 20260206:
-- [ ] `./docs/specs/roadmap/todo/BUGFIX-tags-lowercase-error-on-browser.md`
+- [ ] `./docs/specs/roadmap/todo/FEATURE-add-settings-option-for-default-filter.md`
+- [x] `./docs/specs/roadmap/todo/BUGFIX-tags-lowercase-error-on-browser.md`
 
 20260206 - Release 0.5.1:
 - [x] updated documentation

@@ -28,7 +28,18 @@ function HomePageContent() {
   const [filters, setFilters] = useState<Filters>(() => ({
     channelId: searchParams.get('channelId') || undefined
   }));
-  const [sort, setSort] = useState<Sort>({ field: 'custom', order: 'asc' });
+  const [sort, setSort] = useState<Sort>(() => {
+    if (typeof window !== 'undefined') {
+      const savedDefaultSortField = localStorage.getItem('defaultSortField');
+      if (savedDefaultSortField) {
+        // Set appropriate default sort order based on field
+        let defaultOrder: 'asc' | 'desc' = 'desc';
+        if (savedDefaultSortField === 'title') defaultOrder = 'asc';
+        return { field: savedDefaultSortField, order: defaultOrder };
+      }
+    }
+    return { field: 'date_added', order: 'desc' };
+  });
   const [refreshKey, setRefreshKey] = useState(0);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     if (typeof window !== 'undefined') {

@@ -46,6 +46,7 @@ export default function SettingsPage() {
     const [editName, setEditName] = useState('');
     const [editColor, setEditColor] = useState('');
     const [defaultView, setDefaultView] = useState<'grid' | 'list'>('list');
+    const [defaultSortField, setDefaultSortField] = useState<string>('date_added');
     const [watchAction, setWatchAction] = useState<'none' | 'watched' | 'pending'>('pending');
     const [deletingTag, setDeletingTag] = useState<{ id: string, name: string } | null>(null);
 
@@ -54,6 +55,10 @@ export default function SettingsPage() {
         const savedDefaultView = localStorage.getItem('defaultView') as 'grid' | 'list';
         if (savedDefaultView) {
             setDefaultView(savedDefaultView);
+        }
+        const savedDefaultSortField = localStorage.getItem('defaultSortField');
+        if (savedDefaultSortField) {
+            setDefaultSortField(savedDefaultSortField);
         }
         const savedWatchAction = localStorage.getItem('watchAction') as 'none' | 'watched' | 'pending';
         if (savedWatchAction) {
@@ -168,6 +173,12 @@ export default function SettingsPage() {
         toast.success(`Watch action set to ${value === 'none' ? 'None' : value === 'watched' ? 'Mark as Watched' : 'Mark as Pending'}`);
     };
 
+    const handleDefaultSortChange = (value: string) => {
+        setDefaultSortField(value);
+        localStorage.setItem('defaultSortField', value);
+        toast.success(`Default filter set to ${value.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`);
+    };
+
     return (
         <Layout>
             <div className="max-w-4xl mx-auto">
@@ -204,6 +215,28 @@ export default function SettingsPage() {
                                         <SelectContent>
                                             <SelectItem value="grid">Grid View</SelectItem>
                                             <SelectItem value="list">List View</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="defaultSortField">Default Filter</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Choose the default sorting option for the watchlist.
+                                    </p>
+                                    <Select 
+                                        value={defaultSortField} 
+                                        onValueChange={handleDefaultSortChange}
+                                    >
+                                        <SelectTrigger id="defaultSortField" className="w-[180px]">
+                                            <SelectValue placeholder="Select filter" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="custom">Manual</SelectItem>
+                                            <SelectItem value="date_added">Date Added</SelectItem>
+                                            <SelectItem value="date_watched">Date Watched</SelectItem>
+                                            <SelectItem value="date_favorited">Date Favorited</SelectItem>
+                                            <SelectItem value="date_removed">Date Removed</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
