@@ -1,0 +1,33 @@
+# Release Version 0.4.0
+
+This plan outlines the steps to release version 0.4.0, including documentation updates, version bumping, and branch merging.
+
+## Proposed Changes
+
+### Documentation
+#### [MODIFY] [CHANGELOG.md](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/CHANGELOG.md)
+Update with recent changes since v0.3.1:
+- **Added**: Duration column to events table with sorting and filtering.
+- **Improved**: Table styles and column sorting for stats, history, and events tables.
+- **Fixed**: Stats chart legend, podcast episode visibility without tags, and deleted episodes' events visibility.
+- **Docs**: Instructions for production database migrations.
+
+### Versioning
+#### [MODIFY] [package.json](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/package.json)
+Bump `version` from `0.3.1` to `0.4.0`.
+
+### Git Workflow
+- Merge `develop` into `main`.
+- Create a git tag `v0.4.0`.
+- Push changes and tags to GitHub.
+
+### Release
+- Create a GitHub release for `v0.4.0` with the updated changelog content.
+
+## Verification Plan
+
+### Manual Verification
+1. Verify that [CHANGELOG.md](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/CHANGELOG.md) contains the new version entry.
+2. Verify that [package.json](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/package.json) version is updated.
+3. Verify that `main` branch is up to date with `develop`.
+4. Verify that the GitHub release is created successfully.
