@@ -18,13 +18,26 @@
 - [ ] `./docs/specs/roadmap/todo/UI-add-channels-list-view.md`
 
 #### CHORE:
-- [ ] `./docs/specs/roadmap/todo/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
 
-#### BUGFIXES Pending Analysis:
+#### BUGFIXES Pending - Analysis:
 - [ ] `./docs/specs/roadmap/todo/BUGFIX-faviconerror-on-browser-console.md`
+
+### ANALYSIS MADE - Not implemented:
+- [ ] `./docs/specs/roadmap/todo/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
+    - `./docs/tasks/task-0000023-add-port-variable-to-deployment-config-prompt-v1-implementation_plan.md`
+
+- [ ] `./docs/specs/roadmap/todo/BUGFIX-images-not-showing-in-channels-page.md`: 
+    - `./docs/tasks/task-0000041-BUGFIX-images-not-showing-in-channels-page-prompt-v1-implementation_plan.md`
 
 
 ## Implemented Features
+
+20260206 - Release 0.5.1:
+- [x] updated documentation
+- [x] Analysis done: `./docs/tasks/task-0000041-BUGFIX-images-not-showing-in-channels-page-prompt-v1-implementation_plan.md`
+
+20260206 - Release 0.5.0:
+- [x] updated documentation
 
 20260206 - Release 0.4.0:
 - [x] `./docs/specs/roadmap/completed/BUGFIX-add-legend-to-chart.md`
