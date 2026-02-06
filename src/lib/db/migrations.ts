@@ -581,4 +581,58 @@ export async function runMigrations(db: Database): Promise<void> {
       }
     }
   }
+
+  // Check if add_event_metadata migration has been applied
+  const migration11 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_event_metadata'
+  );
+
+  if (!migration11) {
+    console.log('Running add_event_metadata migration...');
+    await db.run('PRAGMA foreign_keys = OFF');
+    try {
+      await db.exec(`
+        BEGIN TRANSACTION;
+
+        -- 1. Create new table with updated schema
+        CREATE TABLE media_events_new (
+          id TEXT PRIMARY KEY,
+          episode_id TEXT,
+          title TEXT,
+          type TEXT,
+          event_type TEXT NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE SET NULL
+        );
+
+        -- 2. Copy data from old table, joining with episodes to get title and type
+        INSERT INTO media_events_new (id, episode_id, title, type, event_type, created_at)
+        SELECT me.id, me.episode_id, e.title, e.type, me.type, me.created_at
+        FROM media_events me
+        LEFT JOIN episodes e ON me.episode_id = e.id;
+
+        -- 3. Replace old table
+        DROP TABLE media_events;
+        ALTER TABLE media_events_new RENAME TO media_events;
+
+        -- 4. Recreate indexes
+        CREATE INDEX IF NOT EXISTS idx_media_events_episode_id ON media_events(episode_id);
+        CREATE INDEX IF NOT EXISTS idx_media_events_event_type ON media_events(event_type);
+        CREATE INDEX IF NOT EXISTS idx_media_events_created_at ON media_events(created_at);
+
+        -- 5. Record migration
+        INSERT INTO migrations (name) VALUES ('add_event_metadata');
+
+        COMMIT;
+      `);
+      console.log('add_event_metadata migration completed.');
+    } catch (error) {
+      try { await db.run('ROLLBACK'); } catch {}
+      console.error('Error running add_event_metadata migration:', error);
+      throw error;
+    } finally {
+      await db.run('PRAGMA foreign_keys = ON');
+    }
+  }
 }

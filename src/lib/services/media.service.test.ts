@@ -39,7 +39,7 @@ describe('MediaService Event Tracking', () => {
 
         await service.toggleWatched(episode.id);
         
-        const events = await db.all('SELECT * FROM media_events WHERE episode_id = ? AND type = ?', [episode.id, 'watched']);
+        const events = await db.all('SELECT * FROM media_events WHERE episode_id = ? AND event_type = ?', [episode.id, 'watched']);
         expect(events).toHaveLength(1);
     });
 
@@ -58,7 +58,7 @@ describe('MediaService Event Tracking', () => {
         // Then unwatch
         await service.toggleWatched(episode.id);
         
-        const unwatchedEvents = await db.all('SELECT * FROM media_events WHERE episode_id = ? AND type = ?', [episode.id, 'unwatched']);
+        const unwatchedEvents = await db.all('SELECT * FROM media_events WHERE episode_id = ? AND event_type = ?', [episode.id, 'unwatched']);
         expect(unwatchedEvents).toHaveLength(1);
     });
 
@@ -74,7 +74,7 @@ describe('MediaService Event Tracking', () => {
 
         await service.toggleFavorite(episode.id);
         
-        const events = await db.all('SELECT * FROM media_events WHERE episode_id = ? AND type = ?', [episode.id, 'favorited']);
+        const events = await db.all('SELECT * FROM media_events WHERE episode_id = ? AND event_type = ?', [episode.id, 'favorited']);
         expect(events).toHaveLength(1);
     });
 
@@ -90,7 +90,7 @@ describe('MediaService Event Tracking', () => {
 
         await service.deleteEpisode(episode.id);
         
-        const events = await db.all('SELECT * FROM media_events WHERE episode_id = ? AND type = ?', [episode.id, 'removed']);
+        const events = await db.all('SELECT * FROM media_events WHERE episode_id = ? AND event_type = ?', [episode.id, 'removed']);
         expect(events).toHaveLength(1);
     });
 });

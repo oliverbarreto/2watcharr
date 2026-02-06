@@ -31,6 +31,7 @@ export interface DashboardStats {
         type: string;
         event_type: string;
         created_at: number;
+        tags?: { name: string; color: string }[];
     }[];
 }
 
@@ -90,11 +91,11 @@ export class StatsService {
         }
 
         const events = await this.db.all(`
-            SELECT me.type, COUNT(*) as count 
+            SELECT event_type as type, COUNT(*) as count 
             FROM media_events me
-            JOIN episodes e ON me.episode_id = e.id
-            WHERE e.user_id = ? AND me.created_at >= ?
-            GROUP BY me.type
+            LEFT JOIN episodes e ON me.episode_id = e.id
+            WHERE (e.user_id = ? OR e.user_id IS NULL) AND me.created_at >= ?
+            GROUP BY event_type
         `, [userId, threshold]);
 
         return {
@@ -121,14 +122,14 @@ export class StatsService {
             SELECT SUM(e.duration) as total
             FROM episodes e
             JOIN media_events me ON e.id = me.episode_id
-            WHERE e.user_id = ? AND me.type = 'watched' AND me.created_at >= ?
+            WHERE e.user_id = ? AND me.event_type = 'watched' AND me.created_at >= ?
         `, [userId, startOfWeek]);
 
         const thisMonth = await this.db.get(`
             SELECT SUM(e.duration) as total
             FROM episodes e
             JOIN media_events me ON e.id = me.episode_id
-            WHERE e.user_id = ? AND me.type = 'watched' AND me.created_at >= ?
+            WHERE e.user_id = ? AND me.event_type = 'watched' AND me.created_at >= ?
         `, [userId, startOfMonth]);
 
         return {
@@ -148,11 +149,11 @@ export class StatsService {
             query = `
                 SELECT 
                     strftime('%Y-%m-%dT%H:00:00', me.created_at, 'unixepoch') as time_bucket,
-                    COUNT(CASE WHEN me.type = 'added' THEN 1 END) as added,
-                    COUNT(CASE WHEN me.type = 'watched' THEN 1 END) as watched
+                    COUNT(CASE WHEN me.event_type = 'added' THEN 1 END) as added,
+                    COUNT(CASE WHEN me.event_type = 'watched' THEN 1 END) as watched
                 FROM media_events me
-                JOIN episodes e ON me.episode_id = e.id
-                WHERE e.user_id = ? AND me.created_at >= ?
+                LEFT JOIN episodes e ON me.episode_id = e.id
+                WHERE (e.user_id = ? OR e.user_id IS NULL) AND me.created_at >= ?
                 GROUP BY time_bucket
                 ORDER BY time_bucket ASC
             `;
@@ -164,11 +165,11 @@ export class StatsService {
             query = `
                 SELECT 
                     date(me.created_at, 'unixepoch') as time_bucket,
-                    COUNT(CASE WHEN me.type = 'added' THEN 1 END) as added,
-                    COUNT(CASE WHEN me.type = 'watched' THEN 1 END) as watched
+                    COUNT(CASE WHEN me.event_type = 'added' THEN 1 END) as added,
+                    COUNT(CASE WHEN me.event_type = 'watched' THEN 1 END) as watched
                 FROM media_events me
-                JOIN episodes e ON me.episode_id = e.id
-                WHERE e.user_id = ?
+                LEFT JOIN episodes e ON me.episode_id = e.id
+                WHERE (e.user_id = ? OR e.user_id IS NULL)
                 GROUP BY time_bucket
                 ORDER BY time_bucket DESC
                 LIMIT ?
@@ -185,11 +186,11 @@ export class StatsService {
             query = `
                 SELECT 
                     strftime('%Y-%m', me.created_at, 'unixepoch') as time_bucket,
-                    COUNT(CASE WHEN me.type = 'added' THEN 1 END) as added,
-                    COUNT(CASE WHEN me.type = 'watched' THEN 1 END) as watched
+                    COUNT(CASE WHEN me.event_type = 'added' THEN 1 END) as added,
+                    COUNT(CASE WHEN me.event_type = 'watched' THEN 1 END) as watched
                 FROM media_events me
-                JOIN episodes e ON me.episode_id = e.id
-                WHERE e.user_id = ? AND me.created_at >= ?
+                LEFT JOIN episodes e ON me.episode_id = e.id
+                WHERE (e.user_id = ? OR e.user_id IS NULL) AND me.created_at >= ?
                 GROUP BY time_bucket
                 ORDER BY time_bucket ASC
             `;
@@ -219,17 +220,42 @@ export class StatsService {
 
         const events = await this.db.all(`
             SELECT 
-                e.title,
-                e.type,
-                me.type as event_type,
-                me.created_at
+                COALESCE(e.title, me.title) as title,
+                COALESCE(e.type, me.type) as type,
+                me.event_type,
+                me.created_at,
+                me.episode_id
             FROM media_events me
-            JOIN episodes e ON me.episode_id = e.id
-            WHERE e.user_id = ? AND me.created_at >= ?
+            LEFT JOIN episodes e ON me.episode_id = e.id
+            WHERE (e.user_id = ? OR e.user_id IS NULL) AND me.created_at >= ?
             ORDER BY me.created_at DESC
             LIMIT 100
         `, [userId, threshold]);
 
-        return events;
+        // Fetch tags for these episodes
+        const episodeIds = events.map(e => e.episode_id).filter(id => id !== null);
+        let tagsByEpisode: Record<string, { name: string; color: string }[]> = {};
+
+        if (episodeIds.length > 0) {
+            const placeholders = episodeIds.map(() => '?').join(',');
+            const tagRows = await this.db.all(`
+                SELECT et.episode_id, t.name, t.color
+                FROM episode_tags et
+                JOIN tags t ON et.tag_id = t.id
+                WHERE et.episode_id IN (${placeholders})
+            `, episodeIds);
+
+            tagRows.forEach(row => {
+                if (!tagsByEpisode[row.episode_id]) {
+                    tagsByEpisode[row.episode_id] = [];
+                }
+                tagsByEpisode[row.episode_id].push({ name: row.name, color: row.color });
+            });
+        }
+
+        return events.map(event => ({
+            ...event,
+            tags: event.episode_id ? tagsByEpisode[event.episode_id] || [] : []
+        }));
     }
 }

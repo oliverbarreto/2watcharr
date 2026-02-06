@@ -41,7 +41,7 @@ describe('EpisodeRepository Event Tracking', () => {
         
         const events = await db.all('SELECT * FROM media_events WHERE episode_id = ?', episode.id);
         expect(events).toHaveLength(1);
-        expect(events[0].type).toBe('watched');
+        expect(events[0].event_type).toBe('watched');
     });
 
     it('should retrieve latest event timestamps with the episode', async () => {

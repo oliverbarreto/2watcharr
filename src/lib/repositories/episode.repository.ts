@@ -62,11 +62,11 @@ export class EpisodeRepository {
     async findById(id: string): Promise<MediaEpisode | null> {
         const row = await this.db.get(`
             SELECT e.*, c.name as channel_name,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'pending' ORDER BY created_at DESC LIMIT 1) as last_pending_at,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'pending' ORDER BY created_at DESC LIMIT 1) as last_pending_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
             FROM episodes e 
             LEFT JOIN channels c ON e.channel_id = c.id 
             WHERE e.id = ?
@@ -111,11 +111,11 @@ export class EpisodeRepository {
         const hasTagFilter = filters?.tagIds && filters.tagIds.length > 0;
         let query = `
             SELECT ${hasTagFilter ? 'DISTINCT ' : ''}e.*, c.name as channel_name,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'pending' ORDER BY created_at DESC LIMIT 1) as last_pending_at,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'added' ORDER BY created_at DESC LIMIT 1) as last_added_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'pending' ORDER BY created_at DESC LIMIT 1) as last_pending_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
             FROM episodes e
         `;
         query += ' LEFT JOIN channels c ON e.channel_id = c.id';
@@ -332,11 +332,7 @@ export class EpisodeRepository {
             const eventType = watched ? 'watched' : 'unwatched';
             for (const episode of episodes) {
                 if (episode.watched !== watched) {
-                    const eventId = uuidv4();
-                    await this.db.run(
-                        'INSERT INTO media_events (id, episode_id, type, created_at) VALUES (?, ?, ?, ?)',
-                        [eventId, episode.id, eventType, now]
-                    );
+                    await this.addEvent(episode.id, eventType, episode.title, episode.type);
                 }
             }
 
@@ -385,13 +381,13 @@ export class EpisodeRepository {
     /**
      * Add a media event
      */
-    async addEvent(episodeId: string, type: MediaEventType): Promise<void> {
+    async addEvent(episodeId: string, eventType: MediaEventType, title?: string, type?: string): Promise<void> {
         const id = uuidv4();
         const now = Math.floor(Date.now() / 1000);
 
         await this.db.run(
-            'INSERT INTO media_events (id, episode_id, type, created_at) VALUES (?, ?, ?, ?)',
-            [id, episodeId, type, now]
+            'INSERT INTO media_events (id, episode_id, event_type, title, type, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            [id, episodeId, eventType, title || null, type || null, now]
         );
     }
 

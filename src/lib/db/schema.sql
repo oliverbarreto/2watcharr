@@ -85,11 +85,13 @@ CREATE TABLE IF NOT EXISTS episode_tags (
 -- Media events (added, watched, favorited, etc.)
 CREATE TABLE IF NOT EXISTS media_events (
   id TEXT PRIMARY KEY,
-  episode_id TEXT NOT NULL,
-  type TEXT NOT NULL,              -- added, watched, unwatched, favorited, unfavorited, removed, restored, tagged, pending
+  episode_id TEXT,                 -- Nullable because episode might be hard-deleted
+  title TEXT,                      -- Preserved title for deleted episodes
+  type TEXT,                       -- Preserved type (video/podcast) for deleted episodes
+  event_type TEXT NOT NULL,        -- added, watched, unwatched, favorited, unfavorited, removed, restored, tagged, pending
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   
-  FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE CASCADE
+  FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE SET NULL
 );
 
 -- Indexes for performance

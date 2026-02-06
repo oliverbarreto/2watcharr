@@ -79,6 +79,7 @@ interface DashboardStats {
         type: string;
         event_type: string;
         created_at: number;
+        tags?: { name: string; color: string }[];
     }[];
 }
 
@@ -169,8 +170,22 @@ export default function StatsPage() {
     const sortedDetailedStats = [...filteredStats].sort((a, b) => {
         if (!sortConfig) return 0;
         const { key, direction } = sortConfig;
-        if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
-        if (a[key] > b[key]) return direction === 'asc' ? 1 : -1;
+        
+        // Special handling for tags sorting
+        if (key === 'tags' as any) {
+            const tagsA = (a.tags || []).map(t => t.name).join(', ');
+            const tagsB = (b.tags || []).map(t => t.name).join(', ');
+            if (tagsA < tagsB) return direction === 'asc' ? -1 : 1;
+            if (tagsA > tagsB) return direction === 'asc' ? 1 : -1;
+            return 0;
+        }
+
+        const valA = a[key as keyof typeof a];
+        const valB = b[key as keyof typeof b];
+
+        if (valA === undefined || valB === undefined) return 0;
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
         return 0;
     });
 
@@ -524,6 +539,15 @@ export default function StatsPage() {
                                         </div>
                                     </TableHead>
                                     <TableHead 
+                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
+                                        onClick={() => handleSort('tags' as any)}
+                                    >
+                                        <div className="flex items-center">
+                                            Tags
+                                            {getSortIcon('tags' as any)}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead 
                                         className="font-bold uppercase tracking-wider text-[10px] text-right cursor-pointer hover:text-foreground transition-colors"
                                         onClick={() => handleSort('created_at')}
                                     >
@@ -561,8 +585,35 @@ export default function StatsPage() {
                                                     {event.event_type}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-right text-xs text-muted-foreground">
-                                                {new Date(event.created_at * 1000).toLocaleDateString()}
+                                            <TableCell>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {event.tags && event.tags.length > 0 ? (
+                                                        event.tags.map((tag, idx) => (
+                                                            <span 
+                                                                key={idx} 
+                                                                className="px-1.5 py-0.5 rounded text-[9px] font-bold"
+                                                                style={{ 
+                                                                    backgroundColor: tag.color ? `${tag.color}20` : 'rgba(255,255,255,0.1)',
+                                                                    color: tag.color || 'inherit',
+                                                                    border: `1px solid ${tag.color ? `${tag.color}40` : 'rgba(255,255,255,0.2)'}`
+                                                                }}
+                                                            >
+                                                                {tag.name}
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <span className="text-[10px] text-muted-foreground italic">No tags</span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
+                                                {new Date(event.created_at * 1000).toLocaleDateString(undefined, {
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    year: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
                                             </TableCell>
                                         </TableRow>
                                     ))

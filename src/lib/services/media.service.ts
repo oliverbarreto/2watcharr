@@ -52,7 +52,7 @@ export class MediaService {
             });
 
             // Record 'restored' event
-            await this.episodeRepo.addEvent(existing.id, 'restored');
+            await this.episodeRepo.addEvent(existing.id, 'restored', updated.title, updated.type);
 
             // Re-associate tags if provided
             if (tagIds && tagIds.length > 0) {
@@ -105,7 +105,7 @@ export class MediaService {
         });
 
         // Record 'added' event
-        await this.episodeRepo.addEvent(episode.id, 'added');
+        await this.episodeRepo.addEvent(episode.id, 'added', episode.title, episode.type);
 
         // Associate tags if provided
         if (tagIds && tagIds.length > 0) {
@@ -139,19 +139,19 @@ export class MediaService {
         const episode = await this.episodeRepo.update(id, updates);
         
         if (updates.watchStatus !== undefined) {
-             await this.episodeRepo.addEvent(id, updates.watchStatus as MediaEventType);
+             await this.episodeRepo.addEvent(id, updates.watchStatus as MediaEventType, episode.title, episode.type);
         } else if (updates.watched !== undefined) {
-             await this.episodeRepo.addEvent(id, updates.watched ? 'watched' : 'unwatched');
+             await this.episodeRepo.addEvent(id, updates.watched ? 'watched' : 'unwatched', episode.title, episode.type);
         }
 
         if (updates.favorite !== undefined) {
-             await this.episodeRepo.addEvent(id, updates.favorite ? 'favorited' : 'unfavorited');
+             await this.episodeRepo.addEvent(id, updates.favorite ? 'favorited' : 'unfavorited', episode.title, episode.type);
         }
 
         if (updates.isDeleted === true) {
-             await this.episodeRepo.addEvent(id, 'removed');
+             await this.episodeRepo.addEvent(id, 'removed', episode.title, episode.type);
         } else if (updates.isDeleted === false) {
-             await this.episodeRepo.addEvent(id, 'restored');
+             await this.episodeRepo.addEvent(id, 'restored', episode.title, episode.type);
         }
 
         return episode;
@@ -161,8 +161,11 @@ export class MediaService {
      * Delete an episode
      */
     async deleteEpisode(id: string): Promise<void> {
+        const episode = await this.episodeRepo.findById(id);
         await this.episodeRepo.delete(id);
-        await this.episodeRepo.addEvent(id, 'removed');
+        if (episode) {
+            await this.episodeRepo.addEvent(id, 'removed', episode.title, episode.type);
+        }
     }
 
     /**
@@ -188,7 +191,7 @@ export class MediaService {
         });
         
         // Record event
-        await this.episodeRepo.addEvent(id, newWatched ? 'watched' : 'unwatched');
+        await this.episodeRepo.addEvent(id, newWatched ? 'watched' : 'unwatched', updated.title, updated.type);
         
         return updated;
     }
@@ -201,11 +204,11 @@ export class MediaService {
         
         // Record event
         if (status === 'watched') {
-            await this.episodeRepo.addEvent(id, 'watched');
+            await this.episodeRepo.addEvent(id, 'watched', updated.title, updated.type);
         } else if (status === 'pending') {
-            await this.episodeRepo.addEvent(id, 'pending');
+            await this.episodeRepo.addEvent(id, 'pending', updated.title, updated.type);
         } else {
-            await this.episodeRepo.addEvent(id, 'unwatched');
+            await this.episodeRepo.addEvent(id, 'unwatched', updated.title, updated.type);
         }
         
         return updated;
@@ -223,7 +226,7 @@ export class MediaService {
         const updated = await this.episodeRepo.update(id, { favorite: newFavorite });
         
         // Record event
-        await this.episodeRepo.addEvent(id, newFavorite ? 'favorited' : 'unfavorited');
+        await this.episodeRepo.addEvent(id, newFavorite ? 'favorited' : 'unfavorited', updated.title, updated.type);
         
         return updated;
     }
@@ -266,8 +269,12 @@ export class MediaService {
         // Add new tags
         if (tagIds.length > 0) {
             await this.episodeRepo.addTags(id, tagIds);
-            // Record 'tagged' event
-            await this.episodeRepo.addEvent(id, 'tagged');
+            
+            const episode = await this.episodeRepo.findById(id);
+            if (episode) {
+                // Record 'tagged' event
+                await this.episodeRepo.addEvent(id, 'tagged', episode.title, episode.type);
+            }
         }
     }
 

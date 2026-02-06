@@ -38,8 +38,7 @@ export function getTimestampForSort(episode: MediaEpisode, sortField: string): n
     case 'date_removed':
       return episode.lastRemovedAt;
     default:
-      // For non-date sorts, use date_added for grouping
-      return episode.lastAddedAt;
+      return undefined;
   }
 }
 
@@ -83,8 +82,9 @@ export function getNoDateLabel(sortField: string): string {
     case 'date_removed':
       return 'Not Removed';
     case 'date_added':
+      return 'No Date';
     default:
-      return 'Not Added'; // This should rarely happen
+      return 'All Episodes';
   }
 }
 
