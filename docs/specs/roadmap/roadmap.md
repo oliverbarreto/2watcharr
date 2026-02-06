@@ -10,8 +10,6 @@
 - [ ] `./docs/specs/roadmap/todo/TASK-update-docs-tag-and-release.md`
 
 #### FEATURES:
-- [ ] `./docs/specs/roadmap/todo/FEATURE-improve-ux-events-table-in-stats-page.md`
-- [ ] `./docs/specs/roadmap/todo/FEATURE-timeline-dates-sections-in-watchlist-page.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-infinite-scroll-in-watchlist-page.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-import-playlist-data.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-async-request-and-client-ui.md`
@@ -29,8 +27,9 @@
 ## Implemented Features
 20260206:
 - [x] `./docs/specs/roadmap/completed/BUGFIX-add-legend-to-chart.md`
-- [x] `./docs/specs/roadmap/completed/FEATURE-timeline-dates-sections-in-watchlist-page.md`
 - [x] `./docs/specs/roadmap/completed/BUGFIX-improve-draganddrop-ui-remove-handle-in-date-filtering.md`
+- [x] `./docs/specs/roadmap/completed/FEATURE-timeline-dates-sections-in-watchlist-page.md`
+- [x] `./docs/specs/roadmap/completed/FEATURE-improve-ux-events-table-in-stats-page.md`
 
 20260205 - Release 0.3.1:
 - [x] `./docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`
