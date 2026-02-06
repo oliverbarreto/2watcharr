@@ -13,6 +13,7 @@
 - [ ] `./docs/specs/roadmap/todo/FEATURE-infinite-scroll-in-watchlist-page.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-import-playlist-data.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-async-request-and-client-ui.md`
+- [ ] `./docs/specs/roadmap/todo/FEATURE-return-episode-title-to-ios-shortcut-to-display-name-on-notification.md`
 
 #### UI:
 - [ ] `./docs/specs/roadmap/todo/UI-add-channels-list-view.md`
@@ -31,6 +32,8 @@
 
 
 ## Implemented Features
+20260206:
+- [ ] `./docs/specs/roadmap/todo/BUGFIX-tags-lowercase-error-on-browser.md`
 
 20260206 - Release 0.5.1:
 - [x] updated documentation

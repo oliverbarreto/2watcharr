@@ -1,0 +1,874 @@
+# Walkthrough - Tags Management Autofill Error Fix
+
+I have fixed the error that was causing browser extensions (like Bitwarden) to crash on the Tags Management tab of the settings page.
+
+## Changes Made
+
+### Settings Page
+
+#### [page.tsx](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/app/settings/page.tsx)
+
+- **Renamed conflicting ID**: The `id="tagName"` on the tag creation input was renamed to `id="new-tag-name"`. This prevents "DOM Clobbering" where the input element would override the standard `tagName` property of the parent form, which was causing autofill scripts to fail when calling `.toLowerCase()` on it.
+- **Added Autofill Ignore Attributes**: Added several attributes to both the "Create Tag" and "Edit Tag" inputs to instruct browser extensions to ignore these fields:
+    - `autoComplete="off"`
+    - `data-1p-ignore` (1Password)
+    - `data-bwignore` (Bitwarden)
+    - `data-lpignore="true"` (LastPass)
+
+## Verification Results
+
+### Automated Tests
+- Ran `npm run build` to ensure no syntax errors or regressions were introduced.
+- **Result**: `✓ Compiled successfully`
+
+### Manual Verification
+- Verified that the `Label` for the tag name correctly points to the new ID `new-tag-name`.
+- Verified that the input fields still function correctly for creating and editing tags.
+
+```diff:page.tsx
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { Layout } from '@/components/layout';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { UserManagement } from '@/components/features/users/user-management';
+
+interface Tag {
+    id: string;
+    name: string;
+    color: string | null;
+    episodeCount: number;
+}
+
+export default function SettingsPage() {
+    const { data: session } = useSession();
+    const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin;
+    
+    const [tags, setTags] = useState<Tag[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [newTagName, setNewTagName] = useState('');
+    const [newTagColor, setNewTagColor] = useState('#ef4444');
+    const [editingTag, setEditingTag] = useState<string | null>(null);
+    const [editName, setEditName] = useState('');
+    const [editColor, setEditColor] = useState('');
+    const [defaultView, setDefaultView] = useState<'grid' | 'list'>('list');
+    const [watchAction, setWatchAction] = useState<'none' | 'watched' | 'pending'>('pending');
+    const [deletingTag, setDeletingTag] = useState<{ id: string, name: string } | null>(null);
+
+    useEffect(() => {
+        fetchTags();
+        const savedDefaultView = localStorage.getItem('defaultView') as 'grid' | 'list';
+        if (savedDefaultView) {
+            setDefaultView(savedDefaultView);
+        }
+        const savedWatchAction = localStorage.getItem('watchAction') as 'none' | 'watched' | 'pending';
+        if (savedWatchAction) {
+            setWatchAction(savedWatchAction);
+        }
+    }, []);
+
+    const fetchTags = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch('/api/tags');
+            const data = await response.json();
+            if (data.tags) {
+                setTags(data.tags);
+            }
+        } catch (error) {
+            console.error('Error fetching tags:', error);
+            toast.error('Failed to load tags');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCreateTag = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newTagName.trim()) return;
+
+        try {
+            const response = await fetch('/api/tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newTagName, color: newTagColor }),
+            });
+
+            if (response.ok) {
+                setNewTagName('');
+                setNewTagColor('#ef4444');
+                fetchTags();
+                toast.success('Tag created successfully');
+            } else {
+                const error = await response.json();
+                toast.error(error.error || 'Failed to create tag');
+            }
+        } catch (error) {
+            console.error('Error creating tag:', error);
+            toast.error('Failed to create tag');
+        }
+    };
+
+    const handleDeleteTag = async (id: string) => {
+        setDeletingTag(null);
+        try {
+            const response = await fetch(`/api/tags/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                fetchTags();
+                toast.success('Tag deleted successfully');
+            } else {
+                toast.error('Failed to delete tag');
+            }
+        } catch (error) {
+            console.error('Error deleting tag:', error);
+            toast.error('Failed to delete tag');
+        }
+    };
+
+    const startEditing = (tag: Tag) => {
+        setEditingTag(tag.id);
+        setEditName(tag.name);
+        setEditColor(tag.color || '#ef4444');
+    };
+
+    const cancelEditing = () => {
+        setEditingTag(null);
+    };
+
+    const handleUpdateTag = async (id: string) => {
+        if (!editName.trim()) return;
+
+        try {
+            const response = await fetch(`/api/tags/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: editName, color: editColor }),
+            });
+
+            if (response.ok) {
+                setEditingTag(null);
+                fetchTags();
+                toast.success('Tag updated successfully');
+            } else {
+                toast.error('Failed to update tag');
+            }
+        } catch (error) {
+            console.error('Error updating tag:', error);
+            toast.error('Failed to update tag');
+        }
+    };
+
+    const handleDefaultViewChange = (value: 'grid' | 'list') => {
+        setDefaultView(value);
+        localStorage.setItem('defaultView', value);
+        localStorage.setItem('episodeViewMode', value);
+        toast.success(`Default view set to ${value === 'grid' ? 'Grid' : 'List'}`);
+    };
+
+    const handleWatchActionChange = (value: 'none' | 'watched' | 'pending') => {
+        setWatchAction(value);
+        localStorage.setItem('watchAction', value);
+        toast.success(`Watch action set to ${value === 'none' ? 'None' : value === 'watched' ? 'Mark as Watched' : 'Mark as Pending'}`);
+    };
+
+    return (
+        <Layout>
+            <div className="max-w-4xl mx-auto">
+                <h1 className="text-3xl font-bold mb-8">Settings</h1>
+
+                <Tabs defaultValue="general" className="w-full">
+                    <TabsList className="mb-8">
+                        <TabsTrigger value="general">General</TabsTrigger>
+                        <TabsTrigger value="tags">Tags Management</TabsTrigger>
+                        {isAdmin && <TabsTrigger value="users">User Management</TabsTrigger>}
+                    </TabsList>
+
+                    <TabsContent value="general">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>General Settings</CardTitle>
+                                <CardDescription>
+                                    Main application settings and preferences.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="defaultView">Default View</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Choose which view to use by default when loading the list.
+                                    </p>
+                                    <Select 
+                                        value={defaultView} 
+                                        onValueChange={(value) => handleDefaultViewChange(value as 'grid' | 'list')}
+                                    >
+                                        <SelectTrigger id="defaultView" className="w-[180px]">
+                                            <SelectValue placeholder="Select view" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="grid">Grid View</SelectItem>
+                                            <SelectItem value="list">List View</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="watchAction">Default Watch Action</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Action to take when opening a video from the list.
+                                    </p>
+                                    <Select 
+                                        value={watchAction} 
+                                        onValueChange={(value) => handleWatchActionChange(value as 'none' | 'watched' | 'pending')}
+                                    >
+                                        <SelectTrigger id="watchAction" className="w-[180px]">
+                                            <SelectValue placeholder="Select action" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">None</SelectItem>
+                                            <SelectItem value="watched">Mark as Watched</SelectItem>
+                                            <SelectItem value="pending">Mark as Pending</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2 pt-4 border-t">
+                                    <Label>Deleted Episodes</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        View and manage episodes that have been removed from your watch list.
+                                    </p>
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => window.location.href = '/deleted'}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        View Deleted Episodes
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="tags">
+                        <div className="grid gap-8">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Create New Tag</CardTitle>
+                                    <CardDescription>
+                                        Add a new tag to organize your content.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <form onSubmit={handleCreateTag} className="flex flex-col md:flex-row gap-4 items-end">
+                                        <div className="grid w-full items-center gap-1.5 flex-1">
+                                            <Label htmlFor="tagName">Tag Name</Label>
+                                            <Input
+                                                type="text"
+                                                id="tagName"
+                                                placeholder="e.g. Coding, Music, Tech"
+                                                value={newTagName}
+                                                onChange={(e) => setNewTagName(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="grid items-center gap-1.5 min-w-[120px]">
+                                            <Label htmlFor="tagColor">Color</Label>
+                                            <div className="flex gap-2 items-center h-10 px-3 py-2 border rounded-md">
+                                                <input
+                                                    type="color"
+                                                    id="tagColor"
+                                                    className="w-6 h-6 border-none bg-transparent cursor-pointer"
+                                                    value={newTagColor}
+                                                    onChange={(e) => setNewTagColor(e.target.value)}
+                                                />
+                                                <span className="text-sm font-mono uppercase">{newTagColor}</span>
+                                            </div>
+                                        </div>
+                                        <Button type="submit" disabled={!newTagName.trim()}>
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Add Tag
+                                        </Button>
+                                    </form>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Existing Tags</CardTitle>
+                                    <CardDescription>
+                                        Manage your existing tags and see how many episodes use them.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {isLoading ? (
+                                        <div className="flex justify-center py-8">
+                                            <span className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></span>
+                                        </div>
+                                    ) : tags.length === 0 ? (
+                                        <div className="text-center py-8 text-muted-foreground italic">
+                                            No tags created yet.
+                                        </div>
+                                    ) : (
+                                        <div className="grid gap-2">
+                                            {tags.map((tag) => (
+                                                <div
+                                                    key={tag.id}
+                                                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                                                >
+                                                    {editingTag === tag.id ? (
+                                                        <div className="flex-1 flex gap-4 items-center">
+                                                            <Input
+                                                                value={editName}
+                                                                onChange={(e) => setEditName(e.target.value)}
+                                                                className="h-8 max-w-[200px]"
+                                                                autoFocus
+                                                            />
+                                                            <input
+                                                                type="color"
+                                                                value={editColor}
+                                                                onChange={(e) => setEditColor(e.target.value)}
+                                                                className="w-8 h-8 rounded cursor-pointer"
+                                                            />
+                                                            <div className="flex gap-1 ml-auto">
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 text-green-600"
+                                                                    onClick={() => handleUpdateTag(tag.id)}
+                                                                >
+                                                                    <Check className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 text-red-600"
+                                                                    onClick={cancelEditing}
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex items-center gap-3">
+                                                                <div
+                                                                    className="w-4 h-4 rounded-full"
+                                                                    style={{ backgroundColor: tag.color || '#94a3b8' }}
+                                                                />
+                                                                <span className="font-medium">{tag.name}</span>
+                                                                <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
+                                                                    {tag.episodeCount} episodes
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex gap-1">
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8"
+                                                                    onClick={() => startEditing(tag)}
+                                                                >
+                                                                    <Edit2 className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 text-destructive"
+                                                                    onClick={() => setDeletingTag({ id: tag.id, name: tag.name })}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </TabsContent>
+
+
+                    {isAdmin && (
+                        <TabsContent value="users">
+                            <UserManagement />
+                        </TabsContent>
+                    )}
+                </Tabs>
+            </div>
+
+            {/* Confirmation Dialog for Tag Deletion */}
+            <Dialog open={!!deletingTag} onOpenChange={(open) => !open && setDeletingTag(null)}>
+                <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle>Delete Tag</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Are you sure you want to delete the tag <strong>{deletingTag?.name}</strong>? 
+                            This will remove it from all episodes.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={() => setDeletingTag(null)} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button onClick={() => deletingTag && handleDeleteTag(deletingTag.id)} className="bg-red-600 hover:bg-red-700 text-white">
+                            Delete Tag
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </Layout>
+    );
+}
+===
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { Layout } from '@/components/layout';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { UserManagement } from '@/components/features/users/user-management';
+
+interface Tag {
+    id: string;
+    name: string;
+    color: string | null;
+    episodeCount: number;
+}
+
+export default function SettingsPage() {
+    const { data: session } = useSession();
+    const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin;
+    
+    const [tags, setTags] = useState<Tag[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [newTagName, setNewTagName] = useState('');
+    const [newTagColor, setNewTagColor] = useState('#ef4444');
+    const [editingTag, setEditingTag] = useState<string | null>(null);
+    const [editName, setEditName] = useState('');
+    const [editColor, setEditColor] = useState('');
+    const [defaultView, setDefaultView] = useState<'grid' | 'list'>('list');
+    const [watchAction, setWatchAction] = useState<'none' | 'watched' | 'pending'>('pending');
+    const [deletingTag, setDeletingTag] = useState<{ id: string, name: string } | null>(null);
+
+    useEffect(() => {
+        fetchTags();
+        const savedDefaultView = localStorage.getItem('defaultView') as 'grid' | 'list';
+        if (savedDefaultView) {
+            setDefaultView(savedDefaultView);
+        }
+        const savedWatchAction = localStorage.getItem('watchAction') as 'none' | 'watched' | 'pending';
+        if (savedWatchAction) {
+            setWatchAction(savedWatchAction);
+        }
+    }, []);
+
+    const fetchTags = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch('/api/tags');
+            const data = await response.json();
+            if (data.tags) {
+                setTags(data.tags);
+            }
+        } catch (error) {
+            console.error('Error fetching tags:', error);
+            toast.error('Failed to load tags');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCreateTag = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newTagName.trim()) return;
+
+        try {
+            const response = await fetch('/api/tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newTagName, color: newTagColor }),
+            });
+
+            if (response.ok) {
+                setNewTagName('');
+                setNewTagColor('#ef4444');
+                fetchTags();
+                toast.success('Tag created successfully');
+            } else {
+                const error = await response.json();
+                toast.error(error.error || 'Failed to create tag');
+            }
+        } catch (error) {
+            console.error('Error creating tag:', error);
+            toast.error('Failed to create tag');
+        }
+    };
+
+    const handleDeleteTag = async (id: string) => {
+        setDeletingTag(null);
+        try {
+            const response = await fetch(`/api/tags/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                fetchTags();
+                toast.success('Tag deleted successfully');
+            } else {
+                toast.error('Failed to delete tag');
+            }
+        } catch (error) {
+            console.error('Error deleting tag:', error);
+            toast.error('Failed to delete tag');
+        }
+    };
+
+    const startEditing = (tag: Tag) => {
+        setEditingTag(tag.id);
+        setEditName(tag.name);
+        setEditColor(tag.color || '#ef4444');
+    };
+
+    const cancelEditing = () => {
+        setEditingTag(null);
+    };
+
+    const handleUpdateTag = async (id: string) => {
+        if (!editName.trim()) return;
+
+        try {
+            const response = await fetch(`/api/tags/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: editName, color: editColor }),
+            });
+
+            if (response.ok) {
+                setEditingTag(null);
+                fetchTags();
+                toast.success('Tag updated successfully');
+            } else {
+                toast.error('Failed to update tag');
+            }
+        } catch (error) {
+            console.error('Error updating tag:', error);
+            toast.error('Failed to update tag');
+        }
+    };
+
+    const handleDefaultViewChange = (value: 'grid' | 'list') => {
+        setDefaultView(value);
+        localStorage.setItem('defaultView', value);
+        localStorage.setItem('episodeViewMode', value);
+        toast.success(`Default view set to ${value === 'grid' ? 'Grid' : 'List'}`);
+    };
+
+    const handleWatchActionChange = (value: 'none' | 'watched' | 'pending') => {
+        setWatchAction(value);
+        localStorage.setItem('watchAction', value);
+        toast.success(`Watch action set to ${value === 'none' ? 'None' : value === 'watched' ? 'Mark as Watched' : 'Mark as Pending'}`);
+    };
+
+    return (
+        <Layout>
+            <div className="max-w-4xl mx-auto">
+                <h1 className="text-3xl font-bold mb-8">Settings</h1>
+
+                <Tabs defaultValue="general" className="w-full">
+                    <TabsList className="mb-8">
+                        <TabsTrigger value="general">General</TabsTrigger>
+                        <TabsTrigger value="tags">Tags Management</TabsTrigger>
+                        {isAdmin && <TabsTrigger value="users">User Management</TabsTrigger>}
+                    </TabsList>
+
+                    <TabsContent value="general">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>General Settings</CardTitle>
+                                <CardDescription>
+                                    Main application settings and preferences.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="defaultView">Default View</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Choose which view to use by default when loading the list.
+                                    </p>
+                                    <Select 
+                                        value={defaultView} 
+                                        onValueChange={(value) => handleDefaultViewChange(value as 'grid' | 'list')}
+                                    >
+                                        <SelectTrigger id="defaultView" className="w-[180px]">
+                                            <SelectValue placeholder="Select view" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="grid">Grid View</SelectItem>
+                                            <SelectItem value="list">List View</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="watchAction">Default Watch Action</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Action to take when opening a video from the list.
+                                    </p>
+                                    <Select 
+                                        value={watchAction} 
+                                        onValueChange={(value) => handleWatchActionChange(value as 'none' | 'watched' | 'pending')}
+                                    >
+                                        <SelectTrigger id="watchAction" className="w-[180px]">
+                                            <SelectValue placeholder="Select action" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">None</SelectItem>
+                                            <SelectItem value="watched">Mark as Watched</SelectItem>
+                                            <SelectItem value="pending">Mark as Pending</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2 pt-4 border-t">
+                                    <Label>Deleted Episodes</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        View and manage episodes that have been removed from your watch list.
+                                    </p>
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => window.location.href = '/deleted'}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        View Deleted Episodes
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="tags">
+                        <div className="grid gap-8">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Create New Tag</CardTitle>
+                                    <CardDescription>
+                                        Add a new tag to organize your content.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <form onSubmit={handleCreateTag} className="flex flex-col md:flex-row gap-4 items-end">
+                                        <div className="grid w-full items-center gap-1.5 flex-1">
+                                            <Label htmlFor="new-tag-name">Tag Name</Label>
+                                            <Input
+                                                type="text"
+                                                id="new-tag-name"
+                                                placeholder="e.g. Coding, Music, Tech"
+                                                value={newTagName}
+                                                onChange={(e) => setNewTagName(e.target.value)}
+                                                autoComplete="off"
+                                                data-1p-ignore
+                                                data-bwignore
+                                                data-lpignore="true"
+                                            />
+                                        </div>
+                                        <div className="grid items-center gap-1.5 min-w-[120px]">
+                                            <Label htmlFor="tagColor">Color</Label>
+                                            <div className="flex gap-2 items-center h-10 px-3 py-2 border rounded-md">
+                                                <input
+                                                    type="color"
+                                                    id="tagColor"
+                                                    className="w-6 h-6 border-none bg-transparent cursor-pointer"
+                                                    value={newTagColor}
+                                                    onChange={(e) => setNewTagColor(e.target.value)}
+                                                />
+                                                <span className="text-sm font-mono uppercase">{newTagColor}</span>
+                                            </div>
+                                        </div>
+                                        <Button type="submit" disabled={!newTagName.trim()}>
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Add Tag
+                                        </Button>
+                                    </form>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Existing Tags</CardTitle>
+                                    <CardDescription>
+                                        Manage your existing tags and see how many episodes use them.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {isLoading ? (
+                                        <div className="flex justify-center py-8">
+                                            <span className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></span>
+                                        </div>
+                                    ) : tags.length === 0 ? (
+                                        <div className="text-center py-8 text-muted-foreground italic">
+                                            No tags created yet.
+                                        </div>
+                                    ) : (
+                                        <div className="grid gap-2">
+                                            {tags.map((tag) => (
+                                                <div
+                                                    key={tag.id}
+                                                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                                                >
+                                                    {editingTag === tag.id ? (
+                                                        <div className="flex-1 flex gap-4 items-center">
+                                                            <Input
+                                                                value={editName}
+                                                                onChange={(e) => setEditName(e.target.value)}
+                                                                className="h-8 max-w-[200px]"
+                                                                autoFocus
+                                                                autoComplete="off"
+                                                                data-1p-ignore
+                                                                data-bwignore
+                                                                data-lpignore="true"
+                                                            />
+                                                            <input
+                                                                type="color"
+                                                                value={editColor}
+                                                                onChange={(e) => setEditColor(e.target.value)}
+                                                                className="w-8 h-8 rounded cursor-pointer"
+                                                            />
+                                                            <div className="flex gap-1 ml-auto">
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 text-green-600"
+                                                                    onClick={() => handleUpdateTag(tag.id)}
+                                                                >
+                                                                    <Check className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 text-red-600"
+                                                                    onClick={cancelEditing}
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex items-center gap-3">
+                                                                <div
+                                                                    className="w-4 h-4 rounded-full"
+                                                                    style={{ backgroundColor: tag.color || '#94a3b8' }}
+                                                                />
+                                                                <span className="font-medium">{tag.name}</span>
+                                                                <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
+                                                                    {tag.episodeCount} episodes
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex gap-1">
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8"
+                                                                    onClick={() => startEditing(tag)}
+                                                                >
+                                                                    <Edit2 className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 text-destructive"
+                                                                    onClick={() => setDeletingTag({ id: tag.id, name: tag.name })}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </TabsContent>
+
+
+                    {isAdmin && (
+                        <TabsContent value="users">
+                            <UserManagement />
+                        </TabsContent>
+                    )}
+                </Tabs>
+            </div>
+
+            {/* Confirmation Dialog for Tag Deletion */}
+            <Dialog open={!!deletingTag} onOpenChange={(open) => !open && setDeletingTag(null)}>
+                <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle>Delete Tag</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Are you sure you want to delete the tag <strong>{deletingTag?.name}</strong>? 
+                            This will remove it from all episodes.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={() => setDeletingTag(null)} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button onClick={() => deletingTag && handleDeleteTag(deletingTag.id)} className="bg-red-600 hover:bg-red-700 text-white">
+                            Delete Tag
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </Layout>
+    );
+}
+```

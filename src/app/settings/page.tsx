@@ -257,13 +257,17 @@ export default function SettingsPage() {
                                 <CardContent>
                                     <form onSubmit={handleCreateTag} className="flex flex-col md:flex-row gap-4 items-end">
                                         <div className="grid w-full items-center gap-1.5 flex-1">
-                                            <Label htmlFor="tagName">Tag Name</Label>
+                                            <Label htmlFor="new-tag-name">Tag Name</Label>
                                             <Input
                                                 type="text"
-                                                id="tagName"
+                                                id="new-tag-name"
                                                 placeholder="e.g. Coding, Music, Tech"
                                                 value={newTagName}
                                                 onChange={(e) => setNewTagName(e.target.value)}
+                                                autoComplete="off"
+                                                data-1p-ignore
+                                                data-bwignore
+                                                data-lpignore="true"
                                             />
                                         </div>
                                         <div className="grid items-center gap-1.5 min-w-[120px]">
@@ -317,6 +321,10 @@ export default function SettingsPage() {
                                                                 onChange={(e) => setEditName(e.target.value)}
                                                                 className="h-8 max-w-[200px]"
                                                                 autoFocus
+                                                                autoComplete="off"
+                                                                data-1p-ignore
+                                                                data-bwignore
+                                                                data-lpignore="true"
                                                             />
                                                             <input
                                                                 type="color"
