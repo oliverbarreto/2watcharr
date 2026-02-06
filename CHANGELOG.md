@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-02-06
+
+### Added
+- **Manual Reordering**: New manual sort option for the watchlist with drag-and-drop support and persistent order.
+- **Episode Tags in Stats**: Added a tags column to the events table for better context on activities.
+
+### Fixed
+- **Chart Legends**: Added missing legends to stats charts for better data visualization.
+- **Missing Events**: Resolved issues preventing podcast events and events for deleted episodes from showing in the history.
+- **Manual Sort Sections**: Fixed UI where date headers would still appear when manual sort was active.
+
+### Improved
+- **Stats Table UX**: Enhanced sorting and layout for the detailed history and events tables.
+- **Mobile Reordering**: Optimized drag-and-drop experience for mobile users.
+
+### Docs
+- **Database Migrations**: Added guide for applying migrations in production environments.
+
 ## [0.3.1] - 2026-02-05
 
 ### Added
