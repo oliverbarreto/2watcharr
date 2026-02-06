@@ -200,6 +200,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode }: Episod
                                 episode={episode}
                                 onUpdate={fetchEpisodes}
                                 onDelete={fetchEpisodes}
+                                isDraggable={sort?.field === 'custom'}
                             />
                         ) : (
                             <EpisodeListRow
@@ -207,6 +208,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode }: Episod
                                 episode={episode}
                                 onUpdate={fetchEpisodes}
                                 onDelete={fetchEpisodes}
+                                isDraggable={sort?.field === 'custom'}
                             />
                         )
                     )}

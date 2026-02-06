@@ -1,0 +1,42 @@
+# Remove Drag Handles for Non-Manual Filters
+
+Improve the watch list UI by removing reorder handles and disabling dragging when the sort order is not "Manual" (custom).
+
+## Proposed Changes
+
+### Episode Components
+
+#### [MODIFY] [episode-card.tsx](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-card.tsx)
+- Add `isDraggable?: boolean` to [EpisodeCardProps](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-card.tsx#49-54).
+- Pass `disabled: !isDraggable` to `useSortable`.
+- Conditionally render the top drag handle based on `isDraggable`.
+- Remove `cursor-grab` classes from the bottom red area and only spread `attributes`/`listeners` if `isDraggable` is true.
+
+#### [MODIFY] [episode-list-row.tsx](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-list-row.tsx)
+- Add `isDraggable?: boolean` to [EpisodeListRowProps](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-list-row.tsx#41-46).
+- Pass `disabled: !isDraggable` to `useSortable`.
+- Conditionally render the left drag handle based on `isDraggable`.
+
+### List Components
+
+#### [MODIFY] [grouped-episode-list.tsx](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/grouped-episode-list.tsx)
+- Pass `isDraggable={false}` to all [EpisodeCard](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-card.tsx#55-684) and [EpisodeListRow](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-list-row.tsx#47-663) components since grouping is only used for date-based sorts.
+
+#### [MODIFY] [episode-list.tsx](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-list.tsx)
+- Pass `isDraggable={sort?.field === 'custom'}` to [EpisodeCard](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-card.tsx#55-684) and [EpisodeListRow](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-list-row.tsx#47-663) in the flat list view.
+
+---
+
+## Verification Plan
+
+### Manual Verification
+- **Grid View**:
+    1. Select "Manual" sort: Verify top handle is visible and bottom red area allows dragging.
+    2. Select "Date Added": Verify top handle is GONE. Verify bottom red area is visible on hover but does NOT allow dragging (no grab cursor).
+    3. Repeat for other date filters.
+- **List View**:
+    1. Select "Manual" sort: Verify left handle is visible and allows dragging.
+    2. Select "Date Added": Verify left handle is GONE.
+    3. Repeat for other date filters.
+- **Mobile**:
+    1. Verify behavior on mobile (Grid view is default on mobile).

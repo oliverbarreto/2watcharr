@@ -42,9 +42,10 @@ interface EpisodeListRowProps {
     episode: MediaEpisode;
     onUpdate?: () => void;
     onDelete?: () => void;
+    isDraggable?: boolean;
 }
 
-export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowProps) {
+export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true }: EpisodeListRowProps) {
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -57,7 +58,10 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: episode.id });
+    } = useSortable({ 
+        id: episode.id,
+        disabled: !isDraggable
+    });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -329,13 +333,15 @@ export function EpisodeListRow({ episode, onUpdate, onDelete }: EpisodeListRowPr
             <div className="flex flex-col sm:flex-row w-full">
                 <div className="flex items-center gap-2 sm:gap-3 p-2 cursor-default flex-1 min-w-0">
                     {/* Drag Handle */}
-                    <div
-                        {...attributes}
-                        {...listeners}
-                        className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-                    >
-                        <GripVertical className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </div>
+                    {isDraggable && (
+                        <div
+                            {...attributes}
+                            {...listeners}
+                            className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                        >
+                            <GripVertical className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </div>
+                    )}
 
                     {/* Clickable Area (Thumbnail + Metadata) */}
                     <div

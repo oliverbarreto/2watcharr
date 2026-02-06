@@ -57,6 +57,7 @@ export function GroupedEpisodeList({
                   episode={episode}
                   onUpdate={onUpdate}
                   onDelete={onDelete}
+                  isDraggable={false}
                 />
               ) : (
                 <EpisodeListRow
@@ -64,6 +65,7 @@ export function GroupedEpisodeList({
                   episode={episode}
                   onUpdate={onUpdate}
                   onDelete={onDelete}
+                  isDraggable={false}
                 />
               )
             )}

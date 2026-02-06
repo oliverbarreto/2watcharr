@@ -27,6 +27,7 @@ interface FilterBarProps {
         watched?: boolean;
         watchStatus?: 'unwatched' | 'pending' | 'watched';
         tagIds?: string[];
+        favorite?: boolean;
     }) => void;
     onSortChange?: (sort: { field: string; order: 'asc' | 'desc' }) => void;
     initialFilters?: {
@@ -34,6 +35,7 @@ interface FilterBarProps {
         watched?: boolean;
         watchStatus?: 'unwatched' | 'pending' | 'watched';
         tagIds?: string[];
+        favorite?: boolean;
     };
     initialSort?: {
         field: string;

@@ -50,9 +50,10 @@ interface EpisodeCardProps {
     episode: MediaEpisode;
     onUpdate?: () => void;
     onDelete?: () => void;
+    isDraggable?: boolean;
 }
 
-export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
+export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }: EpisodeCardProps) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isHardDeleteDialogOpen, setIsHardDeleteDialogOpen] = useState(false);
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
@@ -66,7 +67,10 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
         setNodeRef,
         transform,
         transition,
-    } = useSortable({ id: episode.id });
+    } = useSortable({ 
+        id: episode.id,
+        disabled: !isDraggable
+    });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -381,13 +385,15 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
 
                     <CardContent className="p-4 flex-1 flex flex-col">
                         {/* Drag Handle */}
-                        <div
-                            {...attributes}
-                            {...listeners}
-                            className="absolute left-2 top-2 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-black/50 p-1 rounded-sm"
-                        >
-                            <GripVertical className="h-4 w-4 text-white" />
-                        </div>
+                        {isDraggable && (
+                            <div
+                                {...attributes}
+                                {...listeners}
+                                className="absolute left-2 top-2 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-black/50 p-1 rounded-sm"
+                            >
+                                <GripVertical className="h-4 w-4 text-white" />
+                            </div>
+                        )}
 
                         {/* Title and Channel */}
                         <div className="mb-2">
@@ -635,9 +641,9 @@ export function EpisodeCard({ episode, onUpdate, onDelete }: EpisodeCardProps) {
 
                     {/* Bottom Drag Handle Line */}
                     <div
-                        {...attributes}
-                        {...listeners}
-                        className="absolute bottom-0 left-0 w-full h-1.5 bg-primary opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-20"
+                        {...(isDraggable ? attributes : {})}
+                        {...(isDraggable ? listeners : {})}
+                        className={`absolute bottom-0 left-0 w-full h-1.5 bg-primary opacity-0 group-hover:opacity-100 transition-opacity z-20 ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''}`}
                     />
                 </Card>
 
