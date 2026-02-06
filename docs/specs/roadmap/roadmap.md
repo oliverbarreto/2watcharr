@@ -25,7 +25,8 @@
 
 
 ## Implemented Features
-20260206:
+
+20260206 - Release 0.4.0:
 - [x] `./docs/specs/roadmap/completed/BUGFIX-add-legend-to-chart.md`
 - [x] `./docs/specs/roadmap/completed/BUGFIX-improve-draganddrop-ui-remove-handle-in-date-filtering.md`
 - [x] `./docs/specs/roadmap/completed/FEATURE-timeline-dates-sections-in-watchlist-page.md`

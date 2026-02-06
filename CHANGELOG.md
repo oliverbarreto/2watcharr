@@ -23,6 +23,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Docs
 - **Database Migrations**: Added guide for applying migrations in production environments.
 
+## [0.4.0] - 2026-02-06
+
+### Added
+- **Stats Page**: Added legends to all charts for better data visualization.
+- **Watchlist**: Introduced manual episode ordering with drag-and-drop support.
+- **Timeline Sections**: Added date-based sections (Today, Yesterday, etc.) in the watchlist when filtering by date.
+- **Priority Filtering**: Added option to filter for favorites and priority episodes.
+
+### Improved
+- **Stats Page**: Enhanced events table with a new tags column and support for sorting across all columns.
+- **Activity Tracking**: Added tracking for soft and hard deletion events.
+
+### Fixed
+- **Watchlist**: Restrict drag-and-drop reordering to manual mode only to prevent UI inconsistencies.
+
 ## [0.3.1] - 2026-02-05
 
 ### Added
