@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.0] - 2026-02-06
 
 ### Docs
-- **Roadmap**: Updated roadmap
+- **Roadmap**: Updated roadmap (😎 YES, we screwed up with this version bump. Blanme it on Antigravity)
 
 ## [0.4.0] - 2026-02-06
 
