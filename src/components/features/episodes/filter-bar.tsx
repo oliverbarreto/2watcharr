@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Play, Tag as TagIcon, X, Clock } from 'lucide-react';
+import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,6 +52,8 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     const [sortField, setSortField] = useState(initialSort?.field || 'created_at');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSort?.order || 'desc');
     const [showTags, setShowTags] = useState(initialFilters?.tagIds && initialFilters.tagIds.length > 0);
+    const [priorityFilter, setPriorityFilter] = useState(false);
+    const [favoriteFilter, setFavoriteFilter] = useState(initialFilters?.favorite || false);
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -107,7 +109,22 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
 
     const handleSortChange = (field: string) => {
         setSortField(field);
-        onSortChange?.({ field, order: sortOrder });
+        
+        // Set appropriate default sort order based on field
+        let defaultOrder: 'asc' | 'desc' = 'desc';
+        
+        // For favorite and duration, default to desc (favorited/longest first)
+        if (field === 'favorite' || field === 'duration') {
+            defaultOrder = 'desc';
+        }
+        // For title, default to asc (alphabetical)
+        else if (field === 'title') {
+            defaultOrder = 'asc';
+        }
+        // For date fields and others, keep desc (most recent first)
+        
+        setSortOrder(defaultOrder);
+        onSortChange?.({ field, order: defaultOrder });
     };
 
     const handleOrderChange = () => {
@@ -198,16 +215,68 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                 <SelectItem value="date_watched">Date Watched</SelectItem>
                                 <SelectItem value="date_favorited">Date Favorited</SelectItem>
                                 <SelectItem value="date_removed">Date Removed</SelectItem>
-                                <SelectItem value="priority">Priority</SelectItem>
-                                <SelectItem value="favorite">Favorite</SelectItem>
-                                <SelectItem value="duration">Duration</SelectItem>
-                                <SelectItem value="title">Title</SelectItem>
                             </SelectContent>
                         </Select>
 
                         <Button variant="outline" size="icon" onClick={handleOrderChange} className="h-9 w-9 flex-shrink-0">
                             {sortOrder === 'desc' ? '↓' : '↑'}
                         </Button>
+
+                        {/* Priority Filter Checkbox */}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={priorityFilter ? 'default' : 'outline'}
+                                        size="icon"
+                                        onClick={() => {
+                                            const newValue = !priorityFilter;
+                                            setPriorityFilter(newValue);
+                                            onFilterChange?.({
+                                                ...initialFilters,
+                                                search,
+                                                watched: watchedFilter === 'all' ? undefined : watchedFilter === 'watched',
+                                                watchStatus: watchedFilter === 'pending' ? 'pending' : undefined,
+                                                tagIds: selectedTagIds,
+                                                favorite: favoriteFilter ? true : undefined,
+                                            });
+                                        }}
+                                        className="h-9 w-9 flex-shrink-0"
+                                    >
+                                        <Gem className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Priority</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        {/* Favorite Filter Checkbox */}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={favoriteFilter ? 'default' : 'outline'}
+                                        size="icon"
+                                        onClick={() => {
+                                            const newValue = !favoriteFilter;
+                                            setFavoriteFilter(newValue);
+                                            onFilterChange?.({
+                                                ...initialFilters,
+                                                search,
+                                                watched: watchedFilter === 'all' ? undefined : watchedFilter === 'watched',
+                                                watchStatus: watchedFilter === 'pending' ? 'pending' : undefined,
+                                                tagIds: selectedTagIds,
+                                                favorite: newValue ? true : undefined,
+                                            });
+                                        }}
+                                        className="h-9 w-9 flex-shrink-0"
+                                    >
+                                        <Star className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Favorite</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
 
                         <TooltipProvider>
                             <Tooltip>

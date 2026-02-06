@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { MediaEpisode } from '@/lib/domain/models';
 import { EpisodeCard } from './episode-card';
 import { EpisodeListRow } from './episode-list-row';
+import { GroupedEpisodeList } from './grouped-episode-list';
+import { isDateBasedSort } from '@/lib/utils/date-grouping';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
     DndContext,
@@ -153,41 +155,63 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode }: Episod
         );
     }
 
+    // If it's a date-based sort, use the grouped rendering
+    if (sort && isDateBasedSort(sort.field)) {
+        return (
+            <div className="space-y-4">
+                <GroupedEpisodeList
+                    episodes={episodes}
+                    sortField={sort.field}
+                    sortOrder={sort.order}
+                    viewMode={viewMode}
+                    onUpdate={fetchEpisodes}
+                    onDelete={fetchEpisodes}
+                />
+            </div>
+        );
+    }
+
+    // Default: Flat list with drag-and-drop (for manual/custom order)
     return (
-        <div className="space-y-4">
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+        >
+            <SortableContext
+                items={episodes.map((e) => e.id)}
+                strategy={
+                    viewMode === 'grid'
+                        ? rectSortingStrategy
+                        : verticalListSortingStrategy
+                }
             >
-                <SortableContext
-                    items={episodes.map(v => v.id)}
-                    strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
+                <div
+                    className={
+                        viewMode === 'grid'
+                            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+                            : 'flex flex-col border rounded-md overflow-hidden bg-card/50'
+                    }
                 >
-                    <div className={viewMode === 'grid'
-                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-                        : "flex flex-col border rounded-md overflow-hidden bg-card/50"
-                    }>
-                        {episodes.map((episode) => (
-                            viewMode === 'grid' ? (
-                                <EpisodeCard
-                                    key={episode.id}
-                                    episode={episode}
-                                    onUpdate={fetchEpisodes}
-                                    onDelete={fetchEpisodes}
-                                />
-                            ) : (
-                                <EpisodeListRow
-                                    key={episode.id}
-                                    episode={episode}
-                                    onUpdate={fetchEpisodes}
-                                    onDelete={fetchEpisodes}
-                                />
-                            )
-                        ))}
-                    </div>
-                </SortableContext>
-            </DndContext>
-        </div>
+                    {episodes.map((episode) =>
+                        viewMode === 'grid' ? (
+                            <EpisodeCard
+                                key={episode.id}
+                                episode={episode}
+                                onUpdate={fetchEpisodes}
+                                onDelete={fetchEpisodes}
+                            />
+                        ) : (
+                            <EpisodeListRow
+                                key={episode.id}
+                                episode={episode}
+                                onUpdate={fetchEpisodes}
+                                onDelete={fetchEpisodes}
+                            />
+                        )
+                    )}
+                </div>
+            </SortableContext>
+        </DndContext>
     );
 }
