@@ -2,18 +2,32 @@
 
 ## Feature Requests
 
-Working on:
+### Working on:
 
-To be done:
-- [ ] `./docs/specs/roadmap/FEATURE-import-playlist-data.md`
-- [ ] `./docs/specs/roadmap/FEATURE-async-request-and-client-ui.md`
-- [ ] `./docs/specs/roadmap/FEATURE-import-playlist-data.md`
-- [ ] `./docs/specs/roadmap/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
+### To be done:
 
-Pending Analysis:
-- [ ] `./docs/specs/roadmap/BUGFIX-faviconerror-on-browser-console.md`
+#### AI TASKS:
+- [ ] `./docs/specs/roadmap/todo/TASK-update-docs-tag-and-release.md`
 
-### Implemented Features
+#### FEATURES:
+- [ ] `./docs/specs/roadmap/todo/FEATURE-improve-ux-events-table-in-stats-page.md`
+- [ ] `./docs/specs/roadmap/todo/FEATURE-timeline-dates-sections-in-watchlist-page.md`
+- [ ] `./docs/specs/roadmap/todo/FEATURE-infinite-scroll-in-watchlist-page.md`
+- [ ] `./docs/specs/roadmap/todo/FEATURE-import-playlist-data.md`
+- [ ] `./docs/specs/roadmap/todo/FEATURE-async-request-and-client-ui.md`
+
+#### UI:
+- [ ] `./docs/specs/roadmap/todo/UI-add-channels-list-view.md`
+
+#### CHORE:
+- [ ] `./docs/specs/roadmap/todo/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
+
+#### BUGFIXES Pending Analysis:
+- [ ] `./docs/specs/roadmap/todo/BUGFIX-faviconerror-on-browser-console.md`
+
+
+## Implemented Features
+
 20260205 - Release 0.3.1:
 - [x] `./docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`
 - [x] BUGFIX: Safari compatibility (custom dialogs, autofill fixes)
