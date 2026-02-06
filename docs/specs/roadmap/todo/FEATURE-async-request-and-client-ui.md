@@ -5,3 +5,4 @@ We want to implement async requests and a client ui for the requests. This will 
 We need to do it when the user is adding episodes, either a youtube video or a iTunes podcast.
 
 We also need to handle background tasks when the app is adding a channel after the user has added a new video or when we are syncing channel metadata with the button in the channel details card.
+

@@ -28,8 +28,9 @@
 
 ## Implemented Features
 20260206:
+- [x] `./docs/specs/roadmap/completed/BUGFIX-add-legend-to-chart.md`
+- [x] `./docs/specs/roadmap/completed/FEATURE-timeline-dates-sections-in-watchlist-page.md`
 - [x] `./docs/specs/roadmap/completed/BUGFIX-improve-draganddrop-ui-remove-handle-in-date-filtering.md`
-- [x] `./docs/specs/roadmap/completed/FEATURE-timeline-dates-sections-in-watchlist-page.mdº`
 
 20260205 - Release 0.3.1:
 - [x] `./docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`

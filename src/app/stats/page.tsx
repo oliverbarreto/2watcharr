@@ -376,6 +376,19 @@ export default function StatsPage() {
                                 <div className="grid flex-1 gap-1">
                                     <CardTitle className="text-lg font-bold">Activity Trend</CardTitle>
                                     <CardDescription>{periodLabels[period]} visualization</CardDescription>
+                                    <div className="flex items-center gap-3 mt-1">
+                                        {Object.entries(chartConfig).map(([key, config]) => (
+                                            <div key={key} className="flex items-center gap-1.5">
+                                                <div 
+                                                    className="h-1.5 w-1.5 rounded-full" 
+                                                    style={{ backgroundColor: config.color }}
+                                                />
+                                                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                    {config.label}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                                 <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
                                     <SelectTrigger className="w-[160px] rounded-lg bg-muted/20 border-border/50">
