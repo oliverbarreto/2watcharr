@@ -1,0 +1,21 @@
+# Walkthrough - Chart Legend Relocation
+
+I have successfully moved the chart legend to be positioned directly below the time range selection dropdown menu, as requested.
+
+## Changes Made
+
+### Stats Page
+- Modified [page.tsx](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/app/stats/page.tsx) to relocate the "Activity Trend" legend.
+- Reorganized the `CardHeader` layout to group the `Select` component (time range dropdown) and the `legend` components in a vertical column on the right side.
+
+## Verification Results
+
+### Manual Verification
+The changes were verified by running the development server and inspecting the Stats page.
+
+![Activity Trend Chart Legend](/Users/oliver/.gemini/antigravity/brain/c4d69781-796d-48a2-8825-75715b9bb5fa/activity_trend_chart_legend_1770475488980.png)
+
+### Verification Recording
+The following recording shows the verification process:
+
+![Verification Recording](/Users/oliver/.gemini/antigravity/brain/c4d69781-796d-48a2-8825-75715b9bb5fa/verify_chart_legend_1770475474642.webp)

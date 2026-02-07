@@ -376,7 +376,21 @@ export default function StatsPage() {
                                 <div className="grid flex-1 gap-1">
                                     <CardTitle className="text-lg font-bold">Activity Trend</CardTitle>
                                     <CardDescription>{periodLabels[period]} visualization</CardDescription>
-                                    <div className="flex items-center gap-3 mt-1">
+                                </div>
+                                <div className="flex flex-col items-end gap-3">
+                                    <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
+                                        <SelectTrigger className="w-[160px] rounded-lg bg-muted/20 border-border/50">
+                                            <SelectValue placeholder="Select period" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl bg-zinc-950/90 backdrop-blur-md border-zinc-800">
+                                            <SelectItem value="day" className="rounded-lg">Today</SelectItem>
+                                            <SelectItem value="week" className="rounded-lg">Last 7 days</SelectItem>
+                                            <SelectItem value="month" className="rounded-lg">Last 30 days</SelectItem>
+                                            <SelectItem value="year" className="rounded-lg">This Year</SelectItem>
+                                            <SelectItem value="total" className="rounded-lg">All Time</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <div className="flex items-center gap-3">
                                         {Object.entries(chartConfig).map(([key, config]) => (
                                             <div key={key} className="flex items-center gap-1.5">
                                                 <div 
@@ -390,18 +404,6 @@ export default function StatsPage() {
                                         ))}
                                     </div>
                                 </div>
-                                <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
-                                    <SelectTrigger className="w-[160px] rounded-lg bg-muted/20 border-border/50">
-                                        <SelectValue placeholder="Select period" />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl bg-zinc-950/90 backdrop-blur-md border-zinc-800">
-                                        <SelectItem value="day" className="rounded-lg">Today</SelectItem>
-                                        <SelectItem value="week" className="rounded-lg">Last 7 days</SelectItem>
-                                        <SelectItem value="month" className="rounded-lg">Last 30 days</SelectItem>
-                                        <SelectItem value="year" className="rounded-lg">This Year</SelectItem>
-                                        <SelectItem value="total" className="rounded-lg">All Time</SelectItem>
-                                    </SelectContent>
-                                </Select>
                             </CardHeader>
                             <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
                                 <ChartContainer config={chartConfig} className="aspect-[16/6] w-full">

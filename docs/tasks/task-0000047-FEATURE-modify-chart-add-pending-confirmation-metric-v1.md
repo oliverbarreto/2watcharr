@@ -1,0 +1,1 @@
+Lets extend the app stats page to show a metric for episodes pending confirmation of being watched.
