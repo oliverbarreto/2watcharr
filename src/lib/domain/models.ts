@@ -154,6 +154,18 @@ export interface SortOptions {
     order: SortOrder;
 }
 
+export interface PaginationOptions {
+    limit?: number;
+    offset?: number;
+}
+
+export interface PaginatedResponse<T> {
+    items: T[];
+    total: number;
+    limit: number;
+    offset: number;
+}
+
 export interface ChannelFilters {
     id?: string;
     search?: string;

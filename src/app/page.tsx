@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout';
 import { FilterBar, EpisodeList } from '@/components/features/episodes';
@@ -50,6 +50,15 @@ function HomePageContent() {
     return 'list';
   });
 
+  const [counts, setCounts] = useState({ current: 0, total: 0 });
+
+  const handleCountChange = useCallback((current: number, total: number) => {
+    setCounts(prev => {
+      if (prev.current === current && prev.total === total) return prev;
+      return { current, total };
+    });
+  }, []);
+
   const toggleViewMode = () => {
     const newMode = viewMode === 'grid' ? 'list' : 'grid';
     setViewMode(newMode);
@@ -84,6 +93,9 @@ function HomePageContent() {
             <p className="text-muted-foreground">
               Manage your videos and podcasts to watch later
             </p>
+            <div className="mt-1 text-sm font-medium text-muted-foreground border-t pt-2 inline-block">
+                Showing <span className="text-foreground">{counts.current}</span> of <span className="text-foreground">{counts.total}</span> episodes
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {filters.channelId && (
@@ -122,7 +134,13 @@ function HomePageContent() {
         />
 
         {/* Episode List */}
-        <EpisodeList key={refreshKey} filters={filters} sort={sort} viewMode={viewMode} />
+        <EpisodeList 
+            key={refreshKey} 
+            filters={filters} 
+            sort={sort} 
+            viewMode={viewMode} 
+            onCountChange={handleCountChange}
+        />
       </div>
     </Layout>
   );
