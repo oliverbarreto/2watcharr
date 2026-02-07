@@ -1,0 +1,13 @@
+# Task: Add pending confirmation metric to stats page
+
+- [x] Plan the implementation
+    - [x] Explore the codebase and identify necessary changes
+    - [x] Create implementation plan
+- [x] Implement backend changes
+    - [x] Update stats domain models
+    - [x] Update [StatsService](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/services/stats.service.ts#40-266) to calculate new metrics
+- [x] Implement frontend changes
+    - [x] Update stats page UI to display new metrics
+- [x] Verify the changes
+    - [x] Run tests
+    - [x] Manual verification

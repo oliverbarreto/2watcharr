@@ -14,6 +14,8 @@ export interface DashboardStats {
         favorited: number;
         removed: number;
         tagged: number;
+        unwatched: number;
+        pending: number;
     };
     playTime: {
         totalSeconds: number;
@@ -104,6 +106,8 @@ export class StatsService {
             favorited: events.find(e => e.type === 'favorited')?.count || 0,
             removed: events.find(e => e.type === 'removed')?.count || 0,
             tagged: events.find(e => e.type === 'tagged')?.count || 0,
+            unwatched: events.find(e => e.type === 'unwatched')?.count || 0,
+            pending: events.find(e => e.type === 'pending')?.count || 0,
         };
     }
 
@@ -142,7 +146,7 @@ export class StatsService {
 
     private async getActivityTimeSeries(userId: string, period: string) {
         let query = '';
-        let params: any[] = [userId];
+        const params: any[] = [userId];
 
         if (period === 'day') {
             // Last 24 hours, grouped by hour
@@ -234,7 +238,7 @@ export class StatsService {
 
         // Fetch tags for these episodes
         const episodeIds = events.map(e => e.episode_id).filter(id => id !== null);
-        let tagsByEpisode: Record<string, { name: string; color: string }[]> = {};
+        const tagsByEpisode: Record<string, { name: string; color: string }[]> = {};
 
         if (episodeIds.length > 0) {
             const placeholders = episodeIds.map(() => '?').join(',');

@@ -31,12 +31,16 @@
 
 
 ## Implemented Features
+20260207:
+- [x] `./docs/specs/roadmap/completed/0.5.3/FEATURE-modify-chart-add-pending-confirmation-metric.md`
+- [x] `./docs/specs/roadmap/completed/0.5.3/FEATURE-modify-chart-legend.md`
+
 20260207 - Release 0.5.2:
 - [x] `./docs/specs/roadmap/completed/0.5.2/FEATURE-infinite-scroll-in-watchlist-page.md`
 
 20260206:
-- [x] `./docs/specs/roadmap/todo/FEATURE-add-settings-option-for-default-filter.md`
-- [x] `./docs/specs/roadmap/todo/BUGFIX-tags-lowercase-error-on-browser.md`
+- [x] `./docs/specs/roadmap/completed/0.5.2/FEATURE-add-settings-option-for-default-filter.md`
+- [x] `./docs/specs/roadmap/completed/0.5.2/BUGFIX-tags-lowercase-error-on-browser.md`
 
 20260206 - Release 0.5.1:
 - [x] updated documentation
@@ -46,25 +50,25 @@
 - [x] updated documentation
 
 20260206 - Release 0.4.0:
-- [x] `./docs/specs/roadmap/completed/BUGFIX-add-legend-to-chart.md`
-- [x] `./docs/specs/roadmap/completed/BUGFIX-improve-draganddrop-ui-remove-handle-in-date-filtering.md`
-- [x] `./docs/specs/roadmap/completed/FEATURE-timeline-dates-sections-in-watchlist-page.md`
-- [x] `./docs/specs/roadmap/completed/FEATURE-improve-ux-events-table-in-stats-page.md`
+- [x] `./docs/specs/roadmap/completed/0.4.0/BUGFIX-add-legend-to-chart.md`
+- [x] `./docs/specs/roadmap/completed/0.4.0/BUGFIX-improve-draganddrop-ui-remove-handle-in-date-filtering.md`
+- [x] `./docs/specs/roadmap/completed/0.4.0/FEATURE-timeline-dates-sections-in-watchlist-page.md`
+- [x] `./docs/specs/roadmap/completed/0.4.0/FEATURE-improve-ux-events-table-in-stats-page.md`
 
 20260205 - Release 0.3.1:
-- [x] `./docs/specs/roadmap/BUGFIX-fix-broken-ios-workflow.md`
+- [x] `./docs/specs/roadmap/completed/0.3.1/BUGFIX-fix-broken-ios-workflow.md`
 - [x] BUGFIX: Safari compatibility (custom dialogs, autofill fixes)
 - [x] FEATURE: "Paste from clipboard" in add episode modal
 - [x] FEATURE: Tags toggle in add episode modal for mobile
 
 20260205 - Release 0.3.0:
 - [x] Modify settings to make the "General" tab the default tab in Settings
-- [x] `./docs/specs/roadmap/completed/FEATURE-deleted-episodes-page.md`
-- [x] `./docs/specs/roadmap/completed/UI-only-allow-grid-view-in-mobile-prompt-v1.md`
-- [x] `./docs/specs/roadmap/completed/UI-improve-ui-overlay-button-in-mobile-prompt-v1.md`
+- [x] `./docs/specs/roadmap/completed/0.3.0/FEATURE-deleted-episodes-page.md`
+- [x] `./docs/specs/roadmap/completed/0.3.0/UI-only-allow-grid-view-in-mobile-prompt-v1.md`
+- [x] `./docs/specs/roadmap/completed/0.3.0/UI-improve-ui-overlay-button-in-mobile-prompt-v1.md`
 
-20260204:
-- [x] `./docs/specs/roadmap/completed/FEATURE-channel-details-page.md`
+20260204 - Release 0.2.0:
+- [x] `./docs/specs/roadmap/completed/0.2.0/FEATURE-channel-details-page.md`
 
 20260203 - Release 0.2.0:
 - [x] Tag and release 0.2.0
@@ -78,11 +82,11 @@
 - [x] `./docs/specs/roadmap/completed/FEATURE-day-week-month-year-chart-and-stats-table.md`
 
 20260131 - Release 0.1.0:
-- [x] `./docs/specs/roadmap/feature-stats.md`                                       
-- [x] `./docs/specs/roadmap/feature-users.md`                                       
+- [x] `./docs/specs/roadmap/completed/0.1.0/feature-stats.md`                                       
+- [x] `./docs/specs/roadmap/completed/0.1.0/feature-users.md`                                       
 
 20260130:
-- [x] `./docs/specs/roadmap/feature-podcasts.md`                                    
+- [x] `./docs/specs/roadmap/completed/0.1.0/feature-podcasts.md`                                    
 - [x] `.agent/workflows/test.md`                                                    
 
 20260128:

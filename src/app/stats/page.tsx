@@ -21,7 +21,9 @@ import {
     ArrowDown,
     Search,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    CircleDashed,
+    RotateCcw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,6 +64,8 @@ interface DashboardStats {
         favorited: number;
         removed: number;
         tagged: number;
+        unwatched: number;
+        pending: number;
     };
     playTime: {
         totalSeconds: number;
@@ -317,6 +321,20 @@ export default function StatsPage() {
                                 icon={<Play className="h-4 w-4" />} 
                                 color="text-green-500"
                                 bg="bg-green-500/10"
+                            />
+                            <UsageItem 
+                                label="Not Watched" 
+                                value={stats.usage.unwatched} 
+                                icon={<RotateCcw className="h-4 w-4" />} 
+                                color="text-orange-500"
+                                bg="bg-orange-500/10"
+                            />
+                            <UsageItem 
+                                label="Pending Confirmation" 
+                                value={stats.usage.pending} 
+                                icon={<CircleDashed className="h-4 w-4" />} 
+                                color="text-cyan-500"
+                                bg="bg-cyan-500/10"
                             />
                             <UsageItem 
                                 label="Favorited" 
