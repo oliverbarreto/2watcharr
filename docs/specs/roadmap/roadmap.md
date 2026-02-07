@@ -10,7 +10,6 @@
 - [ ] `./docs/specs/roadmap/todo/TASK-update-docs-tag-and-release.md`
 
 #### FEATURES:
-- [ ] `./docs/specs/roadmap/todo/FEATURE-infinite-scroll-in-watchlist-page.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-import-playlist-data.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-async-request-and-client-ui.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-return-episode-title-to-ios-shortcut-to-display-name-on-notification.md`
@@ -32,6 +31,9 @@
 
 
 ## Implemented Features
+20260207 - Release 0.5.2:
+- [x] `./docs/specs/roadmap/completed/0.5.2/FEATURE-infinite-scroll-in-watchlist-page.md`
+
 20260206:
 - [x] `./docs/specs/roadmap/todo/FEATURE-add-settings-option-for-default-filter.md`
 - [x] `./docs/specs/roadmap/todo/BUGFIX-tags-lowercase-error-on-browser.md`

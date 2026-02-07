@@ -11,6 +11,7 @@ import {
     WatchStatus,
     Priority,
     Tag,
+    PaginationOptions,
 } from '../domain/models';
 
 export class EpisodeRepository {
@@ -106,7 +107,8 @@ export class EpisodeRepository {
      */
     async findAll(
         filters?: EpisodeFilters,
-        sort?: SortOptions
+        sort?: SortOptions,
+        pagination?: PaginationOptions
     ): Promise<MediaEpisode[]> {
         const hasTagFilter = filters?.tagIds && filters.tagIds.length > 0;
         let query = `
@@ -194,6 +196,16 @@ export class EpisodeRepository {
             query += ' ORDER BY e.custom_order ASC, e.created_at DESC';
         }
 
+        // Add pagination
+        if (pagination?.limit !== undefined) {
+            query += ' LIMIT ?';
+            params.push(pagination.limit);
+        }
+        if (pagination?.offset !== undefined) {
+            query += ' OFFSET ?';
+            params.push(pagination.offset);
+        }
+
         const rows = await this.db.all(query, params);
         const episodes = rows.map((row) => this.mapRowToEpisode(row));
 
@@ -228,6 +240,79 @@ export class EpisodeRepository {
         }
 
         return episodes;
+    }
+
+    /**
+     * Count all episodes matching filters
+     */
+    async countAll(filters?: EpisodeFilters): Promise<number> {
+        const hasTagFilter = filters?.tagIds && filters.tagIds.length > 0;
+        let query = `SELECT COUNT(${hasTagFilter ? 'DISTINCT ' : ''}e.id) as count FROM episodes e`;
+        const params: (string | number | null)[] = [];
+
+        if (hasTagFilter) {
+            query += ' INNER JOIN episode_tags et ON e.id = et.episode_id';
+        }
+
+        const conditions: string[] = [];
+
+        if (filters?.type) {
+            conditions.push('e.type = ?');
+            params.push(filters.type);
+        }
+
+        if (filters?.tagIds && filters.tagIds.length > 0) {
+            const placeholders = filters.tagIds.map(() => '?').join(',');
+            conditions.push(`et.tag_id IN (${placeholders})`);
+            params.push(...filters.tagIds);
+        }
+
+        if (filters?.search) {
+            conditions.push(
+                '(e.title LIKE ? OR e.description LIKE ? OR EXISTS (SELECT 1 FROM channels c WHERE c.id = e.channel_id AND c.name LIKE ?))'
+            );
+            const searchTerm = `%${filters.search}%`;
+            params.push(searchTerm, searchTerm, searchTerm);
+        }
+
+        if (filters?.watched !== undefined) {
+            conditions.push('e.watched = ?');
+            params.push(filters.watched ? 1 : 0);
+        }
+
+        if (filters?.watchStatus !== undefined) {
+            conditions.push('e.watch_status = ?');
+            params.push(filters.watchStatus);
+        }
+
+        if (filters?.favorite !== undefined) {
+            conditions.push('e.favorite = ?');
+            params.push(filters.favorite ? 1 : 0);
+        }
+
+        if (filters?.isDeleted !== undefined) {
+            conditions.push('e.is_deleted = ?');
+            params.push(filters.isDeleted ? 1 : 0);
+        } else {
+            conditions.push('e.is_deleted = 0');
+        }
+
+        if (filters?.channelId) {
+            conditions.push('e.channel_id = ?');
+            params.push(filters.channelId);
+        }
+
+        if (filters?.userId) {
+            conditions.push('e.user_id = ?');
+            params.push(filters.userId);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        const result = await this.db.get(query, params);
+        return result?.count || 0;
     }
 
     /**

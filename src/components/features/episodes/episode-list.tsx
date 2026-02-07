@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { MediaEpisode } from '@/lib/domain/models';
 import { EpisodeCard } from './episode-card';
 import { EpisodeListRow } from './episode-list-row';
 import { GroupedEpisodeList } from './grouped-episode-list';
 import { isDateBasedSort } from '@/lib/utils/date-grouping';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2 } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -25,6 +26,8 @@ import {
 } from '@dnd-kit/sortable';
 import { toast } from 'sonner';
 
+const PAGE_SIZE = 100;
+
 interface EpisodeListProps {
     filters?: {
         search?: string;
@@ -40,12 +43,19 @@ interface EpisodeListProps {
         order: 'asc' | 'desc';
     };
     viewMode: 'grid' | 'list';
+    onCountChange?: (current: number, total: number) => void;
 }
 
-export function EpisodeList({ filters, sort, viewMode: initialViewMode }: EpisodeListProps) {
+export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountChange }: EpisodeListProps) {
     const [episodes, setEpisodes] = useState<MediaEpisode[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [totalCount, setTotalCount] = useState(0);
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
+    
+    const observerTarget = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const checkMobile = () => {
@@ -67,8 +77,13 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode }: Episod
         })
     );
 
-    const fetchEpisodes = useCallback(async () => {
-        setLoading(true);
+    const fetchEpisodes = useCallback(async (currentOffset: number = 0, append: boolean = false) => {
+        if (currentOffset === 0) {
+            setLoading(true);
+        } else {
+            setLoadingMore(true);
+        }
+
         try {
             const params = new URLSearchParams();
 
@@ -83,22 +98,61 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode }: Episod
             if (filters?.isDeleted !== undefined) params.append('isDeleted', String(filters.isDeleted));
             if (sort?.field) params.append('sort', sort.field);
             if (sort?.order) params.append('order', sort.order);
+            
+            // Add pagination params
+            params.append('limit', String(PAGE_SIZE));
+            params.append('offset', String(currentOffset));
 
             const response = await fetch(`/api/episodes?${params.toString()}`);
             if (!response.ok) throw new Error('Failed to fetch episodes');
 
             const data = await response.json();
-            setEpisodes(data.episodes);
+            
+            if (append) {
+                setEpisodes(prev => [...prev, ...data.episodes]);
+            } else {
+                setEpisodes(data.episodes);
+            }
+            
+            setTotalCount(data.total);
+            setHasMore(data.episodes.length === PAGE_SIZE && (currentOffset + data.episodes.length) < data.total);
+            setOffset(currentOffset);
         } catch (error) {
             console.error('Error fetching episodes:', error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     }, [filters, sort]);
 
+    // Reset pagination when filters or sort change
     useEffect(() => {
-        fetchEpisodes();
+        fetchEpisodes(0, false);
     }, [fetchEpisodes]);
+
+    // Intersection Observer for infinite scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+                    fetchEpisodes(offset + PAGE_SIZE, true);
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => observer.disconnect();
+    }, [hasMore, loadingMore, loading, offset, fetchEpisodes]);
+
+    useEffect(() => {
+        if (onCountChange) {
+            onCountChange(episodes.length, totalCount);
+        }
+    }, [episodes.length, totalCount, onCountChange]);
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
@@ -125,7 +179,9 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode }: Episod
         }
     };
 
-    if (loading) {
+    const handleUpdate = () => fetchEpisodes(0, false);
+
+    if (loading && offset === 0) {
         return (
             <div className={viewMode === 'grid'
                 ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
@@ -144,7 +200,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode }: Episod
         );
     }
 
-    if (episodes.length === 0) {
+    if (episodes.length === 0 && !loading) {
         return (
             <div className="text-center py-12">
                 <p className="text-muted-foreground text-lg">No episodes found</p>
@@ -155,65 +211,82 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode }: Episod
         );
     }
 
-    // If it's a date-based sort, use the grouped rendering
-    if (sort && isDateBasedSort(sort.field)) {
-        return (
-            <div className="space-y-4">
-                <GroupedEpisodeList
-                    episodes={episodes}
-                    sortField={sort.field}
-                    sortOrder={sort.order}
-                    viewMode={viewMode}
-                    onUpdate={fetchEpisodes}
-                    onDelete={fetchEpisodes}
-                />
-            </div>
-        );
-    }
+    // Combine episodes rendering to avoid duplication
+    const renderEpisodes = () => {
+        if (sort && isDateBasedSort(sort.field)) {
+            return (
+                <div className="space-y-4">
+                    <GroupedEpisodeList
+                        episodes={episodes}
+                        sortField={sort.field}
+                        sortOrder={sort.order}
+                        viewMode={viewMode}
+                        onUpdate={handleUpdate}
+                        onDelete={handleUpdate}
+                    />
+                </div>
+            );
+        }
 
-    // Default: Flat list with drag-and-drop (for manual/custom order)
-    return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-        >
-            <SortableContext
-                items={episodes.map((e) => e.id)}
-                strategy={
-                    viewMode === 'grid'
-                        ? rectSortingStrategy
-                        : verticalListSortingStrategy
-                }
+        return (
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
             >
-                <div
-                    className={
+                <SortableContext
+                    items={episodes.map((e) => e.id)}
+                    strategy={
                         viewMode === 'grid'
-                            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-                            : 'flex flex-col border rounded-md overflow-hidden bg-card/50'
+                            ? rectSortingStrategy
+                            : verticalListSortingStrategy
                     }
                 >
-                    {episodes.map((episode) =>
-                        viewMode === 'grid' ? (
-                            <EpisodeCard
-                                key={episode.id}
-                                episode={episode}
-                                onUpdate={fetchEpisodes}
-                                onDelete={fetchEpisodes}
-                                isDraggable={sort?.field === 'custom'}
-                            />
-                        ) : (
-                            <EpisodeListRow
-                                key={episode.id}
-                                episode={episode}
-                                onUpdate={fetchEpisodes}
-                                onDelete={fetchEpisodes}
-                                isDraggable={sort?.field === 'custom'}
-                            />
-                        )
-                    )}
-                </div>
-            </SortableContext>
-        </DndContext>
+                    <div
+                        className={
+                            viewMode === 'grid'
+                                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+                                : 'flex flex-col border rounded-md overflow-hidden bg-card/50'
+                        }
+                    >
+                        {episodes.map((episode) =>
+                            viewMode === 'grid' ? (
+                                <EpisodeCard
+                                    key={episode.id}
+                                    episode={episode}
+                                    onUpdate={handleUpdate}
+                                    onDelete={handleUpdate}
+                                    isDraggable={sort?.field === 'custom'}
+                                />
+                            ) : (
+                                <EpisodeListRow
+                                    key={episode.id}
+                                    episode={episode}
+                                    onUpdate={handleUpdate}
+                                    onDelete={handleUpdate}
+                                    isDraggable={sort?.field === 'custom'}
+                                />
+                            )
+                        )}
+                    </div>
+                </SortableContext>
+            </DndContext>
+        );
+    };
+
+    return (
+        <div className="space-y-4">
+            {renderEpisodes()}
+            
+            {/* Infinite Scroll Trigger & Loading More Indicator */}
+            <div ref={observerTarget} className="h-10 flex items-center justify-center">
+                {loadingMore && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading more...</span>
+                    </div>
+                )}
+            </div>
+        </div>
     );
 }

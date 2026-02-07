@@ -101,14 +101,23 @@ export async function GET(request: NextRequest) {
             order: sortOrder as 'asc' | 'desc',
         };
 
+        // Parse pagination
+        const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
+        const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined;
+
+        const pagination = {
+            limit,
+            offset,
+        };
+
         const db = await getDatabase();
         const mediaService = new MediaService(db);
 
-        const episodes = await mediaService.listEpisodes(filters, sort);
+        const { episodes, total } = await mediaService.listEpisodes(filters, sort, pagination);
 
         return NextResponse.json({
             episodes,
-            total: episodes.length,
+            total,
         });
     } catch (error) {
         console.error('Error listing episodes:', error);

@@ -8,6 +8,7 @@ import {
     SortOptions,
     Priority,
     MediaEventType,
+    PaginationOptions,
 } from '../domain/models';
 
 export class MediaService {
@@ -116,13 +117,16 @@ export class MediaService {
     }
 
     /**
-     * List episodes with optional filters and sorting
+     * List episodes with optional filters, sorting and pagination
      */
     async listEpisodes(
         filters?: EpisodeFilters,
-        sort?: SortOptions
-    ): Promise<MediaEpisode[]> {
-        return this.episodeRepo.findAll(filters, sort);
+        sort?: SortOptions,
+        pagination?: PaginationOptions
+    ): Promise<{ episodes: MediaEpisode[], total: number }> {
+        const episodes = await this.episodeRepo.findAll(filters, sort, pagination);
+        const total = await this.episodeRepo.countAll(filters);
+        return { episodes, total };
     }
 
     /**

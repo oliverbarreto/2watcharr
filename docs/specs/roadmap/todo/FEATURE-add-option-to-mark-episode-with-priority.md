@@ -7,3 +7,5 @@ When an episode is marked with priority, it should be displayed with a different
 The priority should be saved in the episode's metadata and should be editable. 
 
 Add this option in the general tab of the settings page. 
+
+-- SHOULD WE USE A 💎 ICON NEXT TO THE START BUTTON INSTEAD ???
