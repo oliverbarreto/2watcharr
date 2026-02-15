@@ -25,6 +25,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { UserManagement } from '@/components/features/users/user-management';
 
 interface Tag {
@@ -49,6 +55,7 @@ export default function SettingsPage() {
     const [defaultSortField, setDefaultSortField] = useState<string>('date_added');
     const [watchAction, setWatchAction] = useState<'none' | 'watched' | 'pending'>('pending');
     const [deletingTag, setDeletingTag] = useState<{ id: string, name: string } | null>(null);
+    const [removingEpisodesTag, setRemovingEpisodesTag] = useState<{ id: string, name: string } | null>(null);
 
     useEffect(() => {
         fetchTags();
@@ -124,6 +131,25 @@ export default function SettingsPage() {
         } catch (error) {
             console.error('Error deleting tag:', error);
             toast.error('Failed to delete tag');
+        }
+    };
+
+    const handleSoftRemoveEpisodes = async (id: string) => {
+        setRemovingEpisodesTag(null);
+        try {
+            const response = await fetch(`/api/tags/${id}/remove-episodes`, {
+                method: 'POST',
+            });
+
+            if (response.ok) {
+                fetchTags();
+                toast.success('Episodes removed successfully');
+            } else {
+                toast.error('Failed to remove episodes');
+            }
+        } catch (error) {
+            console.error('Error removing episodes:', error);
+            toast.error('Failed to remove episodes');
         }
     };
 
@@ -397,22 +423,56 @@ export default function SettingsPage() {
                                                                 </span>
                                                             </div>
                                                             <div className="flex gap-1">
-                                                                <Button
-                                                                    size="icon"
-                                                                    variant="ghost"
-                                                                    className="h-8 w-8"
-                                                                    onClick={() => startEditing(tag)}
-                                                                >
-                                                                    <Edit2 className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    size="icon"
-                                                                    variant="ghost"
-                                                                    className="h-8 w-8 text-destructive"
-                                                                    onClick={() => setDeletingTag({ id: tag.id, name: tag.name })}
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </Button>
+                                                                <TooltipProvider>
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <Button
+                                                                                size="icon"
+                                                                                variant="ghost"
+                                                                                className="h-8 w-8"
+                                                                                onClick={() => startEditing(tag)}
+                                                                            >
+                                                                                <Edit2 className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent>
+                                                                            <p>Edit Tag</p>
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <Button
+                                                                                size="icon"
+                                                                                variant="ghost"
+                                                                                className="h-8 w-8 text-destructive"
+                                                                                onClick={() => setDeletingTag({ id: tag.id, name: tag.name })}
+                                                                            >
+                                                                                <Trash2 className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent>
+                                                                            <p>Delete Tag</p>
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <Button
+                                                                                size="icon"
+                                                                                variant="ghost"
+                                                                                className="h-8 w-8 text-orange-500"
+                                                                                onClick={() => setRemovingEpisodesTag({ id: tag.id, name: tag.name })}
+                                                                                disabled={tag.episodeCount === 0}
+                                                                            >
+                                                                                <Trash2 className="h-4 w-4" strokeWidth={3} />
+                                                                            </Button>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent>
+                                                                            <p>Soft remove episodes by tag</p>
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+                                                                </TooltipProvider>
                                                             </div>
                                                         </>
                                                     )}
@@ -450,6 +510,27 @@ export default function SettingsPage() {
                         </Button>
                         <Button onClick={() => deletingTag && handleDeleteTag(deletingTag.id)} className="bg-red-600 hover:bg-red-700 text-white">
                             Delete Tag
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Confirmation Dialog for Soft Removal by Tag */}
+            <Dialog open={!!removingEpisodesTag} onOpenChange={(open) => !open && setRemovingEpisodesTag(null)}>
+                <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle>Soft Remove Episodes</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            This will remove the tag <strong>{removingEpisodesTag?.name}</strong> from all episodes that have it and mark them as soft deleted. 
+                            You can still restore them later from the Deleted Episodes page.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={() => setRemovingEpisodesTag(null)} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button onClick={() => removingEpisodesTag && handleSoftRemoveEpisodes(removingEpisodesTag.id)} className="bg-orange-600 hover:bg-orange-700 text-white">
+                            Soft Remove Episodes
                         </Button>
                     </DialogFooter>
                 </DialogContent>

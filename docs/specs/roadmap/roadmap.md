@@ -32,6 +32,7 @@
 
 ## Implemented Features
 20260207:
+- [x] `./docs/specs/roadmap/completed/0.5.3/FEATURE-soft-remove-episodes-by-tag.md`
 - [x] `./docs/specs/roadmap/completed/0.5.3/FEATURE-modify-chart-add-pending-confirmation-metric.md`
 - [x] `./docs/specs/roadmap/completed/0.5.3/FEATURE-modify-chart-legend.md`
 

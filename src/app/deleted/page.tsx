@@ -5,7 +5,16 @@ import { useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout';
 import { FilterBar, EpisodeList } from '@/components/features/episodes';
 import { Button } from '@/components/ui/button';
-import { List, LayoutGrid, ArrowLeft } from 'lucide-react';
+import { List, LayoutGrid, ArrowLeft, RotateCcw, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Filters {
   search?: string;
@@ -35,6 +44,10 @@ function DeletedEpisodesContent() {
     return 'list';
   });
 
+  const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const toggleViewMode = () => {
     const newMode = viewMode === 'grid' ? 'list' : 'grid';
     setViewMode(newMode);
@@ -46,6 +59,44 @@ function DeletedEpisodesContent() {
     window.addEventListener('episode-restored', handleRestored);
     return () => window.removeEventListener('episode-restored', handleRestored);
   }, []);
+
+  const handleRestoreAll = async () => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch('/api/episodes/restore-all', { method: 'POST' });
+      if (response.ok) {
+        toast.success('All episodes restored successfully');
+        setRefreshKey((prev) => prev + 1);
+      } else {
+        toast.error('Failed to restore episodes');
+      }
+    } catch (error) {
+      console.error('Error restoring episodes:', error);
+      toast.error('Failed to restore episodes');
+    } finally {
+      setIsProcessing(false);
+      setIsRestoreDialogOpen(false);
+    }
+  };
+
+  const handleHardDeleteAll = async () => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch('/api/episodes/permanent-delete-all', { method: 'DELETE' });
+      if (response.ok) {
+        toast.success('All episodes permanently deleted');
+        setRefreshKey((prev) => prev + 1);
+      } else {
+        toast.error('Failed to delete episodes');
+      }
+    } catch (error) {
+      console.error('Error deleting episodes:', error);
+      toast.error('Failed to delete episodes');
+    } finally {
+      setIsProcessing(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
 
   return (
     <Layout>
@@ -70,6 +121,26 @@ function DeletedEpisodesContent() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 text-green-500 hover:text-green-600 hover:bg-green-500/10"
+              onClick={() => setIsRestoreDialogOpen(true)}
+              disabled={isProcessing}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Restore All
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 text-destructive hover:bg-destructive/10"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              disabled={isProcessing}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete All
+            </Button>
             <Button variant="ghost" size="sm" onClick={toggleViewMode} className="gap-2 hidden md:flex">
               {viewMode === 'grid' ? (
                 <>
@@ -101,6 +172,46 @@ function DeletedEpisodesContent() {
           sort={sort} 
           viewMode={viewMode} 
         />
+
+        {/* Restore All Confirmation */}
+        <Dialog open={isRestoreDialogOpen} onOpenChange={setIsRestoreDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+            <DialogHeader>
+              <DialogTitle>Restore All Episodes</DialogTitle>
+              <DialogDescription className="text-zinc-400">
+                Are you sure you want to restore all episodes? They will be moved back to your active list.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button variant="ghost" onClick={() => setIsRestoreDialogOpen(false)} className="text-zinc-400 hover:text-white">
+                Cancel
+              </Button>
+              <Button onClick={handleRestoreAll} disabled={isProcessing} className="bg-green-600 hover:bg-green-700 text-white">
+                Restore All
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete All Confirmation */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+            <DialogHeader>
+              <DialogTitle>Permanently Delete All</DialogTitle>
+              <DialogDescription className="text-zinc-400">
+                This action is irreversible. Are you sure you want to permanently delete ALL soft-deleted episodes?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button variant="ghost" onClick={() => setIsDeleteDialogOpen(false)} className="text-zinc-400 hover:text-white">
+                Cancel
+              </Button>
+              <Button onClick={handleHardDeleteAll} disabled={isProcessing} className="bg-red-600 hover:bg-red-700 text-white">
+                Delete Everything
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

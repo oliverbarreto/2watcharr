@@ -439,6 +439,16 @@ export class EpisodeRepository {
     }
 
     /**
+     * Restore all soft-deleted episodes for a user
+     */
+    async bulkRestore(userId: string): Promise<void> {
+        await this.db.run(
+            'UPDATE episodes SET is_deleted = 0, updated_at = ? WHERE user_id = ? AND is_deleted = 1',
+            [Math.floor(Date.now() / 1000), userId]
+        );
+    }
+
+    /**
      * Permanently delete episode (hard delete)
      * Removes the episode and all associated data from the database
      */
@@ -454,6 +464,37 @@ export class EpisodeRepository {
 
             // Delete the episode itself
             await this.db.run('DELETE FROM episodes WHERE id = ?', id);
+
+            await this.db.run('COMMIT');
+        } catch (error) {
+            await this.db.run('ROLLBACK');
+            throw error;
+        }
+    }
+
+    /**
+     * Permanently delete all soft-deleted episodes for a user
+     */
+    async bulkHardDelete(userId: string): Promise<void> {
+        await this.db.run('BEGIN TRANSACTION');
+
+        try {
+            // Find all soft-deleted episode IDs first for cleaning up relations
+            const rows = await this.db.all('SELECT id FROM episodes WHERE user_id = ? AND is_deleted = 1', userId);
+            const ids = rows.map(row => row.id);
+
+            if (ids.length > 0) {
+                const placeholders = ids.map(() => '?').join(',');
+                
+                // Delete associated tags
+                await this.db.run(`DELETE FROM episode_tags WHERE episode_id IN (${placeholders})`, ids);
+
+                // Delete associated events
+                await this.db.run(`DELETE FROM media_events WHERE episode_id IN (${placeholders})`, ids);
+
+                // Delete the episodes
+                await this.db.run(`DELETE FROM episodes WHERE user_id = ? AND is_deleted = 1`, userId);
+            }
 
             await this.db.run('COMMIT');
         } catch (error) {

@@ -179,6 +179,48 @@ export class MediaService {
         await this.episodeRepo.hardDelete(id);
     }
 
+    /**
+     * Soft delete all episodes with a specific tag
+     */
+    async softDeleteEpisodesByTag(tagId: string, userId: string): Promise<void> {
+        const episodes = await this.episodeRepo.findAll({ tagIds: [tagId], userId, isDeleted: false });
+        
+        for (const episode of episodes) {
+            // Remove the specific tag
+            const currentTagIds = await this.episodeRepo.getTags(episode.id);
+            const remainingTagIds = currentTagIds.filter(id => id !== tagId);
+            await this.episodeRepo.removeTags(episode.id);
+            if (remainingTagIds.length > 0) {
+                await this.episodeRepo.addTags(episode.id, remainingTagIds);
+            }
+
+            // Soft delete the episode
+            await this.episodeRepo.delete(episode.id);
+            
+            // Record event
+            await this.episodeRepo.addEvent(episode.id, 'removed', episode.title, episode.type);
+        }
+    }
+
+    /**
+     * Restore all soft-deleted episodes for a user
+     */
+    async restoreAllEpisodes(userId: string): Promise<void> {
+        const episodes = await this.episodeRepo.findAll({ userId, isDeleted: true });
+        await this.episodeRepo.bulkRestore(userId);
+        
+        for (const episode of episodes) {
+            await this.episodeRepo.addEvent(episode.id, 'restored', episode.title, episode.type);
+        }
+    }
+
+    /**
+     * Permanently delete all soft-deleted episodes for a user
+     */
+    async hardDeleteAllEpisodes(userId: string): Promise<void> {
+        await this.episodeRepo.bulkHardDelete(userId);
+    }
+
 
     /**
      * Toggle watched status
