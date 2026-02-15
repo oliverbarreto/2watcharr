@@ -10,7 +10,6 @@ import {
     TrendingUp, 
     BarChart3, 
     Clock, 
-    Calendar,
     Play,
     Plus,
     Star,
@@ -176,7 +175,7 @@ export default function StatsPage() {
         const { key, direction } = sortConfig;
         
         // Special handling for tags sorting
-        if (key === 'tags' as any) {
+        if (key === 'tags') {
             const tagsA = (a.tags || []).map(t => t.name).join(', ');
             const tagsB = (b.tags || []).map(t => t.name).join(', ');
             if (tagsA < tagsB) return direction === 'asc' ? -1 : 1;
@@ -396,7 +395,7 @@ export default function StatsPage() {
                                     <CardDescription>{periodLabels[period]} visualization</CardDescription>
                                 </div>
                                 <div className="flex flex-col items-end gap-3">
-                                    <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
+                                    <Select value={period} onValueChange={(v: typeof period) => setPeriod(v)}>
                                         <SelectTrigger className="w-[160px] rounded-lg bg-muted/20 border-border/50">
                                             <SelectValue placeholder="Select period" />
                                         </SelectTrigger>
@@ -573,11 +572,11 @@ export default function StatsPage() {
                                     </TableHead>
                                     <TableHead 
                                         className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
-                                        onClick={() => handleSort('tags' as any)}
+                                        onClick={() => handleSort('tags')}
                                     >
                                         <div className="flex items-center">
                                             Tags
-                                            {getSortIcon('tags' as any)}
+                                            {getSortIcon('tags')}
                                         </div>
                                     </TableHead>
                                     <TableHead 

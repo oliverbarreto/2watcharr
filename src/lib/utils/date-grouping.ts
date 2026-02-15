@@ -1,5 +1,5 @@
 import { MediaEpisode } from '@/lib/domain/models';
-import { formatDistanceToNow, format, isToday, isYesterday, startOfDay } from 'date-fns';
+import { format, isToday, isYesterday, startOfDay } from 'date-fns';
 
 /**
  * Date-based sort fields that should trigger grouping

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-02-15
+
+### Added
+- **Bulk Actions**: Added option in settings to soft remove all videos marked with a specific tag.
+- **Stats Metrics**: Added "Not Watched" and "Pending Confirmation" metrics to the Activity Summary on the stats page.
+
+### Improved
+- **Stats UI**: Moved chart legend placement to be directly below the date filter for better accessibility.
+
+### Fixed
+- **Tests**: Updated tests to match the paginated `listEpisodes` API.
+- **Lint**: Resolved various linting errors across components and services for a cleaner codebase.
+
+### Docs
+- **Deployment**: Added production deployment instructions.
+- **Workflows**: Improved `update-tag-release` and `test` skills/workflows.
+
 ## [0.5.2] - 2026-02-07
 
 ### Added

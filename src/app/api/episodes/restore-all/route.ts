@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
@@ -7,7 +7,7 @@ import { MediaService } from '@/lib/services';
 /**
  * POST /api/episodes/restore-all - Restore all soft-deleted episodes
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user) {

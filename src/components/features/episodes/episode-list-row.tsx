@@ -516,7 +516,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                 
                                 <DropdownMenuItem onSelect={(e) => {
                                     e.preventDefault();
-                                    handleToggleWatched(e as any);
+                                    handleToggleWatched(e as unknown as React.MouseEvent);
                                 }}>
                                     <Check className={`mr-2 h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
                                     {episode.watched ? 'Mark unwatched' : 'Mark watched'}
@@ -531,7 +531,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={(e) => {
                                     e.preventDefault();
-                                    handleToggleFavorite(e as any);
+                                    handleToggleFavorite(e as unknown as React.MouseEvent);
                                 }}>
                                     <Star className={`mr-2 h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                                     {episode.favorite ? 'Remove favorite' : 'Add favorite'}

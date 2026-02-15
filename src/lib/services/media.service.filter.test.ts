@@ -58,21 +58,21 @@ describe('MediaService Filtering', () => {
     });
 
     it('should filter by unwatched status', async () => {
-        const episodes = await service.listEpisodes({ watched: false, watchStatus: 'unwatched' });
+        const { episodes } = await service.listEpisodes({ watched: false, watchStatus: 'unwatched' });
         expect(episodes).toHaveLength(1);
         expect(episodes[0].watchStatus).toBe('unwatched');
         expect(episodes[0].externalId).toBe('unwatched-1');
     });
 
     it('should filter by pending status', async () => {
-        const episodes = await service.listEpisodes({ watched: false, watchStatus: 'pending' });
+        const { episodes } = await service.listEpisodes({ watched: false, watchStatus: 'pending' });
         expect(episodes).toHaveLength(1);
         expect(episodes[0].watchStatus).toBe('pending');
         expect(episodes[0].externalId).toBe('pending-1');
     });
 
     it('should filter by watched status', async () => {
-        const episodes = await service.listEpisodes({ watchStatus: 'watched' });
+        const { episodes } = await service.listEpisodes({ watchStatus: 'watched' });
         expect(episodes).toHaveLength(1);
         expect(episodes[0].watchStatus).toBe('watched');
         expect(episodes[0].externalId).toBe('watched-1');
@@ -80,7 +80,7 @@ describe('MediaService Filtering', () => {
 
     it('should reflect status change in filter after marking as pending', async () => {
         // Start with all episodes
-        const initialEpisodes = await service.listEpisodes({});
+        const { episodes: initialEpisodes } = await service.listEpisodes({});
         const unwatched = initialEpisodes.find(e => e.externalId === 'unwatched-1');
         expect(unwatched).toBeDefined();
         
@@ -88,7 +88,7 @@ describe('MediaService Filtering', () => {
         await service.updateEpisode(unwatched!.id, { watchStatus: 'pending' });
         
         // Filter by pending
-        const pendingEpisodes = await service.listEpisodes({ watched: false, watchStatus: 'pending' });
+        const { episodes: pendingEpisodes } = await service.listEpisodes({ watched: false, watchStatus: 'pending' });
         expect(pendingEpisodes).toHaveLength(2); // One already existed, plus the new one
         expect(pendingEpisodes.map(e => e.externalId)).toContain('unwatched-1');
         expect(pendingEpisodes.map(e => e.externalId)).toContain('pending-1');

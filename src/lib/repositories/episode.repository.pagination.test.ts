@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { EpisodeRepository } from './episode.repository';
 import { createTestDb } from '../test/test-db';
 import { Database } from 'sqlite';
-import { CreateEpisodeDto } from '../domain/models';
 
 describe('EpisodeRepository Pagination', () => {
     let db: Database;

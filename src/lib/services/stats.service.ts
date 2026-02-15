@@ -146,7 +146,7 @@ export class StatsService {
 
     private async getActivityTimeSeries(userId: string, period: string) {
         let query = '';
-        const params: any[] = [userId];
+        const params: (string | number)[] = [userId];
 
         if (period === 'day') {
             // Last 24 hours, grouped by hour

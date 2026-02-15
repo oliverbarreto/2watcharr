@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
@@ -7,7 +7,7 @@ import { MediaService } from '@/lib/services';
 /**
  * DELETE /api/episodes/permanent-delete-all - Permanently delete all soft-deleted episodes
  */
-export async function DELETE(request: NextRequest) {
+export async function DELETE() {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user) {

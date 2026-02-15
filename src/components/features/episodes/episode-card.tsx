@@ -31,7 +31,6 @@ import {
     Plus,
     Youtube,
     Mic,
-    Clock,
 } from 'lucide-react';
 import {
     CommandDialog,

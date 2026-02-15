@@ -112,7 +112,7 @@ export class PodcastMetadataService {
 
             // Find the specific episode by trackId
             const episodeIdNum = parseInt(episodeId, 10);
-            const episode = data.results.find((item: any) => 
+            const episode = data.results.find((item: { wrapperType: string; trackId: number }) => 
                 item.wrapperType === 'podcastEpisode' && item.trackId === episodeIdNum
             );
 

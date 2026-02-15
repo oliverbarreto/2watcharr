@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
 const { v4: uuidv4 } = require('uuid');

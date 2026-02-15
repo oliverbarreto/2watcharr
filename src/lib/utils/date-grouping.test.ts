@@ -5,7 +5,6 @@ import {
   formatDateLabel,
   getNoDateLabel,
   groupEpisodesByDate,
-  DATE_SORT_FIELDS,
 } from './date-grouping';
 import { MediaEpisode } from '@/lib/domain/models';
 
