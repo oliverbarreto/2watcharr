@@ -8,7 +8,7 @@ After we finnish a feature we want to make sure there are no linting errors befo
 ## Process 
 - First verify that we have no lining errors and all test pass.
 - Second, update documentation with recent bugfixes and features. 
-- Then, merge develop into main and then bump the version (0.*.+1) tag, 
+- Then, merge branch "develop" into "main" and then bump the version (0.*.+1) tag, or the versión the user specifies, 
 - Finally, push to github and create a release in github. You have the github cli available.
 
 ## Verification Plan
