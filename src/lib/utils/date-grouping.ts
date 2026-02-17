@@ -1,5 +1,5 @@
 import { MediaEpisode } from '@/lib/domain/models';
-import { format, isToday, isYesterday, startOfDay } from 'date-fns';
+import { format, isToday, isYesterday, startOfDay, isSameWeek } from 'date-fns';
 
 /**
  * Date-based sort fields that should trigger grouping
@@ -44,21 +44,30 @@ export function getTimestampForSort(episode: MediaEpisode, sortField: string): n
 
 /**
  * Format a Unix timestamp into a user-friendly date label
- * Returns "Today", "Yesterday", or formatted date like "February 3, 2026"
+ * Returns "today (Day Month Day, Year)", "yesterday (Day Month Day, Year)",
+ * "Day Month Day, Year" (if within current week), or just "Month Day, Year"
  */
 export function formatDateLabel(timestamp: number): string {
   const date = new Date(timestamp * 1000); // Convert Unix timestamp to milliseconds
+  const now = new Date();
+  
+  const dayName = format(date, 'eeee');
+  const fullDate = format(date, 'MMMM d, yyyy');
   
   if (isToday(date)) {
-    return 'Today';
+    return `today (${dayName} ${fullDate})`;
   }
   
   if (isYesterday(date)) {
-    return 'Yesterday';
+    return `yesterday (${dayName} ${fullDate})`;
+  }
+  
+  if (isSameWeek(date, now, { weekStartsOn: 1 })) {
+    return `${dayName} ${fullDate}`;
   }
   
   // Format as "Month Day, Year"
-  return format(date, 'MMMM d, yyyy');
+  return fullDate;
 }
 
 /**
