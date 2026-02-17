@@ -69,14 +69,15 @@ export function Navbar() {
                 <div className="flex items-center gap-4">
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="sm:hidden -ml-2">
-                                <Menu className="h-6 w-6" />
+                            <Button variant="ghost" className="sm:hidden -ml-2 p-0 hover:bg-transparent flex items-center gap-2 font-bold text-xl">
+                                <Image src="/2watcharr-icon-v1.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
+                                <span className="xs:inline-block">2watcharr</span>
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="w-[280px] sm:w-[350px]">
                             <SheetHeader>
                                 <SheetTitle className="flex items-center gap-2 font-bold text-xl pt-4">
-                                    <Image src="/icon.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
+                                    <Image src="/2watcharr-icon-v1.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
                                     <span>2watcharr</span>
                                 </SheetTitle>
                             </SheetHeader>
@@ -86,8 +87,8 @@ export function Navbar() {
                         </SheetContent>
                     </Sheet>
 
-                    <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-                        <Image src="/icon.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
+                    <Link href="/" className="hidden sm:flex items-center gap-2 font-bold text-xl">
+                        <Image src="/2watcharr-icon-v1.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
                         <span className="hidden xs:inline-block">2watcharr</span>
                     </Link>
                 </div>

@@ -16,7 +16,8 @@ export const metadata: Metadata = {
   title: "2watcharr - Media Watch Later Manager",
   description: "Manage your videos and podcasts to watch later with tags, priorities, and more",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/2watcharr-icon-v1.png",
+    apple: "/2watcharr-icon-v1.png",
   },
 };
 
