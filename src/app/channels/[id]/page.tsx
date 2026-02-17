@@ -60,6 +60,7 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
     const [isSyncing, setIsSyncing] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [refreshEpisodesKey, setRefreshEpisodesKey] = useState(0);
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
     const fetchChannel = useCallback(async () => {
         try {
@@ -132,6 +133,14 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
             console.error('Error updating watch status:', error);
             toast.error('Failed to update episodes');
         }
+    };
+
+    const toggleTag = (tagId: string) => {
+        setSelectedTagIds(prev => 
+            prev.includes(tagId) 
+                ? prev.filter(id => id !== tagId) 
+                : [...prev, tagId]
+        );
     };
 
     if (loading) {
@@ -283,7 +292,7 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
                     {/* Description & Tags */}
                     <div className="p-6 md:p-8 pt-0 space-y-6">
                         {channel.description && channel.description !== "No description available. Sync metadata to refresh." && (
-                            <div className="max-w-3xl">
+                            <div>
                                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                                     {channel.description}
                                 </p>
@@ -292,20 +301,25 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
 
                         {channel.tags && channel.tags.length > 0 && (
                             <div className="flex flex-wrap gap-2">
-                                {channel.tags.map((tag) => (
-                                    <Badge
-                                        key={tag.id}
-                                        variant="outline"
-                                        className="text-xs px-3 py-1 rounded-full font-medium"
-                                        style={tag.color ? {
-                                            backgroundColor: `${tag.color}20`,
-                                            color: tag.color,
-                                            borderColor: `${tag.color}40`,
-                                        } : undefined}
-                                    >
-                                        {tag.name}
-                                    </Badge>
-                                ))}
+                                {channel.tags.map((tag) => {
+                                    const isSelected = selectedTagIds.includes(tag.id);
+                                    return (
+                                        <Badge
+                                            key={tag.id}
+                                            variant={isSelected ? "default" : "outline"}
+                                            className="text-xs px-3 py-1 rounded-full font-medium cursor-pointer transition-all hover:scale-105"
+                                            style={{
+                                                backgroundColor: isSelected ? tag.color || undefined : `${tag.color}20`,
+                                                color: isSelected ? '#fff' : tag.color || 'inherit',
+                                                borderColor: isSelected ? tag.color || undefined : `${tag.color}40`,
+                                                boxShadow: isSelected ? `0 2px 8px ${tag.color}40` : 'none',
+                                            }}
+                                            onClick={() => toggleTag(tag.id)}
+                                        >
+                                            {tag.name}
+                                        </Badge>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -318,7 +332,7 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
                     </div>
                     <EpisodeList 
                         key={`${refreshEpisodesKey}-${id}`}
-                        filters={{ channelId: id }} 
+                        filters={{ channelId: id, tagIds: selectedTagIds }} 
                         viewMode="grid" 
                     />
                 </div>
