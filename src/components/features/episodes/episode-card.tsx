@@ -406,7 +406,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                             <div className="flex flex-wrap items-center gap-x-1 gap-y-0 text-xs text-muted-foreground">
                                 <span
                                     className="hover:text-foreground cursor-pointer font-medium"
-                                    onClick={() => window.location.href = `/channels?channelId=${episode.channelId}`}
+                                    onClick={() => window.location.href = `/channels/${episode.channelId}`}
                                 >
                                     {episode.channelName || 'Unknown Channel'}
                                 </span>

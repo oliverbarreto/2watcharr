@@ -389,7 +389,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                     className="font-medium hover:text-foreground truncate"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        window.location.href = `/channels?channelId=${episode.channelId}`;
+                                        window.location.href = `/channels/${episode.channelId}`;
                                     }}
                                 >
                                     {episode.channelName || 'Unknown Channel'}
