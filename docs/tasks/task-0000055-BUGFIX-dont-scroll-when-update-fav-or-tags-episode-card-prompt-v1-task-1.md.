@@ -1,0 +1,7 @@
+# Task: Add YouTube Shorts support to watchlist
+
+- [x] Research `yt-dlp` support for YouTube Shorts
+- [x] Investigate current implementation of episode addition
+- [/] Create implementation plan
+- [ ] Implement YouTube Shorts support
+- [ ] Verify implementation
