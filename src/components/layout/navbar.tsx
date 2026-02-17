@@ -58,8 +58,9 @@ export function Navbar() {
         window.dispatchEvent(new CustomEvent('episode-added'));
     };
 
-    const handleSignOut = () => {
-        signOut({ callbackUrl: '/login' });
+    const handleSignOut = async () => {
+        await signOut({ redirect: false });
+        window.location.href = '/login';
     };
 
     return (
