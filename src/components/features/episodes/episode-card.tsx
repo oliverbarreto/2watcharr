@@ -359,6 +359,11 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                     <Mic className="h-3 w-3 mr-1" />
                                     Podcast
                                 </Badge>
+                            ) : episode.isShort ? (
+                                <Badge className="bg-red-600 text-white border-none px-1.5 py-0.5">
+                                    <Youtube className="h-3 w-3 mr-1" />
+                                    Shorts
+                                </Badge>
                             ) : (
                                 <Badge className="bg-red-600 text-white border-none px-1.5 py-0.5">
                                     <Youtube className="h-3 w-3 mr-1" />

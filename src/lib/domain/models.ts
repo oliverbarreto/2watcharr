@@ -48,6 +48,7 @@ export interface MediaEpisode {
     isDeleted: boolean;
     priority: Priority;
     customOrder: number | null;
+    isShort: boolean;
     userId: string;
     tags?: Tag[];
     createdAt: number;
@@ -100,6 +101,7 @@ export interface CreateEpisodeDto {
     publishedDate?: string;
     viewCount?: number;
     channelId: string;
+    isShort?: boolean;
     userId: string;
 }
 
@@ -114,6 +116,7 @@ export interface UpdateEpisodeDto {
     customOrder?: number;
     viewCount?: number;
     tagIds?: string[];
+    isShort?: boolean;
 }
 
 export interface CreateChannelDto {
@@ -144,6 +147,7 @@ export interface EpisodeFilters {
     channelId?: string;
     channelIds?: string[];
     isDeleted?: boolean;
+    isShort?: boolean;
     userId?: string;
 }
 

@@ -373,6 +373,11 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                             <div className="absolute top-1 right-1">
                                 {episode.type === 'podcast' ? (
                                     <Mic className="h-3 w-3 text-white drop-shadow-md" />
+                                ) : episode.isShort ? (
+                                    <Badge className="bg-red-600 text-white border-none px-1 py-0 h-4 flex items-center gap-1 scale-75 origin-top-right">
+                                        <Youtube className="h-3 w-3" />
+                                        <span>Shorts</span>
+                                    </Badge>
                                 ) : (
                                     <Youtube className="h-3 w-3 text-white drop-shadow-md" />
                                 )}

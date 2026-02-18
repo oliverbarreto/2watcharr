@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS episodes (
   is_deleted BOOLEAN NOT NULL DEFAULT 0,
   priority TEXT CHECK(priority IN ('none', 'low', 'medium', 'high')) DEFAULT 'none',
   custom_order INTEGER,             -- For manual reordering
+  is_short BOOLEAN NOT NULL DEFAULT 0, -- Whether it's a YouTube Short
   
   -- Metadata
   user_id TEXT NOT NULL,
@@ -96,6 +97,7 @@ CREATE TABLE IF NOT EXISTS media_events (
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_episodes_type ON episodes(type);
+CREATE INDEX IF NOT EXISTS idx_episodes_is_short ON episodes(is_short);
 CREATE INDEX IF NOT EXISTS idx_episodes_channel_id ON episodes(channel_id);
 CREATE INDEX IF NOT EXISTS idx_episodes_watched ON episodes(watched);
 CREATE INDEX IF NOT EXISTS idx_episodes_watch_status ON episodes(watch_status);

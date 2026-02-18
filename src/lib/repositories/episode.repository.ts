@@ -28,8 +28,8 @@ export class EpisodeRepository {
             `INSERT INTO episodes (
         id, type, external_id, title, description, duration, thumbnail_url,
         url, upload_date, published_date, view_count, channel_id, user_id,
-        watch_status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        watch_status, is_short, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 id,
                 dto.type,
@@ -45,6 +45,7 @@ export class EpisodeRepository {
                 dto.channelId,
                 dto.userId,
                 'unwatched',
+                dto.isShort ? 1 : 0,
                 now,
                 now,
             ]
@@ -378,6 +379,10 @@ export class EpisodeRepository {
             updates.push('view_count = ?');
             params.push(dto.viewCount);
         }
+        if (dto.isShort !== undefined) {
+            updates.push('is_short = ?');
+            params.push(dto.isShort ? 1 : 0);
+        }
 
         updates.push('updated_at = ?');
         params.push(Math.floor(Date.now() / 1000));
@@ -654,6 +659,7 @@ export class EpisodeRepository {
             isDeleted: Boolean(row.is_deleted),
             priority: row.priority as Priority,
             customOrder: row.custom_order as number | null,
+            isShort: Boolean(row.is_short),
             userId: row.user_id as string,
             createdAt: row.created_at as number,
             updatedAt: row.updated_at as number,

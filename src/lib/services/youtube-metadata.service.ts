@@ -32,6 +32,8 @@ export class YouTubeMetadataService {
                 thumbnailUrl: rawData.channel_thumbnail || '',
             };
 
+            const isShort = url.includes('/shorts/') || (rawData.duration && rawData.duration <= 60 && !url.includes('/playlist'));
+
             const episode: Partial<CreateEpisodeDto> = {
                 type: 'video',
                 externalId: rawData.id,
@@ -44,6 +46,7 @@ export class YouTubeMetadataService {
                 publishedDate: this.formatDate(rawData.release_date || rawData.upload_date),
                 viewCount: rawData.view_count || 0,
                 channelId: channel.id,
+                isShort: isShort,
             };
 
             return { episode, channel };

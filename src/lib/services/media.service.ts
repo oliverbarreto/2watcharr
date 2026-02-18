@@ -102,6 +102,7 @@ export class MediaService {
             publishedDate: metadata.episode.publishedDate,
             viewCount: metadata.episode.viewCount,
             channelId: channel.id,
+            isShort: metadata.episode.isShort,
             userId: userId,
         });
 

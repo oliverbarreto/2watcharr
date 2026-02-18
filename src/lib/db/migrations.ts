@@ -635,4 +635,37 @@ export async function runMigrations(db: Database): Promise<void> {
       await db.run('PRAGMA foreign_keys = ON');
     }
   }
+
+  // Check if add_is_short migration has been applied
+  const migration12 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_is_short'
+  );
+
+  if (!migration12) {
+    console.log('Running add_is_short migration...');
+    try {
+      await db.run('ALTER TABLE episodes ADD COLUMN is_short BOOLEAN NOT NULL DEFAULT 0');
+      await db.run('CREATE INDEX IF NOT EXISTS idx_episodes_is_short ON episodes(is_short)');
+
+      // Update existing data: mark episodes with /shorts/ in their URL as is_short = 1
+      await db.run("UPDATE episodes SET is_short = 1 WHERE url LIKE '%/shorts/%'");
+
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'add_is_short'
+      );
+      console.log('add_is_short migration completed.');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('duplicate column name')) {
+        await db.run(
+          'INSERT INTO migrations (name) VALUES (?)',
+          'add_is_short'
+        );
+        console.log('is_short column already existed, migration marked as completed.');
+      } else {
+        throw error;
+      }
+    }
+  }
 }
