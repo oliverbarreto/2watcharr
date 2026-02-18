@@ -6,10 +6,18 @@
 
 ### To be done:
 
+These are some features we want to add to the app but are not specidifed yet:
+
+- [ ]
+
 #### AI TASKS:
-- [ ] `./docs/specs/roadmap/todo/TASK-update-docs-tag-and-release.md`
 
 #### FEATURES:
+- [ ] `./docs/tasks/task-0000059-FEATURE-differentiate-shorts-vs-videos-prompt-v1.md`
+- [ ] `./docs/tasks/task-0000058-FEATURE-add-notes-to-episodes-prompt-v1.md`
+- [ ] `./docs/specs/roadmap/todo/task-0000000xx-BUGFIX-dont-scroll-when-update-fav-or-tags-episode-card-prompt-v1.md`
+- [ ] `./docs/specs/roadmap/todo/task-0000000xx-UI-show-floating-bubble-with-number-of-episodes-infinite-scroll-prompt-v1.md`
+
 - [ ] `./docs/specs/roadmap/todo/FEATURE-import-playlist-data.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-async-request-and-client-ui.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-return-episode-title-to-ios-shortcut-to-display-name-on-notification.md`
