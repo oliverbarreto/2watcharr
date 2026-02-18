@@ -15,6 +15,7 @@ const updateEpisodeSchema = z.object({
     isDeleted: z.boolean().optional(),
     priority: z.enum(['none', 'low', 'medium', 'high']).optional(),
     tagIds: z.array(z.string()).optional(),
+    notes: z.string().max(1000).optional().nullable(),
 });
 
 /**

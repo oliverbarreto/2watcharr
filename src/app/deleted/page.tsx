@@ -22,6 +22,7 @@ interface Filters {
   watchStatus?: 'unwatched' | 'pending' | 'watched';
   tagIds?: string[];
   isDeleted?: boolean;
+  hasNotes?: boolean;
 }
 
 interface Sort {

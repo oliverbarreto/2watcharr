@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS episodes (
   priority TEXT CHECK(priority IN ('none', 'low', 'medium', 'high')) DEFAULT 'none',
   custom_order INTEGER,             -- For manual reordering
   is_short BOOLEAN NOT NULL DEFAULT 0, -- Whether it's a YouTube Short
+  notes TEXT,                       -- User personal notes
   
   -- Metadata
   user_id TEXT NOT NULL,

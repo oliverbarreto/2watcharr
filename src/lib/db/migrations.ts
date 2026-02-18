@@ -668,4 +668,32 @@ export async function runMigrations(db: Database): Promise<void> {
       }
     }
   }
+
+  // Check if add_episode_notes migration has been applied
+  const migration13 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_episode_notes'
+  );
+
+  if (!migration13) {
+    console.log('Running add_episode_notes migration...');
+    try {
+      await db.run('ALTER TABLE episodes ADD COLUMN notes TEXT');
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'add_episode_notes'
+      );
+      console.log('add_episode_notes migration completed.');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('duplicate column name')) {
+        await db.run(
+          'INSERT INTO migrations (name) VALUES (?)',
+          'add_episode_notes'
+        );
+        console.log('notes column already existed, migration marked as completed.');
+      } else {
+        throw error;
+      }
+    }
+  }
 }

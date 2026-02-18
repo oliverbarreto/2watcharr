@@ -15,6 +15,7 @@ interface Filters {
   channelId?: string;
   channelIds?: string[];
   favorite?: boolean;
+  hasNotes?: boolean;
 }
 
 interface Sort {
@@ -56,6 +57,7 @@ function HomePageContent() {
       channelId: searchParams.get('channelId') || undefined,
       channelIds: searchParams.get('channels')?.split(',').filter(Boolean) || undefined,
       favorite: searchParams.get('favorite') === 'true' ? true : undefined,
+      hasNotes: searchParams.get('hasNotes') === 'true' ? true : undefined,
     };
   }, [searchParams]);
 
@@ -113,6 +115,7 @@ function HomePageContent() {
     if (merged.tagIds?.length) params.set('tags', merged.tagIds.join(',')); else params.delete('tags');
     if (merged.channelIds?.length) params.set('channels', merged.channelIds.join(',')); else params.delete('channels');
     if (merged.favorite) params.set('favorite', 'true'); else params.delete('favorite');
+    if (merged.hasNotes) params.set('hasNotes', 'true'); else params.delete('hasNotes');
     
     // channelId is used for direct navigation from channel pages, keep it if present
     if (merged.channelId) params.set('channelId', merged.channelId); else params.delete('channelId');

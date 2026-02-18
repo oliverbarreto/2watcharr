@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
         const search = searchParams.get('search') || undefined;
         const watchedParam = searchParams.get('watched');
         const favoriteParam = searchParams.get('favorite');
+        const hasNotesParam = searchParams.get('hasNotes');
         const channelId = searchParams.get('channelId') || undefined;
         const channelsParam = searchParams.get('channels');
         const channelIds = channelsParam ? channelsParam.split(',').filter(Boolean) : undefined;
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
             watched: watchedParam ? watchedParam === 'true' : undefined,
             watchStatus,
             favorite: favoriteParam ? favoriteParam === 'true' : undefined,
+            hasNotes: hasNotesParam ? hasNotesParam === 'true' : undefined,
             channelId,
             channelIds,
             userId,

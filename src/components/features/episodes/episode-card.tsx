@@ -31,6 +31,7 @@ import {
     Plus,
     Youtube,
     Mic,
+    StickyNote,
 } from 'lucide-react';
 import {
     CommandDialog,
@@ -44,6 +45,7 @@ import { toast } from 'sonner';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { formatDistanceToNow } from 'date-fns';
+import { Textarea } from '@/components/ui/textarea';
 
 interface EpisodeCardProps {
     episode: MediaEpisode;
@@ -59,6 +61,9 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isUpdatingTags, setIsUpdatingTags] = useState(false);
+    const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+    const [noteText, setNoteText] = useState(episode.notes || '');
+    const [isSavingNote, setIsSavingNote] = useState(false);
 
     const {
         attributes,
@@ -238,6 +243,27 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
         }
     };
 
+    const handleSaveNote = async () => {
+        setIsSavingNote(true);
+        try {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: noteText.trim() || null }),
+            });
+
+            if (!response.ok) throw new Error('Failed to save note');
+
+            toast.success('Note saved');
+            setIsNoteModalOpen(false);
+            onUpdate?.();
+        } catch {
+            toast.error('Failed to save note');
+        } finally {
+            setIsSavingNote(false);
+        }
+    };
+
     const getRandomColor = () => {
         const colors = [
             '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4',
@@ -383,6 +409,15 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                         {episode.watched && (
                             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                                 <Check className="h-12 w-12 text-white" />
+                            </div>
+                        )}
+
+                        {/* Note Icon Indicator */}
+                        {episode.notes && (
+                            <div className="absolute top-2 left-2 z-10">
+                                <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black border-none p-1">
+                                    <StickyNote className="h-4 w-4" />
+                                </Badge>
                             </div>
                         )}
                     </div>
@@ -638,6 +673,17 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                             Remove from list
                                         </DropdownMenuItem>
                                     )}
+
+                                    <DropdownMenuSeparator />
+                                    
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        setNoteText(episode.notes || '');
+                                        setIsNoteModalOpen(true);
+                                    }}>
+                                        <StickyNote className="mr-2 h-4 w-4" />
+                                        {episode.notes ? 'Edit note' : 'Add note'}
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -664,6 +710,45 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                         </Button>
                         <Button variant="destructive" onClick={handleDelete}>
                             Remove
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Note Modal */}
+            <Dialog open={isNoteModalOpen} onOpenChange={setIsNoteModalOpen}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>{episode.notes ? 'Edit Note' : 'Add Note'}</DialogTitle>
+                        <DialogDescription>
+                            Add a personal note to this episode.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            placeholder="Enter your note here..."
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            className="min-h-[150px] resize-none"
+                            maxLength={1000}
+                        />
+                        <div className="flex justify-end mt-2 text-xs text-muted-foreground">
+                            {noteText.length} / 1000 characters
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setIsNoteModalOpen(false)}
+                            disabled={isSavingNote}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleSaveNote}
+                            disabled={isSavingNote}
+                        >
+                            {isSavingNote ? 'Saving...' : 'Save Note'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

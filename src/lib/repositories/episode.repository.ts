@@ -190,6 +190,14 @@ export class EpisodeRepository {
             params.push(filters.userId);
         }
 
+        if (filters?.hasNotes !== undefined) {
+            if (filters.hasNotes) {
+                conditions.push("(e.notes IS NOT NULL AND e.notes != '')");
+            } else {
+                conditions.push("(e.notes IS NULL OR e.notes = '')");
+            }
+        }
+
         if (conditions.length > 0) {
             query += ' WHERE ' + conditions.join(' AND ');
         }
@@ -320,6 +328,14 @@ export class EpisodeRepository {
             params.push(filters.userId);
         }
 
+        if (filters?.hasNotes !== undefined) {
+            if (filters.hasNotes) {
+                conditions.push("(e.notes IS NOT NULL AND e.notes != '')");
+            } else {
+                conditions.push("(e.notes IS NULL OR e.notes = '')");
+            }
+        }
+
         if (conditions.length > 0) {
             query += ' WHERE ' + conditions.join(' AND ');
         }
@@ -382,6 +398,10 @@ export class EpisodeRepository {
         if (dto.isShort !== undefined) {
             updates.push('is_short = ?');
             params.push(dto.isShort ? 1 : 0);
+        }
+        if (dto.notes !== undefined) {
+            updates.push('notes = ?');
+            params.push(dto.notes);
         }
 
         updates.push('updated_at = ?');
@@ -660,6 +680,7 @@ export class EpisodeRepository {
             priority: row.priority as Priority,
             customOrder: row.custom_order as number | null,
             isShort: Boolean(row.is_short),
+            notes: row.notes as string | null,
             userId: row.user_id as string,
             createdAt: row.created_at as number,
             updatedAt: row.updated_at as number,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check } from 'lucide-react';
+import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check, StickyNote } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +37,7 @@ interface FilterBarProps {
         tagIds?: string[];
         channelIds?: string[];
         favorite?: boolean;
+        hasNotes?: boolean;
     }) => void;
     onSortChange?: (sort: { field: string; order: 'asc' | 'desc' }) => void;
     initialFilters?: {
@@ -46,6 +47,7 @@ interface FilterBarProps {
         tagIds?: string[];
         channelIds?: string[];
         favorite?: boolean;
+        hasNotes?: boolean;
     };
     initialSort?: {
         field: string;
@@ -68,6 +70,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     const [showTags, setShowTags] = useState(initialFilters?.tagIds && initialFilters.tagIds.length > 0);
     const [priorityFilter, setPriorityFilter] = useState(false);
     const [favoriteFilter, setFavoriteFilter] = useState(initialFilters?.favorite || false);
+    const [hasNotesFilter, setHasNotesFilter] = useState(initialFilters?.hasNotes || false);
     const [isChannelMenuOpen, setIsChannelMenuOpen] = useState(false);
 
     // Sync local state when initialFilters changes (URL changes)
@@ -94,6 +97,9 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             
             if (favoriteFilter !== (initialFilters.favorite || false)) {
                 setFavoriteFilter(initialFilters.favorite || false);
+            }
+            if (hasNotesFilter !== (initialFilters.hasNotes || false)) {
+                setHasNotesFilter(initialFilters.hasNotes || false);
             }
         }
     }, [initialFilters]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -127,12 +133,14 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         tagIds: string[];
         channelIds: string[];
         favorite: boolean;
+        hasNotes: boolean;
     }> = {}) => {
         const currentSearch = overrides.search !== undefined ? overrides.search : search;
         const currentWatched = overrides.watchedFilter !== undefined ? overrides.watchedFilter : watchedFilter;
         const currentTagIds = overrides.tagIds !== undefined ? overrides.tagIds : selectedTagIds;
         const currentChannelIds = overrides.channelIds !== undefined ? overrides.channelIds : selectedChannelIds;
         const currentFavorite = overrides.favorite !== undefined ? overrides.favorite : favoriteFilter;
+        const currentHasNotes = overrides.hasNotes !== undefined ? overrides.hasNotes : hasNotesFilter;
 
         onFilterChange?.({
             search: currentSearch || undefined,
@@ -141,6 +149,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             tagIds: currentTagIds.length > 0 ? currentTagIds : undefined,
             channelIds: currentChannelIds.length > 0 ? currentChannelIds : undefined,
             favorite: currentFavorite ? true : undefined,
+            hasNotes: currentHasNotes ? true : undefined,
         });
     };
 
@@ -333,6 +342,27 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Favorite</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        {/* Notes Filter Checkbox */}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={hasNotesFilter ? 'default' : 'outline'}
+                                        size="icon"
+                                        onClick={() => {
+                                            const newValue = !hasNotesFilter;
+                                            setHasNotesFilter(newValue);
+                                            triggerFilterChange({ hasNotes: newValue });
+                                        }}
+                                        className="h-9 w-9 flex-shrink-0"
+                                    >
+                                        <StickyNote className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>With Notes</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
 
