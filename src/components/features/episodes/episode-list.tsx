@@ -59,6 +59,8 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
     const [isMobile, setIsMobile] = useState(false);
     
     const observerTarget = useRef<HTMLDivElement>(null);
+    const [showBubble, setShowBubble] = useState(false);
+    const bubbleTimeoutRef = useRef<NodeJS.Timeout>(null);
 
     useEffect(() => {
         const checkMobile = () => {
@@ -143,6 +145,15 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
             setTotalCount(data.total);
             setHasMore(data.episodes.length === PAGE_SIZE && (currentOffset + data.episodes.length) < data.total);
             setOffset(currentOffset);
+
+            // Show floating bubble when loading more
+            if (append) {
+                setShowBubble(true);
+                if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+                bubbleTimeoutRef.current = setTimeout(() => {
+                    setShowBubble(false);
+                }, 5000);
+            }
         } catch (error) {
             console.error('Error fetching episodes:', error);
         } finally {
@@ -312,6 +323,17 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
                         <span>Loading more...</span>
                     </div>
                 )}
+            </div>
+
+            {/* Floating Count Bubble */}
+            <div className={`fixed bottom-6 left-6 z-50 transition-all duration-500 transform ${
+                showBubble ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'
+            }`}>
+                <div className="bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg border border-primary/20 flex items-center gap-2 backdrop-blur-sm bg-primary/90">
+                    <span className="text-sm font-medium">
+                        Showing {episodes.length} of {totalCount} episodes
+                    </span>
+                </div>
             </div>
         </div>
     );
