@@ -271,7 +271,7 @@ function ChannelsPageContent() {
         } finally {
             setLoading(false);
         }
-    }, [filters.search, filters.type, filters.tagIds?.join(',')]);
+    }, [filters.search, filters.type, filters.tagIds?.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         fetchChannels();

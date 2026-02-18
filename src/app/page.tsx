@@ -36,7 +36,7 @@ function HomePageContent() {
         if (response.ok) {
           const data = await response.json();
           // Map to the format expected by FilterBar
-          setAvailableChannels(data.channels.map((c: any) => ({ id: c.id, name: c.name })));
+          setAvailableChannels(data.channels.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name })));
         }
       } catch (error) {
         console.error('Failed to fetch channels', error);
@@ -196,6 +196,7 @@ function HomePageContent() {
             filters={filters} 
             sort={sort} 
             viewMode={viewMode} 
+            onCountChange={handleCountChange}
         />
       </div>
     </Layout>

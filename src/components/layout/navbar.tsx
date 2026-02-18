@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Plus, Settings, LogOut, User, BarChart3, Menu, Radio, Library } from 'lucide-react';
+import { Plus, Settings, LogOut, User, BarChart3, Radio, Library } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
 import { AddEpisodeDialog } from '@/components/features/episodes/add-episode-dialog';

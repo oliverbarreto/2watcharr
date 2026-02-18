@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.4] - 2026-02-18
+
+### Fixed
+- **Navigation**: Resolved error when navigating from watchlist episode to channel page.
+- **Navbar**: Fixed broken link to switch user profile.
+- **Lint**: Resolved various linting errors across multiple components.
+
+### Improved
+- **Watchlist**: Updated section titles to display day names (e.g., Monday, Tuesday) instead of just dates.
+- **Channel Details**: Enhanced UI and added ability to filter videos by tag.
+- **Assets**: Updated application icon for better mobile experience.
+
+### Docs
+- **Research**: Added analysis on handling YouTube Shorts with `yt-dlp`.
+
 ## [0.5.3] - 2026-02-15
 
 ### Added

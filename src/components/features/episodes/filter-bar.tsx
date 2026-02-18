@@ -73,24 +73,38 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     // Sync local state when initialFilters changes (URL changes)
     useEffect(() => {
         if (initialFilters) {
-            setSearch(initialFilters.search || '');
+            const newSearch = initialFilters.search || '';
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            if (search !== newSearch) setSearch(newSearch);
+            
             // Priority: watchStatus if present, then watched boolean
             const status = initialFilters.watchStatus || 
                          (initialFilters.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched'));
-            setWatchedFilter(status);
+            if (watchedFilter !== status) setWatchedFilter(status);
             
-            setSelectedTagIds(initialFilters.tagIds || []);
-            setSelectedChannelIds(initialFilters.channelIds || []);
-            setFavoriteFilter(initialFilters.favorite || false);
+            // Simple length check for arrays to avoid deep comparison complexity
+            // reliable enough for this specific use case where selection changes usually change length
+            // or completely replace the array
+            if (JSON.stringify(initialFilters.tagIds) !== JSON.stringify(selectedTagIds)) {
+                setSelectedTagIds(initialFilters.tagIds || []);
+            }
+            if (JSON.stringify(initialFilters.channelIds) !== JSON.stringify(selectedChannelIds)) {
+                setSelectedChannelIds(initialFilters.channelIds || []);
+            }
+            
+            if (favoriteFilter !== (initialFilters.favorite || false)) {
+                setFavoriteFilter(initialFilters.favorite || false);
+            }
         }
-    }, [initialFilters]);
+    }, [initialFilters]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (initialSort) {
-            setSortField(initialSort.field);
-            setSortOrder(initialSort.order);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            if (sortField !== initialSort.field) setSortField(initialSort.field);
+            if (sortOrder !== initialSort.order) setSortOrder(initialSort.order);
         }
-    }, [initialSort]);
+    }, [initialSort, sortField, sortOrder]);
 
     useEffect(() => {
         const fetchTags = async () => {

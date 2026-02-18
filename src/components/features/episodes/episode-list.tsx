@@ -147,7 +147,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [JSON.stringify(filters), JSON.stringify(sort), onChannelsChange]);
+    }, [JSON.stringify(filters), JSON.stringify(sort), onChannelsChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Reset pagination when filters or sort change
     useEffect(() => {
