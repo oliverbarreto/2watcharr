@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, use, Suspense } from 'react';
 import Image from 'next/image';
 import { Layout } from '@/components/layout';
 import { EpisodeList } from '@/components/features/episodes';
@@ -33,7 +33,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 interface Tag {
     id: string;
@@ -52,15 +52,16 @@ interface Channel {
     tags?: Tag[];
 }
 
-export default function ChannelDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+function ChannelDetailsContent({ id }: { id: string }) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [channel, setChannel] = useState<Channel | null>(null);
     const [loading, setLoading] = useState(true);
     const [isSyncing, setIsSyncing] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [refreshEpisodesKey, setRefreshEpisodesKey] = useState(0);
-    const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+
+    const selectedTagIds = searchParams.get('tags')?.split(',').filter(Boolean) || [];
 
     const fetchChannel = useCallback(async () => {
         try {
@@ -136,11 +137,18 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
     };
 
     const toggleTag = (tagId: string) => {
-        setSelectedTagIds(prev => 
-            prev.includes(tagId) 
-                ? prev.filter(id => id !== tagId) 
-                : [...prev, tagId]
-        );
+        const params = new URLSearchParams(searchParams.toString());
+        const newSelected = selectedTagIds.includes(tagId)
+            ? selectedTagIds.filter(id => id !== tagId)
+            : [...selectedTagIds, tagId];
+        
+        if (newSelected.length > 0) {
+            params.set('tags', newSelected.join(','));
+        } else {
+            params.delete('tags');
+        }
+        
+        router.push(`/channels/${id}?${params.toString()}`);
     };
 
     if (loading) {
@@ -359,5 +367,24 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
                 </DialogContent>
             </Dialog>
         </Layout>
+    );
+}
+
+export default function ChannelDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
+    return (
+        <Suspense fallback={
+            <Layout>
+                <div className="space-y-8">
+                    <Skeleton className="h-[300px] w-full rounded-xl" />
+                    <div className="space-y-4">
+                        <Skeleton className="h-10 w-1/3" />
+                        <Skeleton className="h-4 w-full" />
+                    </div>
+                </div>
+            </Layout>
+        }>
+            <ChannelDetailsContent id={id} />
+        </Suspense>
     );
 }

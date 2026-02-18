@@ -17,7 +17,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
     DndContext,
@@ -228,12 +228,19 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
 
 function ChannelsPageContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const highlightId = searchParams.get('channelId');
     const [channels, setChannels] = useState<Channel[]>([]);
     const [loading, setLoading] = useState(true);
     const [syncingChannelId, setSyncingChannelId] = useState<string | null>(null);
     const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
-    const [filters, setFilters] = useState<Filters>({});
+
+    // Derive filters from searchParams
+    const filters: Filters = {
+        search: searchParams.get('search') || undefined,
+        type: (searchParams.get('type') as Filters['type']) || undefined,
+        tagIds: searchParams.get('tagIds')?.split(',').filter(Boolean) || undefined,
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -246,12 +253,12 @@ function ChannelsPageContent() {
         })
     );
 
-    const fetchChannels = useCallback(async (currentFilters = filters) => {
+    const fetchChannels = useCallback(async () => {
         try {
             const params = new URLSearchParams();
-            if (currentFilters.search) params.set('search', currentFilters.search);
-            if (currentFilters.type) params.set('type', currentFilters.type);
-            if (currentFilters.tagIds) params.set('tagIds', currentFilters.tagIds.join(','));
+            if (filters.search) params.set('search', filters.search);
+            if (filters.type) params.set('type', filters.type);
+            if (filters.tagIds) params.set('tagIds', filters.tagIds.join(','));
 
             const response = await fetch(`/api/channels?${params.toString()}`);
             if (!response.ok) throw new Error('Failed to fetch channels');
@@ -264,15 +271,20 @@ function ChannelsPageContent() {
         } finally {
             setLoading(false);
         }
-    }, [filters]);
+    }, [filters.search, filters.type, filters.tagIds?.join(',')]);
 
     useEffect(() => {
         fetchChannels();
     }, [fetchChannels]);
 
     const handleFilterChange = (newFilters: Filters) => {
-        setFilters(newFilters);
-        fetchChannels(newFilters);
+        const params = new URLSearchParams(searchParams.toString());
+        
+        if (newFilters.search) params.set('search', newFilters.search); else params.delete('search');
+        if (newFilters.type) params.set('type', newFilters.type); else params.delete('type');
+        if (newFilters.tagIds?.length) params.set('tagIds', newFilters.tagIds.join(',')); else params.delete('tagIds');
+
+        router.push(`/channels?${params.toString()}`);
     };
 
     const handleSyncChannel = async (channelId: string, channelUrl: string) => {

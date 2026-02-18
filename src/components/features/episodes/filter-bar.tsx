@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem } from 'lucide-react';
+import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +18,14 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+    CommandDialog,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
 import { Tag } from '@/lib/domain/models';
 import { useEffect } from 'react';
 
@@ -27,6 +35,7 @@ interface FilterBarProps {
         watched?: boolean;
         watchStatus?: 'unwatched' | 'pending' | 'watched';
         tagIds?: string[];
+        channelIds?: string[];
         favorite?: boolean;
     }) => void;
     onSortChange?: (sort: { field: string; order: 'asc' | 'desc' }) => void;
@@ -35,27 +44,53 @@ interface FilterBarProps {
         watched?: boolean;
         watchStatus?: 'unwatched' | 'pending' | 'watched';
         tagIds?: string[];
+        channelIds?: string[];
         favorite?: boolean;
     };
     initialSort?: {
         field: string;
         order: 'asc' | 'desc';
     };
+    availableChannels?: { id: string; name: string }[];
 }
 
-export function FilterBar({ onFilterChange, onSortChange, initialFilters, initialSort }: FilterBarProps) {
+export function FilterBar({ onFilterChange, onSortChange, initialFilters, initialSort, availableChannels }: FilterBarProps) {
     const [search, setSearch] = useState(initialFilters?.search || '');
     const [watchedFilter, setWatchedFilter] = useState<string>(
         initialFilters?.watchStatus === 'pending' ? 'pending' : 
         (initialFilters?.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched'))
     );
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilters?.tagIds || []);
+    const [selectedChannelIds, setSelectedChannelIds] = useState<string[]>(initialFilters?.channelIds || []);
     const [tags, setTags] = useState<Tag[]>([]);
     const [sortField, setSortField] = useState(initialSort?.field || 'created_at');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSort?.order || 'desc');
     const [showTags, setShowTags] = useState(initialFilters?.tagIds && initialFilters.tagIds.length > 0);
     const [priorityFilter, setPriorityFilter] = useState(false);
     const [favoriteFilter, setFavoriteFilter] = useState(initialFilters?.favorite || false);
+    const [isChannelMenuOpen, setIsChannelMenuOpen] = useState(false);
+
+    // Sync local state when initialFilters changes (URL changes)
+    useEffect(() => {
+        if (initialFilters) {
+            setSearch(initialFilters.search || '');
+            // Priority: watchStatus if present, then watched boolean
+            const status = initialFilters.watchStatus || 
+                         (initialFilters.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched'));
+            setWatchedFilter(status);
+            
+            setSelectedTagIds(initialFilters.tagIds || []);
+            setSelectedChannelIds(initialFilters.channelIds || []);
+            setFavoriteFilter(initialFilters.favorite || false);
+        }
+    }, [initialFilters]);
+
+    useEffect(() => {
+        if (initialSort) {
+            setSortField(initialSort.field);
+            setSortOrder(initialSort.order);
+        }
+    }, [initialSort]);
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -72,27 +107,37 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         fetchTags();
     }, []);
 
-    const triggerFilterChange = (
-        currentSearch: string,
-        currentWatchedFilter: string,
-        currentTagIds: string[]
-    ) => {
+    const triggerFilterChange = (overrides: Partial<{
+        search: string;
+        watchedFilter: string;
+        tagIds: string[];
+        channelIds: string[];
+        favorite: boolean;
+    }> = {}) => {
+        const currentSearch = overrides.search !== undefined ? overrides.search : search;
+        const currentWatched = overrides.watchedFilter !== undefined ? overrides.watchedFilter : watchedFilter;
+        const currentTagIds = overrides.tagIds !== undefined ? overrides.tagIds : selectedTagIds;
+        const currentChannelIds = overrides.channelIds !== undefined ? overrides.channelIds : selectedChannelIds;
+        const currentFavorite = overrides.favorite !== undefined ? overrides.favorite : favoriteFilter;
+
         onFilterChange?.({
             search: currentSearch || undefined,
-            watched: currentWatchedFilter === 'watched' ? true : (currentWatchedFilter === 'all' ? undefined : false),
-            watchStatus: (currentWatchedFilter === 'all' ? undefined : (currentWatchedFilter === 'watched' ? 'watched' : currentWatchedFilter)) as 'unwatched' | 'pending' | 'watched' | undefined,
+            watched: currentWatched === 'watched' ? true : (currentWatched === 'all' ? undefined : false),
+            watchStatus: (currentWatched === 'all' ? undefined : (currentWatched === 'watched' ? 'watched' : currentWatched)) as 'unwatched' | 'pending' | 'watched' | undefined,
             tagIds: currentTagIds.length > 0 ? currentTagIds : undefined,
+            channelIds: currentChannelIds.length > 0 ? currentChannelIds : undefined,
+            favorite: currentFavorite ? true : undefined,
         });
     };
 
     const handleSearchChange = (value: string) => {
         setSearch(value);
-        triggerFilterChange(value, watchedFilter, selectedTagIds);
+        triggerFilterChange({ search: value });
     };
 
     const handleWatchedFilterChange = (value: string) => {
         setWatchedFilter(value);
-        triggerFilterChange(search, value, selectedTagIds);
+        triggerFilterChange({ watchedFilter: value });
     };
 
     const toggleTag = (tagId: string) => {
@@ -101,12 +146,21 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             : [...selectedTagIds, tagId];
         
         setSelectedTagIds(newSelected);
-        triggerFilterChange(search, watchedFilter, newSelected);
+        triggerFilterChange({ tagIds: newSelected });
+    };
+
+    const toggleChannel = (channelId: string) => {
+        const newSelected = selectedChannelIds.includes(channelId)
+            ? selectedChannelIds.filter(id => id !== channelId)
+            : [...selectedChannelIds, channelId];
+        
+        setSelectedChannelIds(newSelected);
+        triggerFilterChange({ channelIds: newSelected });
     };
 
     const clearTags = () => {
         setSelectedTagIds([]);
-        triggerFilterChange(search, watchedFilter, []);
+        triggerFilterChange({ tagIds: [] });
     };
 
     const handleSortChange = (field: string) => {
@@ -234,14 +288,9 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                         onClick={() => {
                                             const newValue = !priorityFilter;
                                             setPriorityFilter(newValue);
-                                            onFilterChange?.({
-                                                ...initialFilters,
-                                                search,
-                                                watched: watchedFilter === 'all' ? undefined : watchedFilter === 'watched',
-                                                watchStatus: watchedFilter === 'pending' ? 'pending' : undefined,
-                                                tagIds: selectedTagIds,
-                                                favorite: favoriteFilter ? true : undefined,
-                                            });
+                                            // Backend doesn't support priority filter yet, 
+                                            // but we'll at least keep current filters in sync
+                                            triggerFilterChange();
                                         }}
                                         className="h-9 w-9 flex-shrink-0"
                                     >
@@ -262,14 +311,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                         onClick={() => {
                                             const newValue = !favoriteFilter;
                                             setFavoriteFilter(newValue);
-                                            onFilterChange?.({
-                                                ...initialFilters,
-                                                search,
-                                                watched: watchedFilter === 'all' ? undefined : watchedFilter === 'watched',
-                                                watchStatus: watchedFilter === 'pending' ? 'pending' : undefined,
-                                                tagIds: selectedTagIds,
-                                                favorite: newValue ? true : undefined,
-                                            });
+                                            triggerFilterChange({ favorite: newValue });
                                         }}
                                         className="h-9 w-9 flex-shrink-0"
                                     >
@@ -277,6 +319,30 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Favorite</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={selectedChannelIds.length > 0 ? "default" : "outline"}
+                                        size="icon"
+                                        onClick={() => setIsChannelMenuOpen(true)}
+                                        className="h-9 w-9 flex-shrink-0 relative"
+                                    >
+                                        <Tv className="h-4 w-4" />
+                                        {selectedChannelIds.length > 0 && (
+                                            <Badge 
+                                                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+                                                variant="destructive"
+                                            >
+                                                {selectedChannelIds.length}
+                                            </Badge>
+                                        )}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Filter by Channel</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
 
@@ -306,6 +372,52 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                     </div>
                 </div>
             </div>
+
+            {/* Spotlight-style Channel Menu */}
+            <CommandDialog 
+                open={isChannelMenuOpen} 
+                onOpenChange={setIsChannelMenuOpen}
+                title="Filter by Channel"
+                description="Search and select channels to filter your library."
+            >
+                <CommandInput placeholder="Search channels..." />
+                <CommandList>
+                    <CommandEmpty>No channels found.</CommandEmpty>
+                    <CommandGroup heading="Available Channels">
+                        {availableChannels?.map((channel: { id: string; name: string }) => {
+                            const isSelected = selectedChannelIds.includes(channel.id);
+                            return (
+                                <CommandItem
+                                    key={channel.id}
+                                    onSelect={() => toggleChannel(channel.id)}
+                                    className="flex items-center justify-between cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Tv className="h-4 w-4 text-muted-foreground" />
+                                        <span>{channel.name}</span>
+                                    </div>
+                                    {isSelected && <Check className="h-4 w-4 text-primary" />}
+                                </CommandItem>
+                            );
+                        })}
+                    </CommandGroup>
+                </CommandList>
+                {selectedChannelIds.length > 0 && (
+                    <div className="p-2 border-t flex justify-end">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => {
+                                setSelectedChannelIds([]);
+                                triggerFilterChange({ channelIds: [] });
+                            }}
+                            className="text-xs h-8"
+                        >
+                            Clear Selection
+                        </Button>
+                    </div>
+                )}
+            </CommandDialog>
 
             {/* Tags list - Dedicated Row */}
             {(showTags || selectedTagIds.length > 0) && tags.length > 0 && (

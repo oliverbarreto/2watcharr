@@ -142,6 +142,7 @@ export interface EpisodeFilters {
     watchStatus?: WatchStatus;
     favorite?: boolean;
     channelId?: string;
+    channelIds?: string[];
     isDeleted?: boolean;
     userId?: string;
 }

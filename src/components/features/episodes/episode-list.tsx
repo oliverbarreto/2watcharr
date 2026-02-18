@@ -34,6 +34,7 @@ interface EpisodeListProps {
         watched?: boolean;
         favorite?: boolean;
         channelId?: string;
+        channelIds?: string[];
         tagIds?: string[];
         watchStatus?: 'unwatched' | 'pending' | 'watched';
         isDeleted?: boolean;
@@ -44,9 +45,10 @@ interface EpisodeListProps {
     };
     viewMode: 'grid' | 'list';
     onCountChange?: (current: number, total: number) => void;
+    onChannelsChange?: (channels: { id: string; name: string }[] | ((prev: { id: string; name: string }[]) => { id: string; name: string }[])) => void;
 }
 
-export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountChange }: EpisodeListProps) {
+export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountChange, onChannelsChange }: EpisodeListProps) {
     const [episodes, setEpisodes] = useState<MediaEpisode[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -91,6 +93,9 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
             if (filters?.watched !== undefined) params.append('watched', String(filters.watched));
             if (filters?.favorite !== undefined) params.append('favorite', String(filters.favorite));
             if (filters?.channelId) params.append('channelId', filters.channelId);
+            if (filters?.channelIds && filters.channelIds.length > 0) {
+                params.append('channels', filters.channelIds.join(','));
+            }
             if (filters?.tagIds && filters.tagIds.length > 0) {
                 params.append('tags', filters.tagIds.join(','));
             }
@@ -112,6 +117,25 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
                 setEpisodes(prev => [...prev, ...data.episodes]);
             } else {
                 setEpisodes(data.episodes);
+                
+                // Extract unique channels for the filter menu
+                if (onChannelsChange) {
+                    const channelsMap = new Map<string, {id: string, name: string}>();
+                    data.episodes.forEach((ep: MediaEpisode) => {
+                        if (ep.channelId && ep.channelName) {
+                            channelsMap.set(ep.channelId, { id: ep.channelId, name: ep.channelName });
+                        }
+                    });
+                    const newChannels = Array.from(channelsMap.values());
+                    
+                    // Only trigger update if channels have actually changed (shallow comparison is enough for IDs)
+                    onChannelsChange((prev: { id: string; name: string }[]) => {
+                        const prevIds = (prev || []).map((c: { id: string; name: string }) => c.id).sort().join(',');
+                        const nextIds = newChannels.map((c: { id: string; name: string }) => c.id).sort().join(',');
+                        if (prevIds === nextIds) return prev;
+                        return newChannels;
+                    });
+                }
             }
             
             setTotalCount(data.total);
@@ -123,12 +147,12 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [filters, sort]);
+    }, [JSON.stringify(filters), JSON.stringify(sort), onChannelsChange]);
 
     // Reset pagination when filters or sort change
     useEffect(() => {
         fetchEpisodes(0, false);
-    }, [fetchEpisodes]);
+    }, [filters?.search, filters?.watched, filters?.favorite, filters?.channelId, filters?.channelIds?.join(','), filters?.tagIds?.join(','), filters?.watchStatus, filters?.isDeleted, sort?.field, sort?.order, fetchEpisodes]);
 
     // Intersection Observer for infinite scroll
     useEffect(() => {

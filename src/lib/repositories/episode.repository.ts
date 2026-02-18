@@ -178,6 +178,12 @@ export class EpisodeRepository {
             params.push(filters.channelId);
         }
 
+        if (filters?.channelIds && filters.channelIds.length > 0) {
+            const placeholders = filters.channelIds.map(() => '?').join(',');
+            conditions.push(`e.channel_id IN (${placeholders})`);
+            params.push(...filters.channelIds);
+        }
+
         if (filters?.userId) {
             conditions.push('e.user_id = ?');
             params.push(filters.userId);
@@ -300,6 +306,12 @@ export class EpisodeRepository {
         if (filters?.channelId) {
             conditions.push('e.channel_id = ?');
             params.push(filters.channelId);
+        }
+
+        if (filters?.channelIds && filters.channelIds.length > 0) {
+            const placeholders = filters.channelIds.map(() => '?').join(',');
+            conditions.push(`e.channel_id IN (${placeholders})`);
+            params.push(...filters.channelIds);
         }
 
         if (filters?.userId) {

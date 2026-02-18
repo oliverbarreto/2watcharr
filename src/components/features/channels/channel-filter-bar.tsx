@@ -33,6 +33,15 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
     const [tags, setTags] = useState<Tag[]>([]);
     const [showTags, setShowTags] = useState(initialFilters?.tagIds && initialFilters.tagIds.length > 0);
 
+    // Sync local state when initialFilters changes (URL changes)
+    useEffect(() => {
+        if (initialFilters) {
+            setSearch(initialFilters.search || '');
+            setTypeFilter(initialFilters.type || 'all');
+            setSelectedTagIds(initialFilters.tagIds || []);
+        }
+    }, [initialFilters]);
+
     useEffect(() => {
         const fetchTags = async () => {
             try {

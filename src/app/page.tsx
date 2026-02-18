@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout';
 import { FilterBar, EpisodeList } from '@/components/features/episodes';
@@ -13,6 +13,8 @@ interface Filters {
   watchStatus?: 'unwatched' | 'pending' | 'watched';
   tagIds?: string[];
   channelId?: string;
+  channelIds?: string[];
+  favorite?: boolean;
 }
 
 interface Sort {
@@ -24,22 +26,59 @@ function HomePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  // Initialize state directly from searchParams and localStorage to avoid setState in effect
-  const [filters, setFilters] = useState<Filters>(() => ({
-    channelId: searchParams.get('channelId') || undefined
-  }));
-  const [sort, setSort] = useState<Sort>(() => {
+  // Fetch available channels for the filter menu
+  const [availableChannels, setAvailableChannels] = useState<{id: string, name: string}[]>([]);
+
+  useEffect(() => {
+    const fetchChannels = async () => {
+      try {
+        const response = await fetch('/api/channels');
+        if (response.ok) {
+          const data = await response.json();
+          // Map to the format expected by FilterBar
+          setAvailableChannels(data.channels.map((c: any) => ({ id: c.id, name: c.name })));
+        }
+      } catch (error) {
+        console.error('Failed to fetch channels', error);
+      }
+    };
+    fetchChannels();
+  }, []);
+
+  // Memoize filters from searchParams
+  const filters: Filters = useMemo(() => {
+    const status = searchParams.get('status');
+    return {
+      search: searchParams.get('search') || undefined,
+      watched: status === 'watched' ? true : (status === 'unwatched' ? false : undefined),
+      watchStatus: status as Filters['watchStatus'] || undefined,
+      tagIds: searchParams.get('tags')?.split(',').filter(Boolean) || undefined,
+      channelId: searchParams.get('channelId') || undefined,
+      channelIds: searchParams.get('channels')?.split(',').filter(Boolean) || undefined,
+      favorite: searchParams.get('favorite') === 'true' ? true : undefined,
+    };
+  }, [searchParams]);
+
+  // Memoize sort from searchParams or localStorage
+  const sort: Sort = useMemo(() => {
+    const field = searchParams.get('sort');
+    const order = searchParams.get('order') as 'asc' | 'desc';
+    
+    if (field && order) {
+      return { field, order };
+    }
+
     if (typeof window !== 'undefined') {
       const savedDefaultSortField = localStorage.getItem('defaultSortField');
       if (savedDefaultSortField) {
-        // Set appropriate default sort order based on field
         let defaultOrder: 'asc' | 'desc' = 'desc';
         if (savedDefaultSortField === 'title') defaultOrder = 'asc';
         return { field: savedDefaultSortField, order: defaultOrder };
       }
     }
     return { field: 'date_added', order: 'desc' };
-  });
+  }, [searchParams]);
+
   const [refreshKey, setRefreshKey] = useState(0);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     if (typeof window !== 'undefined') {
@@ -65,11 +104,28 @@ function HomePageContent() {
     localStorage.setItem('episodeViewMode', newMode);
   };
 
-  // Sync channelId from searchParams to filters state if it changes in the URL
-  const channelIdFromUrl = searchParams.get('channelId') || undefined;
-  if (filters.channelId !== channelIdFromUrl) {
-    setFilters(prev => ({ ...prev, channelId: channelIdFromUrl }));
-  }
+  const updateFilters = (newFilters: Partial<Filters>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const merged = { ...filters, ...newFilters };
+
+    if (merged.search) params.set('search', merged.search); else params.delete('search');
+    if (merged.watchStatus) params.set('status', merged.watchStatus); else params.delete('status');
+    if (merged.tagIds?.length) params.set('tags', merged.tagIds.join(',')); else params.delete('tags');
+    if (merged.channelIds?.length) params.set('channels', merged.channelIds.join(',')); else params.delete('channels');
+    if (merged.favorite) params.set('favorite', 'true'); else params.delete('favorite');
+    
+    // channelId is used for direct navigation from channel pages, keep it if present
+    if (merged.channelId) params.set('channelId', merged.channelId); else params.delete('channelId');
+
+    router.push(`/?${params.toString()}`);
+  };
+
+  const handleSortChange = (newSort: Sort) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('sort', newSort.field);
+    params.set('order', newSort.order);
+    router.push(`/?${params.toString()}`);
+  };
 
   useEffect(() => {
     const handleAdded = () => setRefreshKey((prev) => prev + 1);
@@ -127,10 +183,11 @@ function HomePageContent() {
 
         {/* Filters */}
         <FilterBar
-          onFilterChange={setFilters}
-          onSortChange={setSort}
+          onFilterChange={updateFilters}
+          onSortChange={handleSortChange}
           initialFilters={filters}
           initialSort={sort}
+          availableChannels={availableChannels}
         />
 
         {/* Episode List */}
@@ -139,7 +196,6 @@ function HomePageContent() {
             filters={filters} 
             sort={sort} 
             viewMode={viewMode} 
-            onCountChange={handleCountChange}
         />
       </div>
     </Layout>

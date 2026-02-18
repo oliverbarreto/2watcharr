@@ -70,6 +70,8 @@ export async function GET(request: NextRequest) {
         const watchedParam = searchParams.get('watched');
         const favoriteParam = searchParams.get('favorite');
         const channelId = searchParams.get('channelId') || undefined;
+        const channelsParam = searchParams.get('channels');
+        const channelIds = channelsParam ? channelsParam.split(',').filter(Boolean) : undefined;
         const watchStatus = searchParams.get('watchStatus') as 'unwatched' | 'pending' | 'watched' | undefined || undefined;
         const type = searchParams.get('type') as MediaType | undefined;
 
@@ -87,6 +89,7 @@ export async function GET(request: NextRequest) {
             watchStatus,
             favorite: favoriteParam ? favoriteParam === 'true' : undefined,
             channelId,
+            channelIds,
             userId,
             isDeleted: searchParams.get('isDeleted') === 'true' ? true : undefined,
         };
