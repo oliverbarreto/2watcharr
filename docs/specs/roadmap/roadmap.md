@@ -24,14 +24,24 @@
 
 ### ANALYSIS MADE - Not implemented:
 - [ ] `./docs/specs/roadmap/todo/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
-    - `./docs/tasks/task-0000023-add-port-variable-to-deployment-config-prompt-v1-implementation_plan.md`
+    - `./docs/tasks/0.0.1-0.5.3/task-0000023-add-port-variable-to-deployment-config-prompt-v1-implementation_plan.md`
 
 - [ ] `./docs/specs/roadmap/todo/BUGFIX-images-not-showing-in-channels-page.md`: 
-    - `./docs/tasks/task-0000041-BUGFIX-images-not-showing-in-channels-page-prompt-v1-implementation_plan.md`
+    - `./docs/tasks/0.0.1-0.5.3/task-0000041-BUGFIX-images-not-showing-in-channels-page-prompt-v1-implementation_plan.md`
 
 
 ## Implemented Features
-20260207:
+20260218 - Release 0.5.4:
+- [x] `./docs/tasks/0.5.4/task-0000050-BUGFIX-navbar-localhost-link-prompt-v1.md`
+- [x] `./docs/tasks/0.5.4/task-0000051-UI-use-space-channel-details-page-prompt-v1.md`
+- [x] `./docs/tasks/0.5.4/task-0000052-BUGFIX-navigate-to-channel-page-from-video-cards-prompt-v1.md`
+- [x] `./docs/tasks/0.5.4/task-0000053-UI-watchlist-page-week-days-dates-prompt-v1.md`
+- [x] `./docs/tasks/0.5.4/task-0000054-UI-use-new-facicon-image-prompt-v1.md`
+- [x] `./docs/tasks/0.5.4/task-0000056-FEATURE-allow-adding-youtube-shorts-episodes-prompt-v1.md`
+- [x] `./docs/tasks/0.5.4/task-0000056-UI-add-filter-by-channel-in-watchlist-page-prompt-v1.md`
+- [x] `./docs/tasks/0.5.4/task-0000057-CHORE-fix-linting-test-docs-bump-verion-tag-release-task.md`
+
+20260215 - Release 0.5.3:
 - [x] `./docs/specs/roadmap/completed/0.5.3/FEATURE-soft-remove-episodes-by-tag.md`
 - [x] `./docs/specs/roadmap/completed/0.5.3/FEATURE-modify-chart-add-pending-confirmation-metric.md`
 - [x] `./docs/specs/roadmap/completed/0.5.3/FEATURE-modify-chart-legend.md`
@@ -45,7 +55,7 @@
 
 20260206 - Release 0.5.1:
 - [x] updated documentation
-- [x] Analysis done: `./docs/tasks/task-0000041-BUGFIX-images-not-showing-in-channels-page-prompt-v1-implementation_plan.md`
+- [x] Analysis done: `./docs/tasks/0.0.1-0.5.3/task-0000041-BUGFIX-images-not-showing-in-channels-page-prompt-v1-implementation_plan.md`
 
 20260206 - Release 0.5.0:
 - [x] updated documentation
