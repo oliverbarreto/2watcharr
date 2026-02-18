@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Youtube, Mic, Tag as TagIcon, X } from 'lucide-react';
+import { Search, Youtube, Mic, Tag as TagIcon, X, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -100,6 +100,22 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
         });
     };
 
+    const clearAllFilters = () => {
+        setSearch('');
+        setTypeFilter('all');
+        setSelectedTagIds([]);
+        
+        onFilterChange?.({
+            search: undefined,
+            type: undefined,
+            tagIds: undefined,
+        });
+    };
+
+    const hasAnyFilter = search !== '' || 
+                         typeFilter !== 'all' || 
+                         selectedTagIds.length > 0;
+
     return (
         <div className="flex flex-col mb-6">
             <div className="flex flex-col lg:flex-row gap-4 mb-4">
@@ -110,8 +126,16 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                         placeholder="Search sources..."
                         value={search}
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        className="pl-10 h-10"
+                        className="pl-10 pr-10 h-10"
                     />
+                    {search && (
+                        <button
+                            onClick={() => handleSearchChange('')}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                            <XCircle className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Filters */}
@@ -179,6 +203,18 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                                 <TooltipContent>Filter by Episode Tags</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
+
+                        {hasAnyFilter && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={clearAllFilters}
+                                className="h-10 px-3 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 ml-2"
+                            >
+                                <X className="h-4 w-4" />
+                                Clear All
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

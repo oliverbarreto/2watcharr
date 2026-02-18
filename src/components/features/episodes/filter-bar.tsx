@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check, StickyNote } from 'lucide-react';
+import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check, StickyNote, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -212,6 +212,34 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         onSortChange?.({ field: sortField, order: newOrder });
     };
 
+    const clearAllFilters = () => {
+        setSearch('');
+        setWatchedFilter('all');
+        setSelectedTagIds([]);
+        setSelectedChannelIds([]);
+        setFavoriteFilter(false);
+        setHasNotesFilter(false);
+        setPriorityFilter(false);
+        
+        onFilterChange?.({
+            search: undefined,
+            watched: undefined,
+            watchStatus: undefined,
+            tagIds: undefined,
+            channelIds: undefined,
+            favorite: undefined,
+            hasNotes: undefined,
+        });
+    };
+
+    const hasAnyFilter = search !== '' || 
+                         watchedFilter !== 'all' || 
+                         selectedTagIds.length > 0 || 
+                         selectedChannelIds.length > 0 || 
+                         favoriteFilter || 
+                         hasNotesFilter || 
+                         priorityFilter;
+
     return (
         <div className="flex flex-col mb-6">
             <div className="flex flex-col lg:flex-row gap-4 mb-4">
@@ -222,8 +250,16 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                         placeholder="Search episodes..."
                         value={search}
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 pr-10"
                     />
+                    {search && (
+                        <button
+                            onClick={() => handleSearchChange('')}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                            <XCircle className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Filters & Sort */}
@@ -413,6 +449,18 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                 <TooltipContent>Filter by Tags</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
+
+                        {hasAnyFilter && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={clearAllFilters}
+                                className="h-9 px-3 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                                Clear All
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
