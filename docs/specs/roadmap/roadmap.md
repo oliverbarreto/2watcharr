@@ -14,7 +14,6 @@ These are some features we want to add to the app but are not specidifed yet:
 
 #### FEATURES:
 - [ ] `./docs/specs/roadmap/todo/task-0000000xx-BUGFIX-dont-scroll-when-update-fav-or-tags-episode-card-prompt-v1.md`
-- [ ] `./docs/specs/roadmap/todo/task-0000000xx-UI-show-floating-bubble-with-number-of-episodes-infinite-scroll-prompt-v1.md`
 
 - [ ] `./docs/specs/roadmap/todo/FEATURE-import-playlist-data.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-async-request-and-client-ui.md`
@@ -37,6 +36,14 @@ These are some features we want to add to the app but are not specidifed yet:
 
 
 ## Implemented Features
+20260218:
+- [x] `./docs/tasks/0.5.6/task-0000061-UI-show-floating-bubble-with-number-of-episodes-infinite-scroll-prompt-v1.md
+
+
+Analysis done:
+- [x]`docs/specs/roadmap/todo/FEATURE-extend-scope-to-add-articles-webblogs-and-socialmedia.md`
+- [x] `./docs/specs/roadmap/todo/FEATURE-extend-scope-to-add-articles-webblogs-and-socialmedia-implementation_plan.md`
+
 20260218 - Release 0.5.5:
 - [x] Improved release workflow and task automation.
 - [x] `./docs/tasks/0.5.5/task-0000059-FEATURE-differentiate-shorts-vs-videos-prompt-v1.md`
