@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.5] - 2026-02-18
+
+### Added
+- **YouTube Shorts**: Automatically differentiate YouTube Shorts from regular videos with a "Shorts" indicator on cards.
+- **Episode Notes**: Added ability to add and view personal notes for each episode.
+- **Filters**: Introduced a new "With Notes" filter to easily find episodes with existing notes.
+
+### Improved
+- **UI**: Added "Clear all filters" button to the filter bar.
+- **UI**: Added "x" clear button to search textfields for faster resetting.
+- **Workflow**: Enhanced `/update-tag-release` workflow with automated step hints (`// turbo`).
+
 ## [0.5.4] - 2026-02-18
 
 ### Fixed

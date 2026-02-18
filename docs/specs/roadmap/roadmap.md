@@ -38,9 +38,10 @@ These are some features we want to add to the app but are not specidifed yet:
 
 ## Implemented Features
 20260218 - Release 0.5.5:
-- [x] `./docs/tasks/task-0000059-FEATURE-differentiate-shorts-vs-videos-prompt-v1.md`
-- [x] `./docs/tasks/task-0000058-FEATURE-add-notes-to-episodes-prompt-v1.md`
-- [x] `task-0000059-FEATURE-add-clear-option-to-filter-textfield-and-buttons-prompt-v1.md`
+- [x] Improved release workflow and task automation.
+- [x] `./docs/tasks/0.5.5/task-0000059-FEATURE-differentiate-shorts-vs-videos-prompt-v1.md`
+- [x] `./docs/tasks/0.5.5/task-0000058-FEATURE-add-notes-to-episodes-prompt-v1.md`
+- [x] `./docs/tasks/0.5.5/task-0000059-FEATURE-add-clear-option-to-filter-textfield-and-buttons-prompt-v1.md`
 
 
 20260218 - Release 0.5.4:
