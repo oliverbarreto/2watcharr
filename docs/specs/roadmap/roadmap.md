@@ -13,8 +13,6 @@ These are some features we want to add to the app but are not specidifed yet:
 #### AI TASKS:
 
 #### FEATURES:
-- [ ] `./docs/tasks/task-0000059-FEATURE-differentiate-shorts-vs-videos-prompt-v1.md`
-- [ ] `./docs/tasks/task-0000058-FEATURE-add-notes-to-episodes-prompt-v1.md`
 - [ ] `./docs/specs/roadmap/todo/task-0000000xx-BUGFIX-dont-scroll-when-update-fav-or-tags-episode-card-prompt-v1.md`
 - [ ] `./docs/specs/roadmap/todo/task-0000000xx-UI-show-floating-bubble-with-number-of-episodes-infinite-scroll-prompt-v1.md`
 
@@ -39,6 +37,12 @@ These are some features we want to add to the app but are not specidifed yet:
 
 
 ## Implemented Features
+20260218 - Release 0.5.5:
+- [x] `./docs/tasks/task-0000059-FEATURE-differentiate-shorts-vs-videos-prompt-v1.md`
+- [x] `./docs/tasks/task-0000058-FEATURE-add-notes-to-episodes-prompt-v1.md`
+- [x] `task-0000059-FEATURE-add-clear-option-to-filter-textfield-and-buttons-prompt-v1.md`
+
+
 20260218 - Release 0.5.4:
 - [x] `./docs/tasks/0.5.4/task-0000050-BUGFIX-navbar-localhost-link-prompt-v1.md`
 - [x] `./docs/tasks/0.5.4/task-0000051-UI-use-space-channel-details-page-prompt-v1.md`
