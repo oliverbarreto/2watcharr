@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check, StickyNote, XCircle } from 'lucide-react';
+import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check, StickyNote, XCircle, Video, Youtube, Mic } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,6 +38,8 @@ interface FilterBarProps {
         channelIds?: string[];
         favorite?: boolean;
         hasNotes?: boolean;
+        type?: 'video' | 'podcast';
+        isShort?: boolean;
     }) => void;
     onSortChange?: (sort: { field: string; order: 'asc' | 'desc' }) => void;
     initialFilters?: {
@@ -48,6 +50,8 @@ interface FilterBarProps {
         channelIds?: string[];
         favorite?: boolean;
         hasNotes?: boolean;
+        type?: 'video' | 'podcast';
+        isShort?: boolean;
     };
     initialSort?: {
         field: string;
@@ -71,6 +75,11 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     const [priorityFilter, setPriorityFilter] = useState(false);
     const [favoriteFilter, setFavoriteFilter] = useState(initialFilters?.favorite || false);
     const [hasNotesFilter, setHasNotesFilter] = useState(initialFilters?.hasNotes || false);
+    const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'shorts' | 'podcast'>(
+        initialFilters?.isShort ? 'shorts' : 
+        (initialFilters?.type === 'podcast' ? 'podcast' : 
+        (initialFilters?.type === 'video' && initialFilters?.isShort === false ? 'video' : 'all'))
+    );
     const [isChannelMenuOpen, setIsChannelMenuOpen] = useState(false);
 
     // Sync local state when initialFilters changes (URL changes)
@@ -101,6 +110,11 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             if (hasNotesFilter !== (initialFilters.hasNotes || false)) {
                 setHasNotesFilter(initialFilters.hasNotes || false);
             }
+            
+            const newType = initialFilters.isShort ? 'shorts' : 
+                           (initialFilters.type === 'podcast' ? 'podcast' : 
+                           (initialFilters.type === 'video' && initialFilters.isShort === false ? 'video' : 'all'));
+            if (typeFilter !== newType) setTypeFilter(newType);
         }
     }, [initialFilters]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -134,6 +148,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         channelIds: string[];
         favorite: boolean;
         hasNotes: boolean;
+        typeFilter: 'all' | 'video' | 'shorts' | 'podcast';
     }> = {}) => {
         const currentSearch = overrides.search !== undefined ? overrides.search : search;
         const currentWatched = overrides.watchedFilter !== undefined ? overrides.watchedFilter : watchedFilter;
@@ -141,6 +156,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         const currentChannelIds = overrides.channelIds !== undefined ? overrides.channelIds : selectedChannelIds;
         const currentFavorite = overrides.favorite !== undefined ? overrides.favorite : favoriteFilter;
         const currentHasNotes = overrides.hasNotes !== undefined ? overrides.hasNotes : hasNotesFilter;
+        const currentTypeFilter = overrides.typeFilter !== undefined ? overrides.typeFilter : typeFilter;
 
         onFilterChange?.({
             search: currentSearch || undefined,
@@ -150,6 +166,8 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             channelIds: currentChannelIds.length > 0 ? currentChannelIds : undefined,
             favorite: currentFavorite ? true : undefined,
             hasNotes: currentHasNotes ? true : undefined,
+            type: currentTypeFilter === 'video' || currentTypeFilter === 'podcast' ? currentTypeFilter : undefined,
+            isShort: currentTypeFilter === 'shorts' ? true : (currentTypeFilter === 'video' ? false : undefined),
         });
     };
 
@@ -161,6 +179,12 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     const handleWatchedFilterChange = (value: string) => {
         setWatchedFilter(value);
         triggerFilterChange({ watchedFilter: value });
+    };
+
+    const handleTypeFilterChange = (type: 'video' | 'shorts' | 'podcast') => {
+        const newValue = typeFilter === type ? 'all' : type;
+        setTypeFilter(newValue);
+        triggerFilterChange({ typeFilter: newValue });
     };
 
     const toggleTag = (tagId: string) => {
@@ -220,6 +244,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         setFavoriteFilter(false);
         setHasNotesFilter(false);
         setPriorityFilter(false);
+        setTypeFilter('all');
         
         onFilterChange?.({
             search: undefined,
@@ -229,6 +254,8 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             channelIds: undefined,
             favorite: undefined,
             hasNotes: undefined,
+            type: undefined,
+            isShort: undefined,
         });
     };
 
@@ -238,7 +265,8 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                          selectedChannelIds.length > 0 || 
                          favoriteFilter || 
                          hasNotesFilter || 
-                         priorityFilter;
+                         priorityFilter ||
+                         typeFilter !== 'all';
 
     return (
         <div className="flex flex-col mb-6">
@@ -449,6 +477,52 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                 <TooltipContent>Filter by Tags</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
+
+                        <div className="flex gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant={typeFilter === 'video' ? 'default' : 'outline'}
+                                            size="icon"
+                                            onClick={() => handleTypeFilterChange('video')}
+                                            className="h-9 w-9 flex-shrink-0"
+                                        >
+                                            <Video className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Videos</TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant={typeFilter === 'shorts' ? 'default' : 'outline'}
+                                            size="icon"
+                                            onClick={() => handleTypeFilterChange('shorts')}
+                                            className="h-9 w-9 flex-shrink-0"
+                                        >
+                                            <Youtube className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Shorts</TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant={typeFilter === 'podcast' ? 'default' : 'outline'}
+                                            size="icon"
+                                            onClick={() => handleTypeFilterChange('podcast')}
+                                            className="h-9 w-9 flex-shrink-0"
+                                        >
+                                            <Mic className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Podcasts</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
 
                         {hasAnyFilter && (
                             <Button

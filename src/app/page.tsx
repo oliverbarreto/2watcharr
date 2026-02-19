@@ -16,6 +16,8 @@ interface Filters {
   channelIds?: string[];
   favorite?: boolean;
   hasNotes?: boolean;
+  type?: 'video' | 'podcast';
+  isShort?: boolean;
 }
 
 interface Sort {
@@ -58,6 +60,8 @@ function HomePageContent() {
       channelIds: searchParams.get('channels')?.split(',').filter(Boolean) || undefined,
       favorite: searchParams.get('favorite') === 'true' ? true : undefined,
       hasNotes: searchParams.get('hasNotes') === 'true' ? true : undefined,
+      type: (searchParams.get('type') as any) || undefined,
+      isShort: searchParams.get('isShort') === 'true' ? true : (searchParams.get('isShort') === 'false' ? false : undefined),
     };
   }, [searchParams]);
 
@@ -116,6 +120,8 @@ function HomePageContent() {
     if (merged.channelIds?.length) params.set('channels', merged.channelIds.join(',')); else params.delete('channels');
     if (merged.favorite) params.set('favorite', 'true'); else params.delete('favorite');
     if (merged.hasNotes) params.set('hasNotes', 'true'); else params.delete('hasNotes');
+    if (merged.type) params.set('type', merged.type); else params.delete('type');
+    if (merged.isShort !== undefined) params.set('isShort', String(merged.isShort)); else params.delete('isShort');
     
     // channelId is used for direct navigation from channel pages, keep it if present
     if (merged.channelId) params.set('channelId', merged.channelId); else params.delete('channelId');

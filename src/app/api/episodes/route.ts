@@ -90,6 +90,7 @@ export async function GET(request: NextRequest) {
             watchStatus,
             favorite: favoriteParam ? favoriteParam === 'true' : undefined,
             hasNotes: hasNotesParam ? hasNotesParam === 'true' : undefined,
+            isShort: searchParams.get('isShort') === 'true' ? true : (searchParams.get('isShort') === 'false' ? false : undefined),
             channelId,
             channelIds,
             userId,

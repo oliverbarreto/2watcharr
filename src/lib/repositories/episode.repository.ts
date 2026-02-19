@@ -190,6 +190,11 @@ export class EpisodeRepository {
             params.push(filters.userId);
         }
 
+        if (filters?.isShort !== undefined) {
+            conditions.push('e.is_short = ?');
+            params.push(filters.isShort ? 1 : 0);
+        }
+
         if (filters?.hasNotes !== undefined) {
             if (filters.hasNotes) {
                 conditions.push("(e.notes IS NOT NULL AND e.notes != '')");
@@ -326,6 +331,11 @@ export class EpisodeRepository {
         if (filters?.userId) {
             conditions.push('e.user_id = ?');
             params.push(filters.userId);
+        }
+
+        if (filters?.isShort !== undefined) {
+            conditions.push('e.is_short = ?');
+            params.push(filters.isShort ? 1 : 0);
         }
 
         if (filters?.hasNotes !== undefined) {

@@ -39,6 +39,8 @@ interface EpisodeListProps {
         watchStatus?: 'unwatched' | 'pending' | 'watched';
         isDeleted?: boolean;
         hasNotes?: boolean;
+        type?: 'video' | 'podcast';
+        isShort?: boolean;
     };
     sort?: {
         field: string;
@@ -105,6 +107,8 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
             if (filters?.watchStatus) params.append('watchStatus', filters.watchStatus);
             if (filters?.isDeleted !== undefined) params.append('isDeleted', String(filters.isDeleted));
             if (filters?.hasNotes !== undefined) params.append('hasNotes', String(filters.hasNotes));
+            if (filters?.type) params.append('type', filters.type);
+            if (filters?.isShort !== undefined) params.append('isShort', String(filters.isShort));
             if (sort?.field) params.append('sort', sort.field);
             if (sort?.order) params.append('order', sort.order);
             
@@ -165,7 +169,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
     // Reset pagination when filters or sort change
     useEffect(() => {
         fetchEpisodes(0, false);
-    }, [filters?.search, filters?.watched, filters?.favorite, filters?.hasNotes, filters?.channelId, filters?.channelIds?.join(','), filters?.tagIds?.join(','), filters?.watchStatus, filters?.isDeleted, sort?.field, sort?.order, fetchEpisodes]);
+    }, [filters?.search, filters?.watched, filters?.favorite, filters?.hasNotes, filters?.type, filters?.isShort, filters?.channelId, filters?.channelIds?.join(','), filters?.tagIds?.join(','), filters?.watchStatus, filters?.isDeleted, sort?.field, sort?.order, fetchEpisodes]);
 
     // Intersection Observer for infinite scroll
     useEffect(() => {
