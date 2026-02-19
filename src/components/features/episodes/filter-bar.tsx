@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check, StickyNote, XCircle, Video, Youtube, Mic } from 'lucide-react';
+import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check, StickyNote, XCircle, Video, Youtube, Mic, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +40,7 @@ interface FilterBarProps {
         hasNotes?: boolean;
         type?: 'video' | 'podcast';
         isShort?: boolean;
+        likeStatus?: 'none' | 'like' | 'dislike';
     }) => void;
     onSortChange?: (sort: { field: string; order: 'asc' | 'desc' }) => void;
     initialFilters?: {
@@ -52,6 +53,7 @@ interface FilterBarProps {
         hasNotes?: boolean;
         type?: 'video' | 'podcast';
         isShort?: boolean;
+        likeStatus?: 'none' | 'like' | 'dislike';
     };
     initialSort?: {
         field: string;
@@ -75,6 +77,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     const [priorityFilter, setPriorityFilter] = useState(false);
     const [favoriteFilter, setFavoriteFilter] = useState(initialFilters?.favorite || false);
     const [hasNotesFilter, setHasNotesFilter] = useState(initialFilters?.hasNotes || false);
+    const [likeFilter, setLikeFilter] = useState<'all' | 'like' | 'dislike'>(initialFilters?.likeStatus === 'like' ? 'like' : (initialFilters?.likeStatus === 'dislike' ? 'dislike' : 'all'));
     const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'shorts' | 'podcast'>(
         initialFilters?.isShort ? 'shorts' : 
         (initialFilters?.type === 'podcast' ? 'podcast' : 
@@ -110,6 +113,9 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             if (hasNotesFilter !== (initialFilters.hasNotes || false)) {
                 setHasNotesFilter(initialFilters.hasNotes || false);
             }
+            
+            const newLike = initialFilters.likeStatus === 'like' ? 'like' : (initialFilters.likeStatus === 'dislike' ? 'dislike' : 'all');
+            if (likeFilter !== newLike) setLikeFilter(newLike);
             
             const newType = initialFilters.isShort ? 'shorts' : 
                            (initialFilters.type === 'podcast' ? 'podcast' : 
@@ -148,6 +154,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         channelIds: string[];
         favorite: boolean;
         hasNotes: boolean;
+        likeStatus: 'all' | 'like' | 'dislike';
         typeFilter: 'all' | 'video' | 'shorts' | 'podcast';
     }> = {}) => {
         const currentSearch = overrides.search !== undefined ? overrides.search : search;
@@ -156,6 +163,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         const currentChannelIds = overrides.channelIds !== undefined ? overrides.channelIds : selectedChannelIds;
         const currentFavorite = overrides.favorite !== undefined ? overrides.favorite : favoriteFilter;
         const currentHasNotes = overrides.hasNotes !== undefined ? overrides.hasNotes : hasNotesFilter;
+        const currentLikeStatus = overrides.likeStatus !== undefined ? overrides.likeStatus : likeFilter;
         const currentTypeFilter = overrides.typeFilter !== undefined ? overrides.typeFilter : typeFilter;
 
         onFilterChange?.({
@@ -166,6 +174,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             channelIds: currentChannelIds.length > 0 ? currentChannelIds : undefined,
             favorite: currentFavorite ? true : undefined,
             hasNotes: currentHasNotes ? true : undefined,
+            likeStatus: currentLikeStatus === 'all' ? undefined : (currentLikeStatus as 'none' | 'like' | 'dislike'),
             type: currentTypeFilter === 'video' || currentTypeFilter === 'podcast' ? currentTypeFilter : undefined,
             isShort: currentTypeFilter === 'shorts' ? true : (currentTypeFilter === 'video' ? false : undefined),
         });
@@ -244,6 +253,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         setFavoriteFilter(false);
         setHasNotesFilter(false);
         setPriorityFilter(false);
+        setLikeFilter('all');
         setTypeFilter('all');
         
         onFilterChange?.({
@@ -254,6 +264,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             channelIds: undefined,
             favorite: undefined,
             hasNotes: undefined,
+            likeStatus: undefined,
             type: undefined,
             isShort: undefined,
         });
@@ -266,6 +277,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                          favoriteFilter || 
                          hasNotesFilter || 
                          priorityFilter ||
+                         likeFilter !== 'all' ||
                          typeFilter !== 'all';
 
     return (
@@ -385,6 +397,47 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Priority</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        {/* Like/Dislike Filters */}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={likeFilter === 'like' ? 'default' : 'outline'}
+                                        size="icon"
+                                        onClick={() => {
+                                            const newValue = likeFilter === 'like' ? 'all' : 'like';
+                                            setLikeFilter(newValue);
+                                            triggerFilterChange({ likeStatus: newValue });
+                                        }}
+                                        className={`h-9 w-9 flex-shrink-0 ${likeFilter === 'like' ? 'bg-primary text-primary-foreground' : ''}`}
+                                    >
+                                        <ThumbsUp className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Liked</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={likeFilter === 'dislike' ? 'default' : 'outline'}
+                                        size="icon"
+                                        onClick={() => {
+                                            const newValue = likeFilter === 'dislike' ? 'all' : 'dislike';
+                                            setLikeFilter(newValue);
+                                            triggerFilterChange({ likeStatus: newValue });
+                                        }}
+                                        className={`h-9 w-9 flex-shrink-0 ${likeFilter === 'dislike' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}`}
+                                    >
+                                        <ThumbsDown className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Disliked</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
 

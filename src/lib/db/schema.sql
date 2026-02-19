@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS episodes (
   priority TEXT CHECK(priority IN ('none', 'low', 'medium', 'high')) DEFAULT 'none',
   custom_order INTEGER,             -- For manual reordering
   is_short BOOLEAN NOT NULL DEFAULT 0, -- Whether it's a YouTube Short
+  like_status TEXT CHECK(like_status IN ('none', 'like', 'dislike')) DEFAULT 'none',
   notes TEXT,                       -- User personal notes
   
   -- Metadata
@@ -105,6 +106,7 @@ CREATE INDEX IF NOT EXISTS idx_episodes_watch_status ON episodes(watch_status);
 CREATE INDEX IF NOT EXISTS idx_episodes_is_deleted ON episodes(is_deleted);
 CREATE INDEX IF NOT EXISTS idx_episodes_favorite ON episodes(favorite);
 CREATE INDEX IF NOT EXISTS idx_episodes_priority ON episodes(priority);
+CREATE INDEX IF NOT EXISTS idx_episodes_like_status ON episodes(like_status);
 CREATE INDEX IF NOT EXISTS idx_episodes_created_at ON episodes(created_at);
 CREATE INDEX IF NOT EXISTS idx_episode_tags_tag_id ON episode_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_tags_user_id ON tags(user_id);

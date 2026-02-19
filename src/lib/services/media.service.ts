@@ -6,6 +6,7 @@ import {
     UpdateEpisodeDto,
     EpisodeFilters,
     SortOptions,
+    LikeStatus,
     Priority,
     MediaEventType,
     PaginationOptions,
@@ -274,6 +275,22 @@ export class MediaService {
         
         // Record event
         await this.episodeRepo.addEvent(id, newFavorite ? 'favorited' : 'unfavorited', updated.title, updated.type);
+        
+        return updated;
+    }
+
+    /**
+     * Toggle like status
+     */
+    async toggleLikeStatus(id: string, status: LikeStatus): Promise<MediaEpisode> {
+        const episode = await this.episodeRepo.findById(id);
+        if (!episode) {
+            throw new Error('Episode not found');
+        }
+        
+        // If clicking the same status, reset to 'none'
+        const newStatus = episode.likeStatus === status ? 'none' : status;
+        const updated = await this.episodeRepo.update(id, { likeStatus: newStatus });
         
         return updated;
     }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { MediaEpisode, Tag } from '@/lib/domain/models';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,6 +32,8 @@ import {
     Youtube,
     Mic,
     StickyNote,
+    ThumbsUp,
+    ThumbsDown,
 } from 'lucide-react';
 import {
     CommandDialog,
@@ -49,7 +51,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface EpisodeCardProps {
     episode: MediaEpisode;
-    onUpdate?: () => void;
+    onUpdate?: (updatedEpisode?: MediaEpisode) => void;
     onDelete?: () => void;
     isDraggable?: boolean;
 }
@@ -64,6 +66,12 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [noteText, setNoteText] = useState(episode.notes || '');
     const [isSavingNote, setIsSavingNote] = useState(false);
+    const [likeStatus, setLikeStatus] = useState(episode.likeStatus);
+
+    // Sync state when episode prop changes
+    useEffect(() => {
+        setLikeStatus(episode.likeStatus);
+    }, [episode]);
 
     const {
         attributes,
@@ -79,6 +87,29 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
+    };
+
+    const handleToggleLike = async (status: 'like' | 'dislike') => {
+        try {
+            const newStatus = likeStatus === status ? 'none' : status;
+            setLikeStatus(newStatus);
+            
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ likeStatus: newStatus }),
+            });
+
+            if (!response.ok) {
+                setLikeStatus(likeStatus); // Revert on failure
+                throw new Error('Failed to update like status');
+            }
+            
+            onUpdate?.({ ...episode, likeStatus: newStatus });
+        } catch (error) {
+            console.error('Error updating like status:', error);
+            toast.error('Failed to update like status');
+        }
     };
 
     const handleToggleWatched = async () => {
@@ -494,6 +525,36 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                             ))}
                         </div>
 
+                        {/* Like/Dislike Buttons */}
+                        <div className="flex items-center gap-2 mb-3 pt-3 border-t">
+                            <Button
+                                size="sm"
+                                variant={likeStatus === 'like' ? 'secondary' : 'outline'}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleLike('like');
+                                }}
+                                className={`flex-1 h-8 ${likeStatus === 'like' ? 'bg-primary/10 hover:bg-primary/20 border-primary/20' : ''}`}
+                                title="Like"
+                            >
+                                <ThumbsUp className={`h-4 w-4 mr-2 ${likeStatus === 'like' ? 'fill-primary text-primary' : ''}`} />
+                                <span className={likeStatus === 'like' ? 'text-primary' : ''}>Like</span>
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant={likeStatus === 'dislike' ? 'secondary' : 'outline'}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleLike('dislike');
+                                }}
+                                className={`flex-1 h-8 ${likeStatus === 'dislike' ? 'bg-destructive/10 hover:bg-destructive/20 border-destructive/20' : ''}`}
+                                title="Don't like"
+                            >
+                                <ThumbsDown className={`h-4 w-4 mr-2 ${likeStatus === 'dislike' ? 'fill-destructive text-destructive' : ''}`} />
+                                <span className={likeStatus === 'dislike' ? 'text-destructive' : ''}>Dislike</span>
+                            </Button>
+                        </div>
+
                         {/* Actions */}
                         <div className="flex items-center gap-2 mt-2">
                             <Button
@@ -608,6 +669,22 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleToggleLike('like');
+                                    }}>
+                                        <ThumbsUp className={`mr-2 h-4 w-4 ${likeStatus === 'like' ? 'fill-primary text-primary' : ''}`} />
+                                        {likeStatus === 'like' ? 'Remove like' : 'Like'}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleToggleLike('dislike');
+                                    }}>
+                                        <ThumbsDown className={`mr-2 h-4 w-4 ${likeStatus === 'dislike' ? 'fill-destructive text-destructive' : ''}`} />
+                                        {likeStatus === 'dislike' ? "Remove don't like" : "Don't like"}
+                                    </DropdownMenuItem>
+                                    
+                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={(e) => {
                                         e.preventDefault();
                                         handleReorder('beginning');

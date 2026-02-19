@@ -1,6 +1,7 @@
 import { Database } from 'sqlite';
 import fs from 'fs/promises';
 import path from 'path';
+import { addLikeStatus } from './migrations/add_like_status';
 
 /**
  * Run database migrations
@@ -696,4 +697,7 @@ export async function runMigrations(db: Database): Promise<void> {
       }
     }
   }
+
+  // Run like_status migration
+  await addLikeStatus(db);
 }

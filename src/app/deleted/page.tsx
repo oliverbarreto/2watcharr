@@ -23,6 +23,7 @@ interface Filters {
   tagIds?: string[];
   isDeleted?: boolean;
   hasNotes?: boolean;
+  likeStatus?: 'none' | 'like' | 'dislike';
 }
 
 interface Sort {

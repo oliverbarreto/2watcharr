@@ -91,6 +91,7 @@ export async function GET(request: NextRequest) {
             favorite: favoriteParam ? favoriteParam === 'true' : undefined,
             hasNotes: hasNotesParam ? hasNotesParam === 'true' : undefined,
             isShort: searchParams.get('isShort') === 'true' ? true : (searchParams.get('isShort') === 'false' ? false : undefined),
+            likeStatus: searchParams.get('likeStatus') as any || undefined,
             channelId,
             channelIds,
             userId,

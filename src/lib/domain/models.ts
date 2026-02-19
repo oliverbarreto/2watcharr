@@ -3,6 +3,7 @@
 export type Priority = 'none' | 'low' | 'medium' | 'high';
 export type MediaType = 'video' | 'podcast';
 export type WatchStatus = 'unwatched' | 'pending' | 'watched';
+export type LikeStatus = 'none' | 'like' | 'dislike';
 
 export type MediaEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored' | 'tagged' | 'pending';
 
@@ -49,6 +50,7 @@ export interface MediaEpisode {
     priority: Priority;
     customOrder: number | null;
     isShort: boolean;
+    likeStatus: LikeStatus;
     notes: string | null;
     userId: string;
     tags?: Tag[];
@@ -118,6 +120,7 @@ export interface UpdateEpisodeDto {
     viewCount?: number;
     tagIds?: string[];
     isShort?: boolean;
+    likeStatus?: LikeStatus;
     notes?: string | null;
 }
 
@@ -150,6 +153,7 @@ export interface EpisodeFilters {
     channelIds?: string[];
     isDeleted?: boolean;
     isShort?: boolean;
+    likeStatus?: LikeStatus;
     hasNotes?: boolean;
     userId?: string;
 }

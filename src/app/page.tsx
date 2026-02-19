@@ -18,6 +18,7 @@ interface Filters {
   hasNotes?: boolean;
   type?: 'video' | 'podcast';
   isShort?: boolean;
+  likeStatus?: 'none' | 'like' | 'dislike';
 }
 
 interface Sort {
@@ -62,6 +63,7 @@ function HomePageContent() {
       hasNotes: searchParams.get('hasNotes') === 'true' ? true : undefined,
       type: (searchParams.get('type') as any) || undefined,
       isShort: searchParams.get('isShort') === 'true' ? true : (searchParams.get('isShort') === 'false' ? false : undefined),
+      likeStatus: (searchParams.get('likeStatus') as any) || undefined,
     };
   }, [searchParams]);
 
@@ -122,6 +124,7 @@ function HomePageContent() {
     if (merged.hasNotes) params.set('hasNotes', 'true'); else params.delete('hasNotes');
     if (merged.type) params.set('type', merged.type); else params.delete('type');
     if (merged.isShort !== undefined) params.set('isShort', String(merged.isShort)); else params.delete('isShort');
+    if (merged.likeStatus) params.set('likeStatus', merged.likeStatus); else params.delete('likeStatus');
     
     // channelId is used for direct navigation from channel pages, keep it if present
     if (merged.channelId) params.set('channelId', merged.channelId); else params.delete('channelId');
