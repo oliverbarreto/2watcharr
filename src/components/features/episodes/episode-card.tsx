@@ -507,10 +507,10 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                 title={episode.watchStatus === 'pending' ? "Confirm watched" : (episode.watched ? "Mark as unwatched" : "Mark as watched")}
                             >
                                 {episode.watchStatus === 'pending' ? (
-                                    <>
-                                        <Check className="h-4 w-4 mr-2" />
+                                    <span className="text-[11px] flex items-center">
+                                        <Check className="h-3.5 w-3.5 mr-1" />
                                         Confirm Watched
-                                    </>
+                                    </span>
                                 ) : (
                                     <>
                                         <Check className={`h-4 w-4 mr-2 ${episode.watched ? 'text-primary' : ''}`} />
@@ -526,6 +526,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                     e.stopPropagation();
                                     handleToggleFavorite();
                                 }}
+                                className="flex-shrink-0"
                                 title={episode.favorite ? "Remove from favorites" : "Add to favorites"}
                             >
                                 <Star className={`h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
@@ -539,6 +540,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                     setIsTagPopoverOpen(true);
                                     fetchTags();
                                 }}
+                                className="flex-shrink-0"
                                 title="Manage Tags"
                             >
                                 <TagIcon className="h-4 w-4" />
@@ -599,6 +601,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                     <Button
                                         size="sm"
                                         variant="ghost"
+                                        className="flex-shrink-0"
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         <MoreVertical className="h-4 w-4" />
@@ -644,6 +647,15 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                         <Star className={`mr-2 h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                                         {episode.favorite ? 'Remove favorite' : 'Add favorite'}
                                     </DropdownMenuItem>
+                                    
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        setNoteText(episode.notes || '');
+                                        setIsNoteModalOpen(true);
+                                    }}>
+                                        <StickyNote className="mr-2 h-4 w-4" />
+                                        {episode.notes ? 'Edit note' : 'Add note'}
+                                    </DropdownMenuItem>
 
                                     <DropdownMenuSeparator />
 
@@ -676,14 +688,6 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
 
                                     <DropdownMenuSeparator />
                                     
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
-                                        setNoteText(episode.notes || '');
-                                        setIsNoteModalOpen(true);
-                                    }}>
-                                        <StickyNote className="mr-2 h-4 w-4" />
-                                        {episode.notes ? 'Edit note' : 'Add note'}
-                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
