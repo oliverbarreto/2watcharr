@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { MediaEpisode, Tag } from '@/lib/domain/models';
 import { Badge } from '@/components/ui/badge';
@@ -25,8 +25,6 @@ import {
     Youtube,
     Mic,
     StickyNote,
-    ThumbsUp,
-    ThumbsDown,
 } from 'lucide-react';
 import {
     Dialog,
@@ -65,12 +63,6 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [noteText, setNoteText] = useState(episode.notes || '');
     const [isSavingNote, setIsSavingNote] = useState(false);
-    const [likeStatus, setLikeStatus] = useState(episode.likeStatus);
-
-    // Sync state when episode prop changes
-    useEffect(() => {
-        setLikeStatus(episode.likeStatus);
-    }, [episode]);
 
     const {
         attributes,
@@ -90,28 +82,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
         zIndex: isDragging ? 50 : 'auto',
     };
 
-    const handleToggleLike = async (status: 'like' | 'dislike') => {
-        try {
-            const newStatus = likeStatus === status ? 'none' : status;
-            setLikeStatus(newStatus);
-            
-            const response = await fetch(`/api/episodes/${episode.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ likeStatus: newStatus }),
-            });
-
-            if (!response.ok) {
-                setLikeStatus(likeStatus); // Revert on failure
-                throw new Error('Failed to update like status');
-            }
-            
-            onUpdate?.({ ...episode, likeStatus: newStatus });
-        } catch (error) {
-            console.error('Error updating like status:', error);
-            toast.error('Failed to update like status');
-        }
-    };
+    // handleToggleLike is intentionally not used in this view for now
 
     const handleToggleWatched = async (e: React.MouseEvent) => {
         e.stopPropagation();

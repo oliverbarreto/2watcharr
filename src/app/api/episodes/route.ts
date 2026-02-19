@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
 import { MediaService } from '@/lib/services';
 import { z } from 'zod';
-import { MediaType, SortField } from '@/lib/domain/models';
+import { MediaEpisode, MediaType, SortField } from '@/lib/domain/models';
 
 // Request validation schema
 const addEpisodeSchema = z.object({
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
             favorite: favoriteParam ? favoriteParam === 'true' : undefined,
             hasNotes: hasNotesParam ? hasNotesParam === 'true' : undefined,
             isShort: searchParams.get('isShort') === 'true' ? true : (searchParams.get('isShort') === 'false' ? false : undefined),
-            likeStatus: searchParams.get('likeStatus') as any || undefined,
+            likeStatus: searchParams.get('likeStatus') as MediaEpisode['likeStatus'] || undefined,
             channelId,
             channelIds,
             userId,

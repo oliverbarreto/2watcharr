@@ -7,7 +7,7 @@
 - [ ] Improve `/update-tag-release` workflow <!-- id: 4 -->
     - [ ] Add `// turbo` for automated steps <!-- id: 5 -->
     - [ ] Clarify documentation update steps <!-- id: 6 -->
-- [ ] Execute Release 0.5.5 <!-- id: 7 -->
+
     - [ ] Update [CHANGELOG.md](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/CHANGELOG.md) <!-- id: 8 -->
     - [ ] Update [docs/specs/roadmap/roadmap.md](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/docs/specs/roadmap/roadmap.md) <!-- id: 9 -->
     - [ ] Bump version in [package.json](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/package.json) and `package-lock.json` <!-- id: 10 -->

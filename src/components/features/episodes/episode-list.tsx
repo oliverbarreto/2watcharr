@@ -169,9 +169,11 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
     }, [JSON.stringify(filters), JSON.stringify(sort), onChannelsChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Reset pagination when filters or sort change
+    const channelIdsStr = filters?.channelIds?.join(',');
+    const tagIdsStr = filters?.tagIds?.join(',');
     useEffect(() => {
         fetchEpisodes(0, false);
-    }, [filters?.search, filters?.watched, filters?.favorite, filters?.hasNotes, filters?.type, filters?.isShort, filters?.likeStatus, filters?.channelId, filters?.channelIds?.join(','), filters?.tagIds?.join(','), filters?.watchStatus, filters?.isDeleted, sort?.field, sort?.order, fetchEpisodes]);
+    }, [filters?.search, filters?.watched, filters?.favorite, filters?.hasNotes, filters?.type, filters?.isShort, filters?.likeStatus, filters?.channelId, channelIdsStr, tagIdsStr, filters?.watchStatus, filters?.isDeleted, sort?.field, sort?.order, fetchEpisodes]);
 
     // Intersection Observer for infinite scroll
     useEffect(() => {

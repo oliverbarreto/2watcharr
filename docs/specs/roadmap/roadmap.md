@@ -36,7 +36,15 @@ These are some features we want to add to the app but are not specidifed yet:
 
 
 ## Implemented Features
-20260218:
++20260219 - Release 0.5.6:
++- [x] Added content type filters (Video, Shorts, Podcast).
++- [x] Added "Create Note" option to episode cards and list rows.
++- [x] Implemented "Like" and "Don't Like" voting for episodes.
++- [x] Added floating episode count bubble for infinite scroll.
++- [x] Refined channel list UI for better consistency.
++- [x] Fixed Like/Don't Like filter logic.
++
++20260218:
 - [x] `./docs/tasks/0.5.6/task-0000061-UI-show-floating-bubble-with-number-of-episodes-infinite-scroll-prompt-v1.md
 
 

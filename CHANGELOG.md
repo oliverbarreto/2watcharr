@@ -5,8 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.5] - 2026-02-18
-
+## [0.5.6] - 2026-02-19
++
++### Added
++- **UI**: Floating bubble on the watchlist page displaying the count of loaded episodes during infinite scroll.
++- **UI**: "Create Note" option directly in the episode card and list row dropdown menus.
++- **Filters**: Content type filters (Video, Shorts, Podcast) in the watchlist filter bar.
++- **Voting**: "Like" and "Don't Like" voting buttons for episodes.
++
++### Improved
++- **UI**: Channel list view with wider thumbnails and more compact layout for consistency.
++
++### Fixed
++- **Filters**: "Like/Don't Like" filter functionality to correctly filter episodes.
++
++## [0.5.5] - 2026-02-18
++
 ### Added
 - **YouTube Shorts**: Automatically differentiate YouTube Shorts from regular videos with a "Shorts" indicator on cards.
 - **Episode Notes**: Added ability to add and view personal notes for each episode.

@@ -61,9 +61,9 @@ function HomePageContent() {
       channelIds: searchParams.get('channels')?.split(',').filter(Boolean) || undefined,
       favorite: searchParams.get('favorite') === 'true' ? true : undefined,
       hasNotes: searchParams.get('hasNotes') === 'true' ? true : undefined,
-      type: (searchParams.get('type') as any) || undefined,
+      type: (searchParams.get('type') as Filters['type']) || undefined,
       isShort: searchParams.get('isShort') === 'true' ? true : (searchParams.get('isShort') === 'false' ? false : undefined),
-      likeStatus: (searchParams.get('likeStatus') as any) || undefined,
+      likeStatus: (searchParams.get('likeStatus') as Filters['likeStatus']) || undefined,
     };
   }, [searchParams]);
 
