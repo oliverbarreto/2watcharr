@@ -5,8 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7] - 2026-02-19
+
+### Added
+- **Stats**: Major restructure of the statistics page using a tabbed interface (Activity, Tags, Events History).
+- **Stats**: New "Videos by Tags" interactive line chart in the Tags tab.
+- **Stats**: New metrics for "Viewing Time (Today)" and "Watched Today/This Week".
+- **Stats**: Added "Select All" and "Deselect All" buttons for tag visibility management.
+
+### Improved
+- **Stats**: Reorganized Activity Summary into a more efficient three-column layout.
+- **Stats**: Moved "Visible Tags" section below the chart for better horizontal space utilization.
+
 ## [0.5.6] - 2026-02-19
-+
 +### Added
 +- **UI**: Floating bubble on the watchlist page displaying the count of loaded episodes during infinite scroll.
 +- **UI**: "Create Note" option directly in the episode card and list row dropdown menus.
