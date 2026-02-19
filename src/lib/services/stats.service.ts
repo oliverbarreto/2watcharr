@@ -16,10 +16,13 @@ export interface DashboardStats {
         tagged: number;
         unwatched: number;
         pending: number;
+        watchedToday: number;
+        watchedThisWeek: number;
     };
     playTime: {
         totalSeconds: number;
         averageSecondsPerVideo: number;
+        todaySeconds: number;
         thisWeekSeconds: number;
         thisMonthSeconds: number;
     };
@@ -27,6 +30,10 @@ export interface DashboardStats {
         date: string;
         added: number;
         watched: number;
+    }[];
+    tagsTimeSeries: {
+        date: string;
+        [tag: string]: number | string; // tag name to count, plus the date string
     }[];
     detailedStats: {
         title: string;
@@ -46,6 +53,7 @@ export class StatsService {
         const usage = await this.getUsage(userId, period);
         const playTime = await this.getPlayTimeStats(userId);
         const activityTimeSeries = await this.getActivityTimeSeries(userId, period);
+        const tagsTimeSeries = await this.getTagsTimeSeries(userId, period);
         const detailedStats = await this.getDetailedStats(userId, period);
 
         return {
@@ -53,6 +61,7 @@ export class StatsService {
             usage,
             playTime,
             activityTimeSeries,
+            tagsTimeSeries,
             detailedStats
         };
     }
@@ -108,7 +117,19 @@ export class StatsService {
             tagged: events.find(e => e.type === 'tagged')?.count || 0,
             unwatched: events.find(e => e.type === 'unwatched')?.count || 0,
             pending: events.find(e => e.type === 'pending')?.count || 0,
+            watchedToday: await this.getWatchedCount(userId, Math.floor(new Date().setHours(0, 0, 0, 0) / 1000)),
+            watchedThisWeek: await this.getWatchedCount(userId, Math.floor((Date.now() - (new Date().getDay() * 86400000)) / 1000)),
         };
+    }
+
+    private async getWatchedCount(userId: string, threshold: number) {
+        const result = await this.db.get(`
+            SELECT COUNT(*) as count 
+            FROM media_events me
+            LEFT JOIN episodes e ON me.episode_id = e.id
+            WHERE (e.user_id = ? OR e.user_id IS NULL) AND me.event_type = 'watched' AND me.created_at >= ?
+        `, [userId, threshold]);
+        return result?.count || 0;
     }
 
     private async getPlayTimeStats(userId: string) {
@@ -136,9 +157,17 @@ export class StatsService {
             WHERE e.user_id = ? AND me.event_type = 'watched' AND me.created_at >= ?
         `, [userId, startOfMonth]);
 
+        const today = await this.db.get(`
+            SELECT SUM(e.duration) as total
+            FROM episodes e
+            JOIN media_events me ON e.id = me.episode_id
+            WHERE e.user_id = ? AND me.event_type = 'watched' AND me.created_at >= ?
+        `, [userId, Math.floor(new Date().setHours(0, 0, 0, 0) / 1000)]);
+
         return {
             totalSeconds: total?.total || 0,
             averageSecondsPerVideo: Math.round(total?.average || 0),
+            todaySeconds: today?.total || 0,
             thisWeekSeconds: thisWeek?.total || 0,
             thisMonthSeconds: thisMonth?.total || 0,
         };
@@ -261,5 +290,61 @@ export class StatsService {
             ...event,
             tags: event.episode_id ? tagsByEpisode[event.episode_id] || [] : []
         }));
+    }
+
+    private async getTagsTimeSeries(userId: string, period: string) {
+        let query = '';
+        const params: (string | number)[] = [userId];
+
+        // First, get all tags for the user to know what columns we might have
+        const userTags = await this.db.all('SELECT name FROM tags WHERE user_id = ?', [userId]);
+        if (userTags.length === 0) return [];
+
+        let threshold = 0;
+        const now = Math.floor(Date.now() / 1000);
+        
+        let timeFormat = '';
+        if (period === 'day') {
+            threshold = now - 86400;
+            timeFormat = '%Y-%m-%dT%H:00:00';
+        } else if (period === 'week' || period === 'month') {
+            threshold = period === 'week' ? now - 604800 : now - 2592000;
+            timeFormat = '%Y-%m-%d';
+        } else if (period === 'year' || period === 'total') {
+            if (period === 'year') {
+                const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+                threshold = Math.floor(startOfYear.getTime() / 1000);
+            }
+            timeFormat = '%Y-%m';
+        }
+        params.push(threshold);
+
+        // Subquery to get events with their tags
+        // We only care about 'watched' events for this chart as per requirement "analyze what tags are more popular and when"
+        query = `
+            SELECT 
+                strftime('${timeFormat}', me.created_at, 'unixepoch') as time_bucket,
+                t.name as tag_name,
+                COUNT(*) as count
+            FROM media_events me
+            JOIN episode_tags et ON me.episode_id = et.episode_id
+            JOIN tags t ON et.tag_id = t.id
+            WHERE me.event_type = 'watched' AND t.user_id = ? AND me.created_at >= ?
+            GROUP BY time_bucket, tag_name
+            ORDER BY time_bucket ASC
+        `;
+
+        const rows = await this.db.all(query, params);
+
+        // Group rows by time_bucket
+        const bucketedData: Record<string, Record<string, number | string>> = {};
+        rows.forEach(row => {
+            if (!bucketedData[row.time_bucket]) {
+                bucketedData[row.time_bucket] = { date: row.time_bucket };
+            }
+            bucketedData[row.time_bucket][row.tag_name] = row.count;
+        });
+
+        return Object.values(bucketedData).sort((a, b) => (a.date as string).localeCompare(b.date as string)) as { [tag: string]: number | string; date: string }[];
     }
 }
