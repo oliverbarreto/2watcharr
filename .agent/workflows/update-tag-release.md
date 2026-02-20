@@ -17,16 +17,20 @@ After finishing a feature, we want to ensure no linting errors exist before upda
    - `docs/specs/roadmap/roadmap.md`: Update implementation status.
 
 // turbo
-3. **Merge**: Merge the `develop` branch into `main`.
+3. **Commit**: Commit `develop` branch before moving to `main`.
+   - `git checkout develop`
+
+// turbo
+4. **Merge**: Merge the `develop` branch into `main`.
    - `git checkout main`
    - `git merge develop`
 
 // turbo
-4. **Version Bump**: Bump the version in `package.json` (0.*.+1 or user-specified).
+5. **Version Bump**: Bump the version in `package.json` (0.*.+1 or user-specified).
    - `npm version [patch|minor|major]`
 
 // turbo
-5. **Release**: Push to GitHub and create a release using the GitHub CLI (`gh`).
+6. **Release**: Push to GitHub and create a release using the GitHub CLI (`gh`).
    - `git push origin main --tags`
    - `gh release create v[version] --notes-from-tag`
 
