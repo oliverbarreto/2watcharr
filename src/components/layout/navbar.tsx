@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Plus, Settings, LogOut, User, BarChart3, Radio, Library, Search } from 'lucide-react';
@@ -28,28 +30,40 @@ interface NavLinksProps {
     onClick?: () => void;
 }
 
-const NavLinks = ({ className, onClick }: NavLinksProps) => (
-    <>
-        <Link href="/" onClick={onClick}>
-            <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
-                <Library className="mr-2 h-4 w-4 sm:hidden" />
-                Watch Later
-            </Button>
-        </Link>
-        <Link href="/channels" onClick={onClick}>
-            <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
-                <Radio className="mr-2 h-4 w-4 sm:hidden" />
-                Channels
-            </Button>
-        </Link>
-        <Link href="/stats" onClick={onClick}>
-            <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
-                <BarChart3 className="mr-2 h-4 w-4 sm:hidden" />
-                Stats
-            </Button>
-        </Link>
-    </>
-);
+const NavLinks = ({ className, onClick }: NavLinksProps) => {
+    const pathname = usePathname();
+    
+    const getLinkClass = (path: string) => cn(
+        "w-full justify-start sm:w-auto transition-all duration-200",
+        pathname === path 
+            ? "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90" 
+            : "hover:bg-accent hover:text-accent-foreground",
+        className
+    );
+
+    return (
+        <>
+            <Link href="/" onClick={onClick}>
+                <Button variant="ghost" className={getLinkClass("/")}>
+                    <Library className="mr-2 h-4 w-4 sm:hidden" />
+                    Watch Later
+                </Button>
+            </Link>
+            <Link href="/channels" onClick={onClick}>
+                <Button variant="ghost" className={getLinkClass("/channels")}>
+                    <Radio className="mr-2 h-4 w-4 sm:hidden" />
+                    Channels
+                </Button>
+            </Link>
+            <Link href="/stats" onClick={onClick}>
+                <Button variant="ghost" className={getLinkClass("/stats")}>
+                    <BarChart3 className="mr-2 h-4 w-4 sm:hidden" />
+                    Stats
+                </Button>
+            </Link>
+        </>
+    );
+};
 
 export function Navbar() {
     const { data: session } = useSession();

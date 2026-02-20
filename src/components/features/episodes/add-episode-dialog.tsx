@@ -127,7 +127,10 @@ export function AddEpisodeDialog({ onEpisodeAdded, trigger }: AddEpisodeDialogPr
 
             <DialogContent>
                 <form onSubmit={handleSubmit}>
-                    <DialogHeader>
+                    <DialogHeader className="flex flex-col items-center text-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
+                            <Plus className="h-6 w-6 text-primary" />
+                        </div>
                         <DialogTitle>Add New Media</DialogTitle>
                         <DialogDescription>
                             Paste a YouTube or Podcast URL to add it to your list
