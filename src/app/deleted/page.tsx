@@ -105,22 +105,16 @@ function DeletedEpisodesContent() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push('/settings')}
-                className="gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Settings
-              </Button>
-            </div>
-            <h1 className="text-3xl font-bold">Deleted Episodes</h1>
-            <p className="text-muted-foreground">
-              Episodes that have been removed from your watch list
-            </p>
+          <div className="flex items-center gap-3 mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/settings')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Settings
+            </Button>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -226,10 +220,7 @@ export default function DeletedEpisodesPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Deleted Episodes</h1>
-              <p className="text-muted-foreground">
-                Loading...
-              </p>
+              {/* Removed Page Title and Subtitle */}
             </div>
           </div>
         </div>

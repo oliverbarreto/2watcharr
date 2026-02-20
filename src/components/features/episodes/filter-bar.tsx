@@ -41,6 +41,7 @@ interface FilterBarProps {
         type?: 'video' | 'podcast';
         isShort?: boolean;
         likeStatus?: 'none' | 'like' | 'dislike';
+        priority?: 'none' | 'low' | 'medium' | 'high';
     }) => void;
     onSortChange?: (sort: { field: string; order: 'asc' | 'desc' }) => void;
     initialFilters?: {
@@ -54,6 +55,7 @@ interface FilterBarProps {
         type?: 'video' | 'podcast';
         isShort?: boolean;
         likeStatus?: 'none' | 'like' | 'dislike';
+        priority?: 'none' | 'low' | 'medium' | 'high';
     };
     initialSort?: {
         field: string;
@@ -74,7 +76,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     const [sortField, setSortField] = useState(initialSort?.field || 'created_at');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSort?.order || 'desc');
     const [showTags, setShowTags] = useState(initialFilters?.tagIds && initialFilters.tagIds.length > 0);
-    const [priorityFilter, setPriorityFilter] = useState(false);
+    const [priorityFilter, setPriorityFilter] = useState(initialFilters?.priority === 'high');
     const [favoriteFilter, setFavoriteFilter] = useState(initialFilters?.favorite || false);
     const [hasNotesFilter, setHasNotesFilter] = useState(initialFilters?.hasNotes || false);
     const [likeFilter, setLikeFilter] = useState<'all' | 'like' | 'dislike'>(initialFilters?.likeStatus === 'like' ? 'like' : (initialFilters?.likeStatus === 'dislike' ? 'dislike' : 'all'));
@@ -89,17 +91,12 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     useEffect(() => {
         if (initialFilters) {
             const newSearch = initialFilters.search || '';
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             if (search !== newSearch) setSearch(newSearch);
             
-            // Priority: watchStatus if present, then watched boolean
             const status = initialFilters.watchStatus || 
                          (initialFilters.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched'));
             if (watchedFilter !== status) setWatchedFilter(status);
             
-            // Simple length check for arrays to avoid deep comparison complexity
-            // reliable enough for this specific use case where selection changes usually change length
-            // or completely replace the array
             if (JSON.stringify(initialFilters.tagIds) !== JSON.stringify(selectedTagIds)) {
                 setSelectedTagIds(initialFilters.tagIds || []);
             }
@@ -112,6 +109,10 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             }
             if (hasNotesFilter !== (initialFilters.hasNotes || false)) {
                 setHasNotesFilter(initialFilters.hasNotes || false);
+            }
+            
+            if (priorityFilter !== (initialFilters.priority === 'high')) {
+                setPriorityFilter(initialFilters.priority === 'high');
             }
             
             const newLike = initialFilters.likeStatus === 'like' ? 'like' : (initialFilters.likeStatus === 'dislike' ? 'dislike' : 'all');
@@ -128,9 +129,10 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         if (initialSort) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             if (sortField !== initialSort.field) setSortField(initialSort.field);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             if (sortOrder !== initialSort.order) setSortOrder(initialSort.order);
         }
-    }, [initialSort, sortField, sortOrder]);
+    }, [initialSort]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -156,6 +158,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         hasNotes: boolean;
         likeStatus: 'all' | 'like' | 'dislike';
         typeFilter: 'all' | 'video' | 'shorts' | 'podcast';
+        priorityFilter: boolean;
     }> = {}) => {
         const currentSearch = overrides.search !== undefined ? overrides.search : search;
         const currentWatched = overrides.watchedFilter !== undefined ? overrides.watchedFilter : watchedFilter;
@@ -165,6 +168,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         const currentHasNotes = overrides.hasNotes !== undefined ? overrides.hasNotes : hasNotesFilter;
         const currentLikeStatus = overrides.likeStatus !== undefined ? overrides.likeStatus : likeFilter;
         const currentTypeFilter = overrides.typeFilter !== undefined ? overrides.typeFilter : typeFilter;
+        const currentPriority = overrides.priorityFilter !== undefined ? overrides.priorityFilter : priorityFilter;
 
         onFilterChange?.({
             search: currentSearch || undefined,
@@ -177,6 +181,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             likeStatus: currentLikeStatus === 'all' ? undefined : (currentLikeStatus as 'none' | 'like' | 'dislike'),
             type: currentTypeFilter === 'video' || currentTypeFilter === 'podcast' ? currentTypeFilter : undefined,
             isShort: currentTypeFilter === 'shorts' ? true : (currentTypeFilter === 'video' ? false : undefined),
+            priority: currentPriority ? 'high' : undefined,
         });
     };
 
@@ -216,25 +221,16 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
 
     const clearTags = () => {
         setSelectedTagIds([]);
+        setShowTags(false);
         triggerFilterChange({ tagIds: [] });
     };
 
     const handleSortChange = (field: string) => {
         setSortField(field);
-        
-        // Set appropriate default sort order based on field
         let defaultOrder: 'asc' | 'desc' = 'desc';
-        
-        // For favorite and duration, default to desc (favorited/longest first)
-        if (field === 'favorite' || field === 'duration') {
-            defaultOrder = 'desc';
-        }
-        // For title, default to asc (alphabetical)
-        else if (field === 'title') {
+        if (field === 'title') {
             defaultOrder = 'asc';
         }
-        // For date fields and others, keep desc (most recent first)
-        
         setSortOrder(defaultOrder);
         onSortChange?.({ field, order: defaultOrder });
     };
@@ -255,6 +251,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         setPriorityFilter(false);
         setLikeFilter('all');
         setTypeFilter('all');
+        setShowTags(false);
         
         onFilterChange?.({
             search: undefined,
@@ -267,6 +264,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             likeStatus: undefined,
             type: undefined,
             isShort: undefined,
+            priority: undefined,
         });
     };
 
@@ -281,8 +279,8 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                          typeFilter !== 'all';
 
     return (
-        <div className="flex flex-col mb-6">
-            <div className="flex flex-col lg:flex-row gap-4 mb-4">
+        <div className="flex flex-col">
+            <div className="flex flex-col xl:flex-row gap-4 mb-4">
                 {/* Search */}
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -290,7 +288,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                         placeholder="Search episodes..."
                         value={search}
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        className="pl-10 pr-10"
+                        className="pl-10 pr-10 h-10 xl:h-9"
                     />
                     {search && (
                         <button
@@ -303,7 +301,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                 </div>
 
                 {/* Filters & Sort */}
-                <div className="flex flex-row items-center gap-2 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0 no-scrollbar">
+                <div className="flex flex-row items-center gap-2 overflow-x-auto xl:overflow-visible pb-1 xl:pb-0 no-scrollbar">
                     <div className="flex gap-2 flex-shrink-0">
                         <Button
                             variant={watchedFilter === 'all' ? 'default' : 'outline'}
@@ -359,9 +357,9 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                         </TooltipProvider>
                     </div>
 
-                    <div className="flex gap-2 lg:flex-none flex-1 min-w-[120px]">
+                    <div className="flex gap-2 xl:flex-none flex-1 min-w-[120px]">
                         <Select value={sortField} onValueChange={handleSortChange}>
-                            <SelectTrigger className="h-9 lg:w-[180px] flex-1">
+                            <SelectTrigger className="h-9 xl:w-[180px] flex-1">
                                 <SelectValue placeholder="Sort by" />
                             </SelectTrigger>
                             <SelectContent>
@@ -377,7 +375,6 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                             {sortOrder === 'desc' ? '↓' : '↑'}
                         </Button>
 
-                        {/* Priority Filter Checkbox */}
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -387,9 +384,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                         onClick={() => {
                                             const newValue = !priorityFilter;
                                             setPriorityFilter(newValue);
-                                            // Backend doesn't support priority filter yet, 
-                                            // but we'll at least keep current filters in sync
-                                            triggerFilterChange();
+                                            triggerFilterChange({ priorityFilter: newValue });
                                         }}
                                         className="h-9 w-9 flex-shrink-0"
                                     >
@@ -400,7 +395,6 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                             </Tooltip>
                         </TooltipProvider>
 
-                        {/* Like/Dislike Filters */}
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -441,7 +435,6 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                             </Tooltip>
                         </TooltipProvider>
 
-                        {/* Favorite Filter Checkbox */}
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -462,7 +455,6 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                             </Tooltip>
                         </TooltipProvider>
 
-                        {/* Notes Filter Checkbox */}
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -592,7 +584,6 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                 </div>
             </div>
 
-            {/* Spotlight-style Channel Menu */}
             <CommandDialog 
                 open={isChannelMenuOpen} 
                 onOpenChange={setIsChannelMenuOpen}
@@ -603,7 +594,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                 <CommandList>
                     <CommandEmpty>No channels found.</CommandEmpty>
                     <CommandGroup heading="Available Channels">
-                        {availableChannels?.map((channel: { id: string; name: string }) => {
+                        {availableChannels?.map((channel) => {
                             const isSelected = selectedChannelIds.includes(channel.id);
                             return (
                                 <CommandItem
@@ -638,7 +629,6 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                 )}
             </CommandDialog>
 
-            {/* Tags list - Dedicated Row */}
             {(showTags || selectedTagIds.length > 0) && tags.length > 0 && (
                 <div className="w-full flex items-center gap-2 py-2 border-t animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="flex flex-wrap gap-2 flex-1">

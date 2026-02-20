@@ -75,6 +75,7 @@ export async function GET(request: NextRequest) {
         const channelIds = channelsParam ? channelsParam.split(',').filter(Boolean) : undefined;
         const watchStatus = searchParams.get('watchStatus') as 'unwatched' | 'pending' | 'watched' | undefined || undefined;
         const type = searchParams.get('type') as MediaType | undefined;
+        const priority = searchParams.get('priority') as 'none' | 'low' | 'medium' | 'high' | undefined;
 
         const session = await getServerSession(authOptions);
         if (!session?.user) {
@@ -96,6 +97,7 @@ export async function GET(request: NextRequest) {
             channelIds,
             userId,
             isDeleted: searchParams.get('isDeleted') === 'true' ? true : undefined,
+            priority,
         };
 
 

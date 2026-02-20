@@ -200,6 +200,10 @@ export class EpisodeRepository {
             conditions.push('e.like_status = ?');
             params.push(filters.likeStatus);
         }
+        if (filters?.priority) {
+            conditions.push("e.priority = ?");
+            params.push(filters.priority);
+        }
 
         if (filters?.hasNotes !== undefined) {
             if (filters.hasNotes) {
@@ -347,6 +351,10 @@ export class EpisodeRepository {
         if (filters?.likeStatus !== undefined) {
             conditions.push('e.like_status = ?');
             params.push(filters.likeStatus);
+        }
+        if (filters?.priority) {
+            conditions.push("e.priority = ?");
+            params.push(filters.priority);
         }
 
         if (filters?.hasNotes !== undefined) {

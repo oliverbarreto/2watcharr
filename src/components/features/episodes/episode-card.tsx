@@ -34,6 +34,8 @@ import {
     StickyNote,
     ThumbsUp,
     ThumbsDown,
+    Link as LinkIcon,
+    Gem,
 } from 'lucide-react';
 import {
     CommandDialog,
@@ -67,6 +69,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
     const [noteText, setNoteText] = useState(episode.notes || '');
     const [isSavingNote, setIsSavingNote] = useState(false);
     const [likeStatus, setLikeStatus] = useState(episode.likeStatus);
+    const [isCopying, setIsCopying] = useState(false);
 
     // Sync state when episode prop changes
     useEffect(() => {
@@ -143,6 +146,36 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
             onUpdate?.();
         } catch {
             toast.error('Failed to update episode');
+        }
+    };
+
+    const handleTogglePriority = async () => {
+        try {
+            const newPriority = episode.priority === 'high' ? 'none' : 'high';
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ priority: newPriority }),
+            });
+
+            if (!response.ok) throw new Error('Failed to update priority');
+
+            toast.success(newPriority === 'high' ? 'Marked as priority' : 'Removed priority');
+            if (onUpdate) onUpdate();
+        } catch (error) {
+            console.error('Error toggling priority:', error);
+            toast.error('Failed to update priority');
+        }
+    };
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(episode.url);
+            setIsCopying(true);
+            toast.success('Link copied to clipboard');
+            setTimeout(() => setIsCopying(false), 2000);
+        } catch {
+            toast.error('Failed to copy link');
         }
     };
 
@@ -334,14 +367,10 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
-            case 'high':
-                return 'bg-red-500';
-            case 'medium':
-                return 'bg-yellow-500';
-            case 'low':
-                return 'bg-blue-500';
-            default:
-                return 'bg-gray-500';
+            case 'high': return 'text-primary fill-primary';
+            case 'medium': return 'text-blue-500 fill-blue-500';
+            case 'low': return 'text-slate-400 fill-slate-400';
+            default: return 'text-slate-400';
         }
     };
 
@@ -443,14 +472,20 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                             </div>
                         )}
 
-                        {/* Note Icon Indicator */}
-                        {episode.notes && (
-                            <div className="absolute top-2 left-2 z-10">
-                                <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black border-none p-1">
+                        {/* Thumbnail Indicators */}
+                        <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 drop-shadow-md">
+                            {episode.priority !== 'none' && (
+                                <Gem className={`h-5 w-5 ${getPriorityColor(episode.priority)}`} />
+                            )}
+                            {episode.favorite && (
+                                <Star className="h-5 w-5 text-primary fill-primary" />
+                            )}
+                            {episode.notes && (
+                                <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black border-none p-1 h-6 w-6 flex items-center justify-center">
                                     <StickyNote className="h-4 w-4" />
                                 </Badge>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
 
                     <CardContent className="p-4 flex-1 flex flex-col">
@@ -504,11 +539,6 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
 
                         {/* Badges */}
                         <div className="flex flex-wrap gap-2 mb-auto pb-3">
-                            {episode.priority !== 'none' && (
-                                <Badge className={getPriorityColor(episode.priority)}>
-                                    {episode.priority.charAt(0).toUpperCase() + episode.priority.slice(1)}
-                                </Badge>
-                            )}
                             {episode.tags?.map((tag) => (
                                 <Badge
                                     key={tag.id}
@@ -724,6 +754,14 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                         <Star className={`mr-2 h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                                         {episode.favorite ? 'Remove favorite' : 'Add favorite'}
                                     </DropdownMenuItem>
+
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleTogglePriority();
+                                    }}>
+                                        <Gem className={`mr-2 h-4 w-4 ${episode.priority === 'high' ? 'fill-primary text-primary' : ''}`} />
+                                        {episode.priority === 'high' ? 'Remove priority' : 'Mark as priority'}
+                                    </DropdownMenuItem>
                                     
                                     <DropdownMenuItem onSelect={(e) => {
                                         e.preventDefault();
@@ -732,6 +770,14 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                     }}>
                                         <StickyNote className="mr-2 h-4 w-4" />
                                         {episode.notes ? 'Edit note' : 'Add note'}
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleCopyLink();
+                                    }}>
+                                        <LinkIcon className={`mr-2 h-4 w-4 ${isCopying ? 'animate-bounce text-primary' : ''}`} />
+                                        {isCopying ? 'Copied!' : 'Copy Link'}
                                     </DropdownMenuItem>
 
                                     <DropdownMenuSeparator />

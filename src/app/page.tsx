@@ -88,6 +88,7 @@ function HomePageContent() {
   }, [searchParams]);
 
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     if (typeof window !== 'undefined') {
       const savedViewMode = localStorage.getItem('episodeViewMode') as 'grid' | 'list';
@@ -141,8 +142,15 @@ function HomePageContent() {
 
   useEffect(() => {
     const handleAdded = () => setRefreshKey((prev) => prev + 1);
+    const handleToggleFilters = () => setShowFilters((prev) => !prev);
+    
     window.addEventListener('episode-added', handleAdded);
-    return () => window.removeEventListener('episode-added', handleAdded);
+    window.addEventListener('toggle-filters', handleToggleFilters);
+    
+    return () => {
+      window.removeEventListener('episode-added', handleAdded);
+      window.removeEventListener('toggle-filters', handleToggleFilters);
+    };
   }, []);
 
   const clearChannelFilter = () => {
@@ -157,11 +165,7 @@ function HomePageContent() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Watch Later</h1>
-            <p className="text-muted-foreground">
-              Manage your videos and podcasts to watch later
-            </p>
-            <div className="mt-1 text-sm font-medium text-muted-foreground border-t pt-2 inline-block">
+            <div className="text-sm font-medium text-muted-foreground">
                 Showing <span className="text-foreground">{counts.current}</span> of <span className="text-foreground">{counts.total}</span> episodes
             </div>
           </div>
@@ -193,14 +197,24 @@ function HomePageContent() {
           </div>
         </div>
 
-        {/* Filters */}
-        <FilterBar
-          onFilterChange={updateFilters}
-          onSortChange={handleSortChange}
-          initialFilters={filters}
-          initialSort={sort}
-          availableChannels={availableChannels}
-        />
+        {/* Floating Filters */}
+        {showFilters && (
+          <div className="fixed inset-x-0 top-16 z-30 animate-in slide-in-from-top duration-300">
+            <div className="container mx-auto px-4">
+              <div className="bg-background/60 backdrop-blur-md border rounded-b-xl shadow-2xl pt-4 px-4 pb-0 relative">
+                <FilterBar
+                  onFilterChange={(newFilters) => {
+                    updateFilters(newFilters);
+                  }}
+                  onSortChange={handleSortChange}
+                  initialFilters={filters}
+                  initialSort={sort}
+                  availableChannels={availableChannels}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Episode List */}
         <EpisodeList 
@@ -221,12 +235,7 @@ export default function HomePage() {
       <Layout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Watch Later</h1>
-              <p className="text-muted-foreground">
-                Loading...
-              </p>
-            </div>
+            {/* Removed Page Title and Subtitle */}
           </div>
         </div>
       </Layout>

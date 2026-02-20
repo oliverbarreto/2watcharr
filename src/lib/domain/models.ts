@@ -155,6 +155,7 @@ export interface EpisodeFilters {
     isShort?: boolean;
     likeStatus?: LikeStatus;
     hasNotes?: boolean;
+    priority?: Priority;
     userId?: string;
 }
 

@@ -117,7 +117,7 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                          selectedTagIds.length > 0;
 
     return (
-        <div className="flex flex-col mb-6">
+        <div className="flex flex-col">
             <div className="flex flex-col lg:flex-row gap-4 mb-4">
                 {/* Search */}
                 <div className="relative flex-1">

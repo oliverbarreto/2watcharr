@@ -294,12 +294,8 @@ export default function StatsPage() {
     return (
         <Layout>
             <div className="animate-in fade-in duration-500 pb-20">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Usage Statistics</h1>
-                        <p className="text-muted-foreground">Detailed insights into your watch history and library.</p>
-                    </div>
-                </div>
+                {/* Removed Page Title and Subtitle */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8"></div>
 
                 {/* Summary Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

@@ -25,6 +25,9 @@ import {
     Youtube,
     Mic,
     StickyNote,
+    Link as LinkIcon,
+    Gem,
+    ThumbsUp,
 } from 'lucide-react';
 import {
     Dialog,
@@ -63,6 +66,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [noteText, setNoteText] = useState(episode.notes || '');
     const [isSavingNote, setIsSavingNote] = useState(false);
+    const [isCopying, setIsCopying] = useState(false);
 
     const {
         attributes,
@@ -117,6 +121,37 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
             onUpdate?.();
         } catch {
             toast.error('Failed to update episode');
+        }
+    };
+
+    const handleTogglePriority = async (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        try {
+            const newPriority = episode.priority === 'high' ? 'none' : 'high';
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ priority: newPriority }),
+            });
+
+            if (!response.ok) throw new Error('Failed to update priority');
+
+            toast.success(newPriority === 'high' ? 'Marked as priority' : 'Removed from priority');
+            onUpdate?.();
+        } catch {
+            toast.error('Failed to update priority');
+        }
+    };
+
+    const handleCopyLink = async (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        try {
+            await navigator.clipboard.writeText(episode.url);
+            setIsCopying(true);
+            toast.success('Link copied to clipboard');
+            setTimeout(() => setIsCopying(false), 2000);
+        } catch {
+            toast.error('Failed to copy link');
         }
     };
 
@@ -484,9 +519,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                     <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-primary text-primary" />
                                 )}
                                 {episode.priority !== 'none' && (
-                                    <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 py-0 h-3.5 sm:h-4 border-primary/30 text-primary">
-                                        {episode.priority}
-                                    </Badge>
+                                    <Gem className="h-4 w-4 text-primary fill-primary drop-shadow-sm" />
                                 )}
                             </div>
                         </div>
@@ -587,11 +620,27 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
 
                                 <DropdownMenuItem onSelect={(e) => {
                                     e.preventDefault();
+                                    handleTogglePriority(e as unknown as React.MouseEvent);
+                                }}>
+                                    <Gem className={`mr-2 h-4 w-4 ${episode.priority === 'high' ? 'fill-primary text-primary' : ''}`} />
+                                    {episode.priority === 'high' ? 'Remove priority' : 'Mark as priority'}
+                                </DropdownMenuItem>
+
+                                <DropdownMenuItem onSelect={(e) => {
+                                    e.preventDefault();
                                     setNoteText(episode.notes || '');
                                     setIsNoteModalOpen(true);
                                 }}>
                                     <StickyNote className="mr-2 h-4 w-4" />
                                     {episode.notes ? 'Edit note' : 'Add note'}
+                                </DropdownMenuItem>
+
+                                <DropdownMenuItem onSelect={(e) => {
+                                    e.preventDefault();
+                                    handleCopyLink(e as unknown as React.MouseEvent);
+                                }}>
+                                    <LinkIcon className={`mr-2 h-4 w-4 ${isCopying ? 'animate-bounce text-primary' : ''}`} />
+                                    {isCopying ? 'Copied!' : 'Copy Link'}
                                 </DropdownMenuItem>
 
                                 <DropdownMenuSeparator />
@@ -653,6 +702,19 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                     >
                         <Star className={`h-3.5 w-3.5 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                         {episode.favorite ? 'Favorited' : 'Favorite'}
+                    </Button>
+                    <div className="w-px h-4 bg-border/40" />
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 h-8 text-[10px] gap-2 font-medium"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleTogglePriority(e);
+                        }}
+                    >
+                        <Gem className={`h-3.5 w-3.5 ${episode.priority === 'high' ? 'fill-primary text-primary' : ''}`} />
+                        {episode.priority === 'high' ? 'Priority' : 'Prioritize'}
                     </Button>
                     <div className="w-px h-4 bg-border/40" />
                     <Button

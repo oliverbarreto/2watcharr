@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Plus, Settings, LogOut, User, BarChart3, Radio, Library } from 'lucide-react';
+import { Plus, Settings, LogOut, User, BarChart3, Radio, Library, Search } from 'lucide-react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
 import { AddEpisodeDialog } from '@/components/features/episodes/add-episode-dialog';
@@ -32,7 +33,7 @@ const NavLinks = ({ className, onClick }: NavLinksProps) => (
         <Link href="/" onClick={onClick}>
             <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
                 <Library className="mr-2 h-4 w-4 sm:hidden" />
-                Watch List
+                Watch Later
             </Button>
         </Link>
         <Link href="/channels" onClick={onClick}>
@@ -52,6 +53,25 @@ const NavLinks = ({ className, onClick }: NavLinksProps) => (
 
 export function Navbar() {
     const { data: session } = useSession();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    
+    // Check if any filters are active
+    const hasActiveFilters = Array.from(searchParams.keys()).some(key => 
+        ['search', 'watched', 'watchStatus', 'tags', 'channels', 'favorite', 'hasNotes', 'likeStatus', 'type', 'isShort', 'priority'].includes(key)
+    );
+
+    // Get dynamic title based on pathname
+    const getPageTitle = () => {
+        if (pathname === '/') return 'Watch Later';
+        if (pathname === '/channels') return 'Channels';
+        if (pathname === '/stats') return 'Stats';
+        if (pathname === '/deleted') return 'Deleted';
+        if (pathname === '/settings') return 'Settings';
+        if (pathname.startsWith('/channels/')) return 'Channel';
+        return '';
+    };
+
     const user = session?.user as { id?: string; name?: string | null; email?: string | null; image?: string | null; emoji?: string | null; isAdmin?: boolean; color?: string | null } | undefined;
 
     const handleEpisodeAdded = () => {
@@ -71,7 +91,7 @@ export function Navbar() {
                         <SheetTrigger asChild>
                             <Button variant="ghost" className="sm:hidden -ml-2 p-0 hover:bg-transparent flex items-center gap-2 font-bold text-xl">
                                 <Image src="/2watcharr-icon-v1.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
-                                <span className="xs:inline-block">2watcharr</span>
+                                <span className="hidden">2watcharr</span>
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="w-[280px] sm:w-[350px]">
@@ -91,6 +111,15 @@ export function Navbar() {
                         <Image src="/2watcharr-icon-v1.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
                         <span className="hidden xs:inline-block">2watcharr</span>
                     </Link>
+
+                    {getPageTitle() && (
+                        <div className="flex items-center gap-2">
+                            <div className="h-6 w-px bg-border mx-1 hidden xs:block" />
+                            <h1 className="text-sm font-medium text-muted-foreground uppercase tracking-wider hidden xs:block">
+                                {getPageTitle()}
+                            </h1>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -105,12 +134,22 @@ export function Navbar() {
                         trigger={
                             <Button
                                 size="icon"
-                                className="rounded-full bg-red-600 hover:bg-red-700 text-white h-9 w-9"
+                                variant="ghost"
+                                className="rounded-full h-9 w-9"
                             >
                                 <Plus className="h-5 w-5" />
                             </Button>
                         }
                     />
+
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className={cn("rounded-full h-9 w-9", hasActiveFilters && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary/80")}
+                        onClick={() => window.dispatchEvent(new CustomEvent('toggle-filters'))}
+                    >
+                        <Search className={cn("h-5 w-5", hasActiveFilters && "stroke-[2.5px]")} />
+                    </Button>
                     
                     <Link href="/settings">
                         <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">

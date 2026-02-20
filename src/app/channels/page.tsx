@@ -6,7 +6,9 @@ import { Layout } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trash2, RefreshCw, Youtube, Mic, ChevronUp, ChevronDown, List, LayoutGrid } from 'lucide-react';
+import { Trash2, RefreshCw, Youtube, Mic, ChevronUp, ChevronDown, List, LayoutGrid,
+    X
+} from 'lucide-react';
 import { ChannelFilterBar } from '@/components/features/channels/channel-filter-bar';
 import { ChannelListRow } from '@/components/features/channels/channel-list-row';
 import { toast } from 'sonner';
@@ -236,6 +238,7 @@ function ChannelsPageContent() {
     const [loading, setLoading] = useState(true);
     const [syncingChannelId, setSyncingChannelId] = useState<string | null>(null);
     const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
+    const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
         if (typeof window !== 'undefined') {
             return (localStorage.getItem('channelViewMode') as 'grid' | 'list') || 'grid';
@@ -289,6 +292,10 @@ function ChannelsPageContent() {
 
     useEffect(() => {
         fetchChannels();
+
+        const handleToggleFilters = () => setShowFilters((prev) => !prev);
+        window.addEventListener('toggle-filters', handleToggleFilters);
+        return () => window.removeEventListener('toggle-filters', handleToggleFilters);
     }, [fetchChannels]);
 
     const handleFilterChange = (newFilters: Filters) => {
@@ -427,12 +434,7 @@ function ChannelsPageContent() {
         <Layout>
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold">Channels & Podcasts</h1>
-                        <p className="text-muted-foreground">
-                            All sources from your saved content
-                        </p>
-                    </div>
+                    {/* Removed Page Title and Subtitle */}
                     <Button variant="ghost" size="sm" onClick={toggleViewMode} className="gap-2 hidden md:flex">
                         {viewMode === 'grid' ? (
                             <>
@@ -448,7 +450,21 @@ function ChannelsPageContent() {
                     </Button>
                 </div>
 
-                <ChannelFilterBar onFilterChange={handleFilterChange} initialFilters={filters} />
+                {/* Floating Filters */}
+                {showFilters && (
+                    <div className="fixed inset-x-0 top-16 z-30 animate-in slide-in-from-top duration-300">
+                        <div className="container mx-auto px-4">
+                            <div className="bg-background/60 backdrop-blur-md border rounded-b-xl shadow-2xl pt-4 px-4 pb-0 relative">
+                                <ChannelFilterBar 
+                                    onFilterChange={(newFilters) => {
+                                        handleFilterChange(newFilters);
+                                    }} 
+                                    initialFilters={filters} 
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {channels.length === 0 ? (
                     <div className="text-center py-12">
