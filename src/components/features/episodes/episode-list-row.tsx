@@ -27,7 +27,6 @@ import {
     StickyNote,
     Link as LinkIcon,
     Gem,
-    ThumbsUp,
 } from 'lucide-react';
 import {
     Dialog,

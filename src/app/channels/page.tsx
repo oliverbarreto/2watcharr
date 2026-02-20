@@ -6,9 +6,7 @@ import { Layout } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trash2, RefreshCw, Youtube, Mic, ChevronUp, ChevronDown, List, LayoutGrid,
-    X
-} from 'lucide-react';
+import { Trash2, RefreshCw, Youtube, Mic, ChevronUp, ChevronDown, List, LayoutGrid } from 'lucide-react';
 import { ChannelFilterBar } from '@/components/features/channels/channel-filter-bar';
 import { ChannelListRow } from '@/components/features/channels/channel-list-row';
 import { toast } from 'sonner';

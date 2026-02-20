@@ -38,9 +38,9 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
         if (initialFilters) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setSearch(initialFilters.search || '');
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+             
             setTypeFilter(initialFilters.type || 'all');
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+             
             setSelectedTagIds(initialFilters.tagIds || []);
         }
     }, [initialFilters]);

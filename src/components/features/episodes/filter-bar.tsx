@@ -87,8 +87,13 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     );
     const [isChannelMenuOpen, setIsChannelMenuOpen] = useState(false);
 
+    // Track previous props to sync state in render
+    const [prevInitialFilters, setPrevInitialFilters] = useState(initialFilters);
+    const [prevInitialSort, setPrevInitialSort] = useState(initialSort);
+
     // Sync local state when initialFilters changes (URL changes)
-    useEffect(() => {
+    if (initialFilters !== prevInitialFilters) {
+        setPrevInitialFilters(initialFilters);
         if (initialFilters) {
             const newSearch = initialFilters.search || '';
             if (search !== newSearch) setSearch(newSearch);
@@ -123,16 +128,16 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                            (initialFilters.type === 'video' && initialFilters.isShort === false ? 'video' : 'all'));
             if (typeFilter !== newType) setTypeFilter(newType);
         }
-    }, [initialFilters]); // eslint-disable-line react-hooks/exhaustive-deps
+    }
 
-    useEffect(() => {
+    // Sync local state when initialSort changes
+    if (initialSort !== prevInitialSort) {
+        setPrevInitialSort(initialSort);
         if (initialSort) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             if (sortField !== initialSort.field) setSortField(initialSort.field);
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             if (sortOrder !== initialSort.order) setSortOrder(initialSort.order);
         }
-    }, [initialSort]); // eslint-disable-line react-hooks/exhaustive-deps
+    }
 
     useEffect(() => {
         const fetchTags = async () => {
