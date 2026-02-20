@@ -46,12 +46,18 @@ Things & Ideas to investigate:
 
 ## Working on:
 
-20260220:
-- [ ] Floating filters instead of at the top of the page. (docs/specs/roadmap/todo/FEATURE-refactor-ui-floating-filters.md)
-- [ ] Add an option button in the episodes card (grid and list view) to mark the episode with "priority" (yes/no). (docs/tasks/FEATURE-add-with-priority-button-in-options-menu.md)
-- [ ] Add a copy link button to episode cards (grid and list view). (docs/tasks/FEATURE-add-copy-url-button-in-options-menu.md)
-
 ## Implemented Features
+
+20260220 - Release 0.5.8:
+- [x] Floating blurred search panel at the top of the page.
+- [x] Page titles in the navbar for better navigation context.
+- [x] Copy link button for quick access to video URLs in cards and lists.
+- [x] Priority status toggle (Favorite/Priority) in cards and lists.
+- [x] Priority filter for quick content filtering.
+- [x] Context-aware tag sorting (Alphabetical, Frequency, Last used).
+- [x] Hidden search button on Statistics page.
+- [x] Subtle active menu item highlighting in navbar.
+- [x] Resolved all remaining linting errors.
 
 20260219 - Release 0.5.7:
 - [x] Restructured Stats page with tabs (Activity, Tags, Events History).

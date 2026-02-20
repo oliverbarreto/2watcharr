@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.8] - 2026-02-20
+
+### Added
+- **UI**: Floating blurred search panel at the top of the page for improved search experience.
+- **UI**: Page titles in the navbar for better navigation context.
+- **UI**: Copy link button for quick access to video URLs in episode cards and list rows.
+- **UI**: Priority status toggle (Favorite/Priority) in episode cards and list rows.
+- **Filters**: Priority filter to easily find favorited or prioritized content.
+- **Tags**: Context-aware tag sorting (Alphabetical in Preferences, Frequency in Filters, Last used in Add Tags modal).
+
+### Fixed
+- **Filters**: Resolved issue where the priority filter was not correctly updating the URL or filtering the list.
+- **UI**: Hidden search button on Stats page where it is not used.
+- **Lint**: Fixed all remaining linting warnings and errors.
+
+### Improved
+- **UI**: Enhanced active menu item visibility in navbar with a subtle red highlight.
+
 ## [0.5.7] - 2026-02-19
 
 ### Added
