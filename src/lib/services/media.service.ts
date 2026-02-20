@@ -60,6 +60,12 @@ export class MediaService {
             if (tagIds && tagIds.length > 0) {
                 await this.episodeRepo.removeTags(existing.id);
                 await this.episodeRepo.addTags(existing.id, tagIds);
+
+                // Update last used for tags
+                const now = Math.floor(Date.now() / 1000);
+                for (const tagId of tagIds) {
+                    await this.tagRepo.updateLastUsed(tagId, now);
+                }
             }
 
             // Move to beginning of the list
@@ -113,6 +119,12 @@ export class MediaService {
         // Associate tags if provided
         if (tagIds && tagIds.length > 0) {
             await this.episodeRepo.addTags(episode.id, tagIds);
+
+            // Update last used for tags
+            const now = Math.floor(Date.now() / 1000);
+            for (const tagId of tagIds) {
+                await this.tagRepo.updateLastUsed(tagId, now);
+            }
         }
 
         return episode;
@@ -334,6 +346,12 @@ export class MediaService {
         if (tagIds.length > 0) {
             await this.episodeRepo.addTags(id, tagIds);
             
+            // Update last used for tags
+            const now = Math.floor(Date.now() / 1000);
+            for (const tagId of tagIds) {
+                await this.tagRepo.updateLastUsed(tagId, now);
+            }
+
             const episode = await this.episodeRepo.findById(id);
             if (episode) {
                 // Record 'tagged' event

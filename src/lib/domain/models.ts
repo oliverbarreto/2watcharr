@@ -81,6 +81,7 @@ export interface Tag {
     name: string;
     color: string | null;
     userId: string;
+    lastUsedAt?: number;
     createdAt: number;
 }
 

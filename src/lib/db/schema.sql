@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS tags (
   name TEXT NOT NULL,
   color TEXT,                       -- Hex color for UI
   user_id TEXT NOT NULL,
+  last_used_at INTEGER,             -- Last time the tag was used
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE(name, user_id)

@@ -1,0 +1,22 @@
+# Task: Improve Tags UI Experience
+
+- [x] Research current tag implementation <!-- id: 0 -->
+    - [x] Analyze database schema for tags <!-- id: 1 -->
+    - [x] Search for "Recent tags" logic <!-- id: 2 -->
+    - [x] Identify tag ordering in Preferences, Filter, and Add Modal <!-- id: 3 -->
+- [/] Create Implementation Plan <!-- id: 4 -->
+- [ ] Database updates <!-- id: 14 -->
+    - [ ] Create migration for `last_used_at` column <!-- id: 15 -->
+    - [ ] Update [schema.sql](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/db/schema.sql) <!-- id: 16 -->
+- [ ] Backend updates <!-- id: 17 -->
+    - [ ] Update [Tag](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/app/settings/page.tsx#36-42) model and [TagRepository](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/repositories/tag.repository.ts#5-138) <!-- id: 18 -->
+    - [ ] Update [MediaService](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/services/media.service.ts#15-391) to track tag usage <!-- id: 19 -->
+    - [ ] Update `/api/tags` to support sorting <!-- id: 20 -->
+- [ ] Frontend updates <!-- id: 21 -->
+    - [ ] Implement Alphabetical Ordering in Preferences <!-- id: 5 -->
+    - [ ] Implement "Most Used First" Ordering in Tags Filter <!-- id: 6 -->
+    - [ ] Implement "Last Used First" Ordering in Add Tags Modal <!-- id: 7 -->
+- [ ] Verification <!-- id: 10 -->
+    - [ ] Verify alphabetization in Preferences <!-- id: 11 -->
+    - [ ] Verify "Most Used" ordering in Filters <!-- id: 12 -->
+    - [ ] Verify "Last Used" ordering in Add Modal <!-- id: 13 -->

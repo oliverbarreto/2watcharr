@@ -76,7 +76,7 @@ export default function SettingsPage() {
     const fetchTags = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch('/api/tags');
+            const response = await fetch('/api/tags?sort=alphabetical');
             const data = await response.json();
             if (data.tags) {
                 setTags(data.tags);

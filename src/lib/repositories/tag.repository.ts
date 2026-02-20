@@ -13,8 +13,8 @@ export class TagRepository {
         const now = Math.floor(Date.now() / 1000);
 
         await this.db.run(
-            `INSERT INTO tags (id, name, color, user_id, created_at) VALUES (?, ?, ?, ?, ?)`,
-            [id, dto.name, dto.color || null, dto.userId, now]
+            `INSERT INTO tags (id, name, color, user_id, last_used_at, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+            [id, dto.name, dto.color || null, dto.userId, now, now]
         );
 
         const tag = await this.findById(id);
@@ -22,6 +22,16 @@ export class TagRepository {
             throw new Error('Failed to create tag');
         }
         return tag;
+    }
+
+    /**
+     * Update last used timestamp
+     */
+    async updateLastUsed(id: string, timestamp: number): Promise<void> {
+        await this.db.run(
+            'UPDATE tags SET last_used_at = ? WHERE id = ?',
+            [timestamp, id]
+        );
     }
 
     /**
@@ -43,14 +53,20 @@ export class TagRepository {
     /**
      * Find all tags
      */
-    async findAll(userId?: string): Promise<Tag[]> {
+    async findAll(userId?: string, sort: 'alphabetical' | 'recent' = 'alphabetical'): Promise<Tag[]> {
         let query = 'SELECT * FROM tags';
         const params: (string | number | null)[] = [];
         if (userId) {
             query += ' WHERE user_id = ?';
             params.push(userId);
         }
-        query += ' ORDER BY name ASC';
+
+        if (sort === 'recent') {
+            query += ' ORDER BY last_used_at DESC, name ASC';
+        } else {
+            query += ' ORDER BY name ASC';
+        }
+
         const rows = await this.db.all(query, params);
         return rows.map((row) => this.mapRowToTag(row));
     }
@@ -101,7 +117,7 @@ export class TagRepository {
     /**
      * Get tags with episode count
      */
-    async getTagsWithEpisodeCount(userId?: string): Promise<Array<Tag & { episodeCount: number }>> {
+    async getTagsWithEpisodeCount(userId?: string, sort: 'alphabetical' | 'usage' | 'recent' = 'alphabetical'): Promise<Array<Tag & { episodeCount: number }>> {
         let query = `
             SELECT t.*, COUNT(et.episode_id) as episode_count
             FROM tags t
@@ -112,10 +128,16 @@ export class TagRepository {
             query += ' WHERE t.user_id = ?';
             params.push(userId);
         }
-        query += `
-            GROUP BY t.id
-            ORDER BY t.name ASC
-        `;
+        
+        query += ' GROUP BY t.id';
+
+        if (sort === 'usage') {
+            query += ' ORDER BY episode_count DESC, t.name ASC';
+        } else if (sort === 'recent') {
+            query += ' ORDER BY t.last_used_at DESC, t.name ASC';
+        } else {
+            query += ' ORDER BY t.name ASC';
+        }
 
         const rows = await this.db.all(query, params);
 
@@ -131,6 +153,7 @@ export class TagRepository {
             name: row.name as string,
             color: row.color as string | null,
             userId: row.user_id as string,
+            lastUsedAt: row.last_used_at as number | undefined,
             createdAt: row.created_at as number,
         };
     }

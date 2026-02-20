@@ -137,7 +137,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     useEffect(() => {
         const fetchTags = async () => {
             try {
-                const response = await fetch('/api/tags');
+                const response = await fetch('/api/tags?sort=usage');
                 const data = await response.json();
                 if (data.tags) {
                     setTags(data.tags);
