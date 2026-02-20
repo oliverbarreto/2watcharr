@@ -2,13 +2,23 @@
 
 ## Feature Requests
 
-### Working on:
-
 ### To be done:
 
 These are some features we want to add to the app but are not specidifed yet:
 
-- [ ]
+- [ ] FEATURE: Download transcript (only youtube videos for now. We need to investigate how to do it for other platforms such as for podcasts. We can always fallback to downloading the audio file and using a service to extract the transcript). (docs/specs/roadmap/todo/FEATURE-download-transcripts.md)
+- [ ] FEATURE: 2watcharr browser extension. (docs/specs/roadmap/todo/FEATURE-2watcharr-browser-extension.md)
+
+Things & Ideas to investigate:
+- [ ] a way to allow the user to not add a video via iOS Share Sheet or copya paste in the app, but instead the app or a browser extension could just intercept the url, see that it is a vido or podcast, and add it to a "watch list". 
+- [ ] Add a list of "Watch Next" that could be populated with videos from the watch list, and the user could order them with drag and drop. 
+- [ ] How to download current playlist from youtube and youtube history ... also for other platforms
+- [ ] Create our own algorithm to:
+    1. Analyze topics of added/watched videos to provide insights to the user of what he is interested in (e.g. "You watch a lot of videos about AI", "You watch a lot of videos from this channel", "This week you watched 5 videos about AI", "Three weeks and you have not watched any videos about personal development", ...). Time consumed in each topic is also a factor to consider. Provide a way to group them together (and add/remove topics manually?).
+    2. recommend videos based on user preferences (current watchlist videos, what has been watched, liked/dislike, channels, etc.) and history and have new page with this recommendations. 
+- [ ] Create a new page to show the recommendations based on the user preferences.
+- [ ] Enable adding reminders to watch certain videos, or videos in a tag (in this sense we can consider a tag as a playlist for a certain topic).
+
 
 #### AI TASKS:
 
@@ -34,24 +44,31 @@ These are some features we want to add to the app but are not specidifed yet:
 - [ ] `./docs/specs/roadmap/todo/BUGFIX-images-not-showing-in-channels-page.md`: 
     - `./docs/tasks/0.0.1-0.5.3/task-0000041-BUGFIX-images-not-showing-in-channels-page-prompt-v1-implementation_plan.md`
 
+## Working on:
+
+20260220:
+- [ ] Floating filters instead of at the top of the page. (docs/specs/roadmap/todo/FEATURE-refactor-ui-floating-filters.md)
+- [ ] Add an option button in the episodes card (grid and list view) to mark the episode with "priority" (yes/no). (docs/tasks/FEATURE-add-with-priority-button-in-options-menu.md)
+- [ ] Add a copy link button to episode cards (grid and list view). (docs/tasks/FEATURE-add-copy-url-button-in-options-menu.md)
 
 ## Implemented Features
-+20260219 - Release 0.5.7:
-+- [x] Restructured Stats page with tabs (Activity, Tags, Events History).
-+- [x] Added "Videos by Tags" interactive line chart.
-+- [x] Added "Viewing Time (Today)" and "Watched Today/This Week" metrics.
-+- [x] Added Select/Deselect All for tags in stats.
-+- [x] Optimized stats layout for better visibility.
-+
-+20260219 - Release 0.5.6:
-+- [x] Added content type filters (Video, Shorts, Podcast).
-+- [x] Added "Create Note" option to episode cards and list rows.
-+- [x] Implemented "Like" and "Don't Like" voting for episodes.
-+- [x] Added floating episode count bubble for infinite scroll.
-+- [x] Refined channel list UI for better consistency.
-+- [x] Fixed Like/Don't Like filter logic.
-+
-+20260218:
+
+20260219 - Release 0.5.7:
+- [x] Restructured Stats page with tabs (Activity, Tags, Events History).
+- [x] Added "Videos by Tags" interactive line chart.
+ [x] Added "Viewing Time (Today)" and "Watched Today/This Week" metrics.
+- [x] Added Select/Deselect All for tags in stats.
+ [x] Optimized stats layout for better visibility.
+
+20260219 - Release 0.5.6:
+- [x] Added content type filters (Video, Shorts, Podcast).
+- [x] Added "Create Note" option to episode cards and list rows.
+- [x] Implemented "Like" and "Don't Like" voting for episodes.
+- [x] Added floating episode count bubble for infinite scroll.
+- [x] Refined channel list UI for better consistency.
+- [x] Fixed Like/Don't Like filter logic.
+
+20260218:
 - [x] `./docs/tasks/0.5.6/task-0000061-UI-show-floating-bubble-with-number-of-episodes-infinite-scroll-prompt-v1.md
 
 
