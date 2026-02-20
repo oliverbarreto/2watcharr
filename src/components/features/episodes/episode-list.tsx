@@ -42,6 +42,7 @@ interface EpisodeListProps {
         type?: 'video' | 'podcast';
         isShort?: boolean;
         likeStatus?: 'none' | 'like' | 'dislike';
+        priority?: 'none' | 'low' | 'medium' | 'high';
     };
     sort?: {
         field: string;
@@ -111,6 +112,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
             if (filters?.type) params.append('type', filters.type);
             if (filters?.isShort !== undefined) params.append('isShort', String(filters.isShort));
             if (filters?.likeStatus !== undefined) params.append('likeStatus', filters.likeStatus);
+            if (filters?.priority !== undefined) params.append('priority', filters.priority);
             if (sort?.field) params.append('sort', sort.field);
             if (sort?.order) params.append('order', sort.order);
             
@@ -173,7 +175,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
     const tagIdsStr = filters?.tagIds?.join(',');
     useEffect(() => {
         fetchEpisodes(0, false);
-    }, [filters?.search, filters?.watched, filters?.favorite, filters?.hasNotes, filters?.type, filters?.isShort, filters?.likeStatus, filters?.channelId, channelIdsStr, tagIdsStr, filters?.watchStatus, filters?.isDeleted, sort?.field, sort?.order, fetchEpisodes]);
+    }, [filters?.search, filters?.watched, filters?.favorite, filters?.hasNotes, filters?.type, filters?.isShort, filters?.likeStatus, filters?.priority, filters?.channelId, channelIdsStr, tagIdsStr, filters?.watchStatus, filters?.isDeleted, sort?.field, sort?.order, fetchEpisodes]);
 
     // Intersection Observer for infinite scroll
     useEffect(() => {
