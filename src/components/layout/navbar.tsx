@@ -33,13 +33,16 @@ interface NavLinksProps {
 const NavLinks = ({ className, onClick }: NavLinksProps) => {
     const pathname = usePathname();
     
-    const getLinkClass = (path: string) => cn(
-        "w-full justify-start sm:w-auto transition-all duration-200",
-        pathname === path 
-            ? "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90" 
-            : "hover:bg-accent hover:text-accent-foreground",
-        className
-    );
+    const getLinkClass = (path: string) => {
+        const isActive = pathname === path || (path === '/channels' && pathname.startsWith('/channels/'));
+        return cn(
+            "w-full justify-start sm:w-auto transition-all duration-200",
+            isActive
+                ? "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90" 
+                : "hover:bg-accent hover:text-accent-foreground",
+            className
+        );
+    };
 
     return (
         <>
@@ -149,24 +152,33 @@ export function Navbar() {
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                className="rounded-full h-9 w-9"
+                                className="rounded-full h-9 w-9 bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary/90"
                             >
-                                <Plus className="h-5 w-5" />
+                                <Plus className="h-5 w-5 stroke-[2.5px]" />
                             </Button>
                         }
                     />
 
-                    <Button
-                        size="icon"
-                        variant="ghost"
-                        className={cn("rounded-full h-9 w-9", hasActiveFilters && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary/80")}
-                        onClick={() => window.dispatchEvent(new CustomEvent('toggle-filters'))}
-                    >
-                        <Search className={cn("h-5 w-5", hasActiveFilters && "stroke-[2.5px]")} />
-                    </Button>
+                    {!['/stats', '/settings'].includes(pathname) && (
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className={cn("rounded-full h-9 w-9", hasActiveFilters && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary/80")}
+                            onClick={() => window.dispatchEvent(new CustomEvent('toggle-filters'))}
+                        >
+                            <Search className={cn("h-5 w-5", hasActiveFilters && "stroke-[2.5px]")} />
+                        </Button>
+                    )}
                     
                     <Link href="/settings">
-                        <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={cn(
+                                "rounded-full h-9 w-9",
+                                pathname === '/settings' && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90"
+                            )}
+                        >
                             <Settings className="h-5 w-5" />
                         </Button>
                     </Link>
