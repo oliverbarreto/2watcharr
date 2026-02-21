@@ -86,11 +86,13 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
         })
     );
 
-    const fetchEpisodes = useCallback(async (currentOffset: number = 0, append: boolean = false) => {
-        if (currentOffset === 0) {
-            setLoading(true);
-        } else {
-            setLoadingMore(true);
+    const fetchEpisodes = useCallback(async (currentOffset: number = 0, append: boolean = false, silent: boolean = false) => {
+        if (!silent) {
+            if (currentOffset === 0) {
+                setLoading(true);
+            } else {
+                setLoadingMore(true);
+            }
         }
 
         try {
@@ -226,7 +228,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
         }
     };
 
-    const handleUpdate = () => fetchEpisodes(0, false);
+    const handleUpdate = () => fetchEpisodes(0, false, true);
 
     if (loading && offset === 0) {
         return (
