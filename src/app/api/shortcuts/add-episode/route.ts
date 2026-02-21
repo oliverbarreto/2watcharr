@@ -18,6 +18,9 @@ const addEpisodeSchema = z.object({
  */
 export async function POST(request: NextRequest) {
     try {
+        const startTime = Date.now();
+        const requestUrl = new URL(request.url);
+        
         const session = await getServerSession(authOptions);
         let userId: string;
 
@@ -34,9 +37,11 @@ export async function POST(request: NextRequest) {
                 if (user) {
                     userId = user.id;
                 } else {
+                    console.log(`POST ${requestUrl.pathname} 401 in ${Date.now() - startTime}ms - Invalid API Token`);
                     return NextResponse.json({ success: false, error: 'Invalid API Token' }, { status: 401 });
                 }
             } else {
+                console.log(`POST ${requestUrl.pathname} 401 in ${Date.now() - startTime}ms - Unauthorized`);
                 return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
             }
         }
@@ -60,6 +65,9 @@ export async function POST(request: NextRequest) {
 
         // Add the episode
         const episode = await mediaService.addEpisodeFromUrl(url, userId, tagIds);
+
+        const duration = Date.now() - startTime;
+        console.log(`POST ${requestUrl.pathname} 200 in ${duration}ms - User: ${userId}, URL: ${url}`);
 
         return NextResponse.json({
             success: true,
