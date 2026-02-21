@@ -48,6 +48,12 @@ Things & Ideas to investigate:
 
 ## Implemented Features
 
+20260221 - Release 0.5.9:
+- [x] Silent refresh mechanism for episode updates.
+- [x] Case-insensitive and emoji-neutral alphabetical tag sorting.
+- [x] Resolved type safety issues in tests.
+- [x] Fully clean linting and type checking.
+
 20260220 - Release 0.5.8:
 - [x] Floating blurred search panel at the top of the page.
 - [x] Page titles in the navbar for better navigation context.
