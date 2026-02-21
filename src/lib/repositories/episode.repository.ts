@@ -611,20 +611,20 @@ export class EpisodeRepository {
     }
 
     /**
-     * Move episode to the beginning of the list
+     * Move episode to the beginning of the list for a specific user
      */
-    async moveToBeginning(id: string): Promise<void> {
-        const episodes = await this.findAll({ watched: false }, { field: 'custom', order: 'asc' });
+    async moveToBeginning(id: string, userId: string): Promise<void> {
+        const episodes = await this.findAll({ userId, watched: false, isDeleted: false }, { field: 'custom', order: 'asc' });
         const episodeIds = episodes.map(e => e.id).filter(vid => vid !== id);
         episodeIds.unshift(id);
         await this.reorder(episodeIds);
     }
 
     /**
-     * Move episode to the end of the list
+     * Move episode to the end of the list for a specific user
      */
-    async moveToEnd(id: string): Promise<void> {
-        const episodes = await this.findAll({ watched: false }, { field: 'custom', order: 'asc' });
+    async moveToEnd(id: string, userId: string): Promise<void> {
+        const episodes = await this.findAll({ userId, watched: false, isDeleted: false }, { field: 'custom', order: 'asc' });
         const episodeIds = episodes.map(e => e.id).filter(vid => vid !== id);
         episodeIds.push(id);
         await this.reorder(episodeIds);

@@ -69,7 +69,7 @@ export class MediaService {
             }
 
             // Move to beginning of the list
-            await this.episodeRepo.moveToBeginning(existing.id);
+            await this.episodeRepo.moveToBeginning(existing.id, userId);
 
             return updated;
         }
@@ -324,15 +324,15 @@ export class MediaService {
     /**
      * Move episode to the beginning
      */
-    async moveToBeginning(id: string): Promise<void> {
-        return this.episodeRepo.moveToBeginning(id);
+    async moveToBeginning(id: string, userId: string): Promise<void> {
+        return this.episodeRepo.moveToBeginning(id, userId);
     }
 
     /**
      * Move episode to the end
      */
-    async moveToEnd(id: string): Promise<void> {
-        return this.episodeRepo.moveToEnd(id);
+    async moveToEnd(id: string, userId: string): Promise<void> {
+        return this.episodeRepo.moveToEnd(id, userId);
     }
 
     /**
