@@ -1,10 +1,13 @@
 # TASK: FEATURE - Allow browser extension to call POST /api/shortcuts/add-episode by handling CORS preflight (OPTIONS) and returning CORS headers on both OPTIONS and POST.  
 
-## Goal
+## Instructions
 
-Allow the browser extension to call POST /api/shortcuts/add-episode by handling CORS preflight (OPTIONS) and returning CORS headers on both OPTIONS and POST.
+I am working on a Browser extension that makes calls to the 2watcharr API to add episodes. We re using the same api that we use for iOS Shortcuts /api/shortcuts/add-episode endpoint. 
 
-Below we have the problem, the diagnostic that the AI assistant implementing the browser extension gave, and set of instructions to implement in our Next.js‑specific API.
+The problem is that we are having some issues whehn using it from the Browser extension. 
+
+I include next the diagnostic that the AI assistant implementing the browser extension gave me. I want you to evaluate it and provide your opinion with your full knowledge of our code base to check if the assessment is valid and we should implement the changes he proposes.
+
 
 ## Problem description
 
@@ -35,6 +38,11 @@ For this second video: the browser is sending a CORS preflight (OPTIONS) because
 
 ### Proposed solution
 
+Allow the browser extension to call POST /api/shortcuts/add-episode by handling CORS preflight (OPTIONS) and returning CORS headers on both OPTIONS and POST.
+
+Below we have the problem, the diagnostic that the AI assistant implementing the browser extension gave, and set of instructions to implement in our Next.js‑specific API.
+
+
 Fix (server-side CORS): The `/api/shortcuts/add-episode` needs to respond to OPTIONS with:
 
 - Access-Control-Allow-Origin: * (or your extension origin)
@@ -43,12 +51,12 @@ Fix (server-side CORS): The `/api/shortcuts/add-episode` needs to respond to OPT
 
 Once those are present, the POST will go through.
 
-## What to implement (Next.js app router)
+### What to implement (Next.js app router)
 
 In the route file that handles /api/shortcuts/add-episode, add an OPTIONS handler.
 Add CORS headers to both OPTIONS and POST responses.
 
-## Minimal example (app router)
+### Minimal example (app router)
 
 ```ts
 // app/api/shortcuts/add-episode/route.ts
@@ -85,7 +93,7 @@ export async function POST(req: Request) {
 }
 ```
 
-## Notes
+### Notes
 
 Replace <EXTENSION_ID> with the real extension ID.
 If you’re using the pages router (not app router), the same headers can be set inside the handler and you must explicitly handle OPTIONS.
@@ -99,5 +107,3 @@ curl -i -X OPTIONS http://localhost:3000/api/shortcuts/add-episode \
 ```
 
 Expect 204 and the CORS headers listed above.
-
-
