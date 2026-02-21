@@ -1,6 +1,7 @@
 import { Database } from 'sqlite';
 import { v4 as uuidv4 } from 'uuid';
 import { Tag, CreateTagDto } from '../domain/models';
+import { sortTagsAlphabetically } from '../utils/tag-utils';
 
 export class TagRepository {
     constructor(private db: Database) { }
@@ -68,7 +69,13 @@ export class TagRepository {
         }
 
         const rows = await this.db.all(query, params);
-        return rows.map((row) => this.mapRowToTag(row));
+        const tags = rows.map((row) => this.mapRowToTag(row));
+
+        if (sort === 'alphabetical') {
+            return sortTagsAlphabetically(tags);
+        }
+
+        return tags;
     }
 
     /**
@@ -141,10 +148,16 @@ export class TagRepository {
 
         const rows = await this.db.all(query, params);
 
-        return rows.map((row: Record<string, unknown>) => ({
+        const tagsWithCount = rows.map((row: Record<string, unknown>) => ({
             ...this.mapRowToTag(row),
             episodeCount: row.episode_count as number,
         }));
+
+        if (sort === 'alphabetical') {
+            return sortTagsAlphabetically(tagsWithCount);
+        }
+
+        return tagsWithCount;
     }
 
     private mapRowToTag(row: Record<string, unknown>): Tag {

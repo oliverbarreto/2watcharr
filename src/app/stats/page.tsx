@@ -55,6 +55,7 @@ import {
     Tooltip
 } from 'recharts';
 import { Input } from '@/components/ui/input';
+import { sortStringsAlphabetically } from '@/lib/utils/tag-utils';
 
 interface DashboardStats {
     counts: {
@@ -277,11 +278,11 @@ export default function StatsPage() {
     };
 
     // Get all unique tags from time series
-    const allAvailableTags = stats ? Array.from(new Set(
+    const allAvailableTags = stats ? sortStringsAlphabetically(Array.from(new Set(
         stats.tagsTimeSeries.flatMap(point => 
             Object.keys(point).filter(key => key !== 'date')
         )
-    )) : [];
+    ))) : [];
 
     const toggleTagVisibility = (tagName: string) => {
         setVisibleTags(prev => 
