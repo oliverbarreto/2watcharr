@@ -6,6 +6,7 @@ import { getDatabase } from '@/lib/db/database';
 import { MediaService } from '@/lib/services';
 import { TagRepository, UserRepository } from '@/lib/repositories';
 import { z } from 'zod';
+import { handleOptions, getCorsHeaders } from '@/lib/utils/cors';
 
 // Request validation schema
 const addEpisodeSchema = z.object({
@@ -14,9 +15,17 @@ const addEpisodeSchema = z.object({
 });
 
 /**
+ * OPTIONS /api/shortcuts/add-episode - Handle CORS preflight
+ */
+export const OPTIONS = handleOptions;
+
+/**
  * POST /api/shortcuts/add-episode - Add episode from iOS Shortcut
  */
 export async function POST(request: NextRequest) {
+    const origin = request.headers.get('origin');
+    const corsHeaders = getCorsHeaders(origin);
+
     try {
         const startTime = Date.now();
         const requestUrl = new URL(request.url);
@@ -38,11 +47,11 @@ export async function POST(request: NextRequest) {
                     userId = user.id;
                 } else {
                     console.log(`POST ${requestUrl.pathname} 401 in ${Date.now() - startTime}ms - Invalid API Token`);
-                    return NextResponse.json({ success: false, error: 'Invalid API Token' }, { status: 401 });
+                    return NextResponse.json({ success: false, error: 'Invalid API Token' }, { status: 401, headers: corsHeaders });
                 }
             } else {
                 console.log(`POST ${requestUrl.pathname} 401 in ${Date.now() - startTime}ms - Unauthorized`);
-                return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+                return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
             }
         }
 
@@ -77,7 +86,7 @@ export async function POST(request: NextRequest) {
                 type: episode.type,
                 channel: episode.channelId,
             },
-        });
+        }, { headers: corsHeaders });
     } catch (error) {
         console.error('Error adding episode from shortcut:', error);
 
@@ -88,7 +97,7 @@ export async function POST(request: NextRequest) {
                     error: 'Invalid request data',
                     details: error.issues,
                 },
-                { status: 400 }
+                { status: 400, headers: corsHeaders }
             );
         }
 
@@ -98,7 +107,7 @@ export async function POST(request: NextRequest) {
                     success: false,
                     error: error.message,
                 },
-                { status: 400 }
+                { status: 400, headers: corsHeaders }
             );
         }
 
@@ -107,7 +116,7 @@ export async function POST(request: NextRequest) {
                 success: false,
                 error: 'Failed to add episode',
             },
-            { status: 500 }
+            { status: 500, headers: corsHeaders }
         );
     }
 }
