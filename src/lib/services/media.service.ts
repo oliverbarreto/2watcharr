@@ -405,4 +405,94 @@ export class MediaService {
         }
         return false;
     }
+
+    /**
+     * Add multiple videos in batch
+     * @param videos List of videos (url and optional tag)
+     * @param userId User ID adding the videos
+     * @returns Promise resolving to list of results per URL
+     */
+    async addVideosBatch(
+        videos: { url: string; tag?: string }[],
+        userId: string
+    ): Promise<{ url: string; status: 'OK' | 'NOK'; reason?: string }[]> {
+        // Collect all unique tags and ensure they exist beforehand to avoid race conditions
+        const uniqueTags = Array.from(new Set(videos.map(v => v.tag).filter((tag): tag is string => !!tag)));
+        const tagMap = new Map<string, string>();
+
+        for (const tagName of uniqueTags) {
+            let tagEntity = await this.tagRepo.findByName(tagName, userId);
+            if (!tagEntity) {
+                tagEntity = await this.tagRepo.create({ name: tagName, userId });
+            }
+            tagMap.set(tagName, tagEntity.id);
+        }
+
+        return Promise.all(
+            videos.map(async (v) => {
+                try {
+                    // Check if is a YouTube URL at all
+                    const isYouTube = v.url.includes('youtube.com') || v.url.includes('youtu.be');
+                    if (!isYouTube) {
+                        return { 
+                            url: v.url, 
+                            status: 'NOK' as const, 
+                            reason: 'Only YouTube URLs are supported' 
+                        };
+                    }
+
+                    // Basic check to reject channel URLs
+                    if (this.isYouTubeChannelUrl(v.url)) {
+                        return { 
+                            url: v.url, 
+                            status: 'NOK' as const, 
+                            reason: 'Channel URLs are not supported on this endpoint' 
+                        };
+                    }
+
+                    // Validate if it is specifically a video or short URL
+                    if (!this.isYouTubeVideoUrl(v.url)) {
+                        return { 
+                            url: v.url, 
+                            status: 'NOK' as const, 
+                            reason: 'Only YouTube video/short URLs are supported' 
+                        };
+                    }
+
+                    let tagIds: string[] | undefined;
+                    if (v.tag && tagMap.has(v.tag)) {
+                        tagIds = [tagMap.get(v.tag)!];
+                    }
+
+                    // Add the episode
+                    await this.addEpisodeFromUrl(v.url, userId, tagIds);
+                    return { url: v.url, status: 'OK' as const };
+                } catch (error) {
+                    console.error(`Error adding video ${v.url}:`, error);
+                    return {
+                        url: v.url,
+                        status: 'NOK' as const,
+                        reason: error instanceof Error ? error.message : 'Unknown error',
+                    };
+                }
+            })
+        );
+    }
+
+    /**
+     * Check if the URL is a YouTube video or short URL
+     */
+    private isYouTubeVideoUrl(url: string): boolean {
+        return (url.includes('youtube.com') || url.includes('youtu.be')) && 
+               (url.includes('/watch') || url.includes('/shorts/') || url.includes('youtu.be/'));
+    }
+
+    /**
+     * Check if the URL is a YouTube channel URL
+     */
+    private isYouTubeChannelUrl(url: string): boolean {
+        return url.includes('/channel/') || 
+               url.includes('/c/') || 
+               (url.includes('/@') && !url.includes('/watch') && !url.includes('/shorts/'));
+    }
 }

@@ -26,3 +26,10 @@ The endpoint should be called "api/shortcuts/add-videos" and should accept a lis
 
 ## Validation
 - Create and execute tests using a max of 3 urls to test the new api endpoint. 
+
+
+---
+
+# V2
+
+Did you create a test that is ran with the validation vitest everytime we want to run test before releaseing for production ? If not, create them and document with other tests
