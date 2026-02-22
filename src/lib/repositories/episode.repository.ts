@@ -16,7 +16,30 @@ import {
 } from '../domain/models';
 
 export class EpisodeRepository {
+    private static writeLock: Promise<void> = Promise.resolve();
+
     constructor(private db: Database) { }
+
+    private async runInTransaction<T>(work: () => Promise<T>): Promise<T> {
+        const lock = EpisodeRepository.writeLock;
+        let resolveLock: () => void;
+        EpisodeRepository.writeLock = new Promise(res => resolveLock = res);
+
+        try {
+            await lock;
+            await this.db.run('BEGIN TRANSACTION');
+            try {
+                const result = await work();
+                await this.db.run('COMMIT');
+                return result;
+            } catch (error) {
+                await this.db.run('ROLLBACK');
+                throw error;
+            }
+        } finally {
+            resolveLock!();
+        }
+    }
 
     /**
      * Create a new episode
@@ -473,9 +496,7 @@ export class EpisodeRepository {
         // Get all applicable episodes first to create events
         const episodes = await this.findAll({ channelId, userId, isDeleted: false });
 
-        await this.db.run('BEGIN TRANSACTION');
-
-        try {
+        await this.runInTransaction(async () => {
             await this.db.run(
                 `UPDATE episodes 
                  SET watched = ?, watch_status = ?, updated_at = ? 
@@ -490,12 +511,7 @@ export class EpisodeRepository {
                     await this.addEvent(episode.id, eventType, episode.title, episode.type);
                 }
             }
-
-            await this.db.run('COMMIT');
-        } catch (error) {
-            await this.db.run('ROLLBACK');
-            throw error;
-        }
+        });
     }
 
     /**
@@ -523,9 +539,7 @@ export class EpisodeRepository {
      * Removes the episode and all associated data from the database
      */
     async hardDelete(id: string): Promise<void> {
-        await this.db.run('BEGIN TRANSACTION');
-
-        try {
+        await this.runInTransaction(async () => {
             // Delete associated tags
             await this.db.run('DELETE FROM episode_tags WHERE episode_id = ?', id);
 
@@ -534,28 +548,21 @@ export class EpisodeRepository {
 
             // Delete the episode itself
             await this.db.run('DELETE FROM episodes WHERE id = ?', id);
-
-            await this.db.run('COMMIT');
-        } catch (error) {
-            await this.db.run('ROLLBACK');
-            throw error;
-        }
+        });
     }
 
     /**
      * Permanently delete all soft-deleted episodes for a user
      */
     async bulkHardDelete(userId: string): Promise<void> {
-        await this.db.run('BEGIN TRANSACTION');
-
-        try {
+        await this.runInTransaction(async () => {
             // Find all soft-deleted episode IDs first for cleaning up relations
             const rows = await this.db.all('SELECT id FROM episodes WHERE user_id = ? AND is_deleted = 1', userId);
             const ids = rows.map(row => row.id);
 
             if (ids.length > 0) {
                 const placeholders = ids.map(() => '?').join(',');
-                
+
                 // Delete associated tags
                 await this.db.run(`DELETE FROM episode_tags WHERE episode_id IN (${placeholders})`, ids);
 
@@ -565,12 +572,7 @@ export class EpisodeRepository {
                 // Delete the episodes
                 await this.db.run(`DELETE FROM episodes WHERE user_id = ? AND is_deleted = 1`, userId);
             }
-
-            await this.db.run('COMMIT');
-        } catch (error) {
-            await this.db.run('ROLLBACK');
-            throw error;
-        }
+        });
     }
 
 
@@ -594,20 +596,14 @@ export class EpisodeRepository {
         const now = Math.floor(Date.now() / 1000);
 
         // Use a transaction for consistency
-        await this.db.run('BEGIN TRANSACTION');
-
-        try {
+        await this.runInTransaction(async () => {
             for (let i = 0; i < episodeIds.length; i++) {
                 await this.db.run(
                     'UPDATE episodes SET custom_order = ?, updated_at = ? WHERE id = ?',
                     [i, now, episodeIds[i]]
                 );
             }
-            await this.db.run('COMMIT');
-        } catch (error) {
-            await this.db.run('ROLLBACK');
-            throw error;
-        }
+        });
     }
 
     /**

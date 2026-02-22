@@ -35,7 +35,14 @@ export class MediaService {
     async addEpisodeFromUrl(url: string, userId: string, tagIds?: string[]): Promise<MediaEpisode> {
         // Extract metadata
         const metadata = await this.metadataService.extractMetadata(url);
+        return this.saveEpisodeFromMetadata(metadata, userId, tagIds);
+    }
 
+    /**
+     * Save an episode to the database from extracted metadata.
+     * This logic is shared between single additions and batch additions.
+     */
+    private async saveEpisodeFromMetadata(metadata: any, userId: string, tagIds?: string[]): Promise<MediaEpisode> {
         if (!metadata.episode.externalId) {
             throw new Error('Could not extract external ID from metadata');
         }
@@ -104,7 +111,7 @@ export class MediaService {
             description: metadata.episode.description,
             duration: metadata.episode.duration,
             thumbnailUrl: metadata.episode.thumbnailUrl,
-            url: metadata.episode.url || url,
+            url: metadata.episode.url || metadata.episode.externalId,
             uploadDate: metadata.episode.uploadDate,
             publishedDate: metadata.episode.publishedDate,
             viewCount: metadata.episode.viewCount,
@@ -416,7 +423,7 @@ export class MediaService {
         videos: { url: string; tag?: string }[],
         userId: string
     ): Promise<{ url: string; status: 'OK' | 'NOK'; reason?: string }[]> {
-        // Collect all unique tags and ensure they exist beforehand to avoid race conditions
+        // Collect all unique tags and ensure they exist beforehand
         const uniqueTags = Array.from(new Set(videos.map(v => v.tag).filter((tag): tag is string => !!tag)));
         const tagMap = new Map<string, string>();
 
@@ -428,55 +435,71 @@ export class MediaService {
             tagMap.set(tagName, tagEntity.id);
         }
 
-        return Promise.all(
-            videos.map(async (v) => {
+        const results: { url: string; status: 'OK' | 'NOK'; reason?: string }[] = [];
+        
+        // Process in chunks of 5 for metadata extraction to avoid overloading the system
+        const CHUNK_SIZE = 5;
+        for (let i = 0; i < videos.length; i += CHUNK_SIZE) {
+            const chunk = videos.slice(i, i + CHUNK_SIZE);
+            
+            // 1. Parallel metadata extraction for the chunk
+            const metadataPromises = chunk.map(async (v) => {
                 try {
                     // Check if is a YouTube URL at all
                     const isYouTube = v.url.includes('youtube.com') || v.url.includes('youtu.be');
                     if (!isYouTube) {
-                        return { 
-                            url: v.url, 
-                            status: 'NOK' as const, 
-                            reason: 'Only YouTube URLs are supported' 
-                        };
+                        return { v, status: 'NOK' as const, reason: 'Only YouTube URLs are supported' };
                     }
 
                     // Basic check to reject channel URLs
                     if (this.isYouTubeChannelUrl(v.url)) {
-                        return { 
-                            url: v.url, 
-                            status: 'NOK' as const, 
-                            reason: 'Channel URLs are not supported on this endpoint' 
-                        };
+                        return { v, status: 'NOK' as const, reason: 'Channel URLs are not supported on this endpoint' };
                     }
 
                     // Validate if it is specifically a video or short URL
                     if (!this.isYouTubeVideoUrl(v.url)) {
-                        return { 
-                            url: v.url, 
-                            status: 'NOK' as const, 
-                            reason: 'Only YouTube video/short URLs are supported' 
-                        };
+                        return { v, status: 'NOK' as const, reason: 'Only YouTube video/short URLs are supported' };
                     }
 
-                    let tagIds: string[] | undefined;
-                    if (v.tag && tagMap.has(v.tag)) {
-                        tagIds = [tagMap.get(v.tag)!];
-                    }
-
-                    // Add the episode
-                    await this.addEpisodeFromUrl(v.url, userId, tagIds);
-                    return { url: v.url, status: 'OK' as const };
+                    const metadata = await this.metadataService.extractMetadata(v.url);
+                    return { v, metadata, status: 'OK' as const };
                 } catch (error) {
-                    console.error(`Error adding video ${v.url}:`, error);
-                    return {
-                        url: v.url,
-                        status: 'NOK' as const,
-                        reason: error instanceof Error ? error.message : 'Unknown error',
+                    return { 
+                        v, 
+                        status: 'NOK' as const, 
+                        reason: error instanceof Error ? error.message : 'Unknown error' 
                     };
                 }
-            })
-        );
+            });
+
+            const chunkMetadataResults = await Promise.all(metadataPromises);
+
+            // 2. Sequential persistence to avoid database transaction collisions
+            for (const res of chunkMetadataResults) {
+                if (res.status === 'OK' && res.metadata) {
+                    try {
+                        let tagIds: string[] | undefined;
+                        if (res.v.tag && tagMap.has(res.v.tag)) {
+                            tagIds = [tagMap.get(res.v.tag)!];
+                        }
+                        
+                        await this.saveEpisodeFromMetadata(res.metadata, userId, tagIds);
+                        results.push({ url: res.v.url, status: 'OK' });
+                    } catch (error) {
+                        console.error(`Error saving video ${res.v.url}:`, error);
+                        results.push({
+                            url: res.v.url,
+                            status: 'NOK',
+                            reason: error instanceof Error ? error.message : 'Failed to save to database',
+                        });
+                    }
+                } else {
+                    results.push({ url: res.v.url, status: 'NOK', reason: res.reason });
+                }
+            }
+        }
+
+        return results;
     }
 
     /**
