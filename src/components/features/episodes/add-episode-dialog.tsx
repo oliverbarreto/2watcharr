@@ -128,18 +128,18 @@ export function AddEpisodeDialog({ onEpisodeAdded, trigger }: AddEpisodeDialogPr
             <DialogContent>
                 <form onSubmit={handleSubmit}>
                     <DialogHeader className="flex flex-col items-center text-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
+                        {/* <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
                             <Plus className="h-6 w-6 text-primary" />
-                        </div>
+                        </div> */}
                         <DialogTitle>Add New Media</DialogTitle>
                         <DialogDescription>
                             Paste a YouTube or Podcast URL to add it to your list
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-8">
                         <div className="grid gap-2">
-                            <Label htmlFor="url">URL</Label>
-                            <div className="flex gap-2">
+                            {/* <Label htmlFor="url">URL</Label> */}
+                            <div className="flex gap-2 pb-3">
                                 <Input
                                     id="url"
                                     type="url"
@@ -167,7 +167,7 @@ export function AddEpisodeDialog({ onEpisodeAdded, trigger }: AddEpisodeDialogPr
 
                         {availableTags.length > 0 && (
                             <div className="grid gap-2">
-                                <div className="flex items-center justify-between">
+                                {/* <div className="flex items-center justify-between">
                                     <Label className="flex items-center gap-2">
                                         <TagIcon className="h-4 w-4" />
                                         Tags (Optional)
@@ -181,7 +181,7 @@ export function AddEpisodeDialog({ onEpisodeAdded, trigger }: AddEpisodeDialogPr
                                     >
                                         {showTags ? 'Hide' : 'Add Tags'}
                                     </Button>
-                                </div>
+                                </div> */}
                                 <div className={`${showTags ? 'flex' : 'hidden'} md:flex flex-wrap gap-2 pt-1`}>
                                     {availableTags.map((tag) => {
                                         const isSelected = selectedTagIds.includes(tag.id);
