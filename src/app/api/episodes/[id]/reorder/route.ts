@@ -34,9 +34,9 @@ export async function POST(
         }
 
         if (position === 'beginning') {
-            await mediaService.moveToBeginning(id);
+            await mediaService.moveToBeginning(id, userId);
         } else {
-            await mediaService.moveToEnd(id);
+            await mediaService.moveToEnd(id, userId);
         }
 
         return NextResponse.json({ success: true });
