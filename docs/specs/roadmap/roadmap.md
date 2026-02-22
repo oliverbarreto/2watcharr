@@ -48,6 +48,12 @@ Things & Ideas to investigate:
 
 ## Implemented Features
 
+20260222 - Release 0.5.10:
+- [x] Centralized CORS logic for shortcut endpoints.
+- [x] Console logging in API endpoints.
+- [x] Improved "Add Episode" modal layout.
+- [x] Concurrency fix in episode reordering logic.
+
 20260221 - Release 0.5.9:
 - [x] Silent refresh mechanism for episode updates.
 - [x] Case-insensitive and emoji-neutral alphabetical tag sorting.

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.10] - 2026-02-22
+
+### Added
+- **API**: Centralized CORS logic for shortcut endpoints to handle preflight requests and consistent header generation.
+- **Tech**: Console logging added to API endpoints for improved troubleshooting and observability.
+
+### Improved
+- **UI**: Spacing and layout refinements in the "Add Episode" modal form.
+
+### Fixed
+- **Logic**: Concurrency safety in `moveToBeginning` to ensure consistent ordering in multi-user or rapid update scenarios.
+
 ## [0.5.9] - 2026-02-21
 
 ### Added
