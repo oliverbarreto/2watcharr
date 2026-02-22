@@ -3,7 +3,8 @@ description: Check Linting errors, Update docs, tag and release to Github
 ---
 
 ## Goal
-After finishing a feature, we want to ensure no linting errors exist before updating documentation, merging to main, and bumping the version to create a new tag release on GitHub.
+
+After finishing a feature, we want to ensure that all tests pass and no linting errors exist before updating documentation, merging to main, and bumping the version to create a new tag release on GitHub.
 
 ## Process 
 
@@ -11,6 +12,7 @@ After finishing a feature, we want to ensure no linting errors exist before upda
 1. **Verification**: Run linting and tests to ensure the codebase is clean.
    - `npm run lint`
    - `npm test`
+   - Note: run `npm run lint` if necessary after passing all tests if any changes were made due to correct code of failing tests
 
 2. **Documentation**: Update the following files with recent changes (bugfixes, features, etc.):
    - `CHANGELOG.md`: Use [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.

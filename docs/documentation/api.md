@@ -127,12 +127,12 @@ POST `/api/tags`
 ### Delete Tag
 DELETE `/api/tags/:id`
 
-## iOS Integration
+## iOS/Shortcut Integration
 
-### Add Video from Shortcut
-POST `/api/shortcuts/add-video`
+### Add Episode from Shortcut
+POST `/api/shortcuts/add-episode`
 
-Simplified endpoint for iOS Shortcuts. `tag` creates a new tag if it doesn't exist.
+Simplified endpoint for iOS Shortcuts and Browser Extensions. `tag` creates a new tag if it doesn't exist.
 
 **Body:**
 ```json
