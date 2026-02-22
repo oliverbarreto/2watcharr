@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
 import { MediaService } from '@/lib/services';
-import { TagRepository, UserRepository } from '@/lib/repositories';
+import { UserRepository } from '@/lib/repositories';
 import { z } from 'zod';
 import { handleOptions, getCorsHeaders } from '@/lib/utils/cors';
 

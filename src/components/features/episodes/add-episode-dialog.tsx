@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Check, Tag as TagIcon, Clipboard } from 'lucide-react';
+import { Plus, Check, Clipboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -13,7 +13,6 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Tooltip,
     TooltipContent,
@@ -36,7 +35,7 @@ export function AddEpisodeDialog({ onEpisodeAdded, trigger }: AddEpisodeDialogPr
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
     const [loading, setLoading] = useState(false);
-    const [showTags, setShowTags] = useState(false);
+    const [showTags] = useState(false);
 
     useEffect(() => {
         const handleOpen = () => setOpen(true);

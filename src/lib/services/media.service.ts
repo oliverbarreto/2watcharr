@@ -1,6 +1,7 @@
 import { Database } from 'sqlite';
 import { EpisodeRepository, ChannelRepository, TagRepository } from '../repositories';
 import { MetadataService } from './metadata.service';
+import { UnifiedMetadata } from './youtube-metadata.service';
 import {
     MediaEpisode,
     UpdateEpisodeDto,
@@ -42,7 +43,7 @@ export class MediaService {
      * Save an episode to the database from extracted metadata.
      * This logic is shared between single additions and batch additions.
      */
-    private async saveEpisodeFromMetadata(metadata: any, userId: string, tagIds?: string[]): Promise<MediaEpisode> {
+    private async saveEpisodeFromMetadata(metadata: UnifiedMetadata, userId: string, tagIds?: string[]): Promise<MediaEpisode> {
         if (!metadata.episode.externalId) {
             throw new Error('Could not extract external ID from metadata');
         }
