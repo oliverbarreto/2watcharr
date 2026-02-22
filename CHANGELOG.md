@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.11] - 2026-02-22
+
+### Added
+- **Watch Next**: New dedicated page for manual video ordering with drag-and-drop support.
+- **API**: New `/api/shortcuts/add-videos` endpoint for batch adding multiple videos for a specific tag.
+- **Keyboard Shortcuts**: New navigation shortcuts ($g+w$ for Watch Later, $g+n$ for Watch Next, $g+c$ for Channels, $g+s$ for Stats, $g+p$ for Preferences) and search/filter shortcuts ($f$ to toggle, $ESC$ to close).
+
+### Improved
+- **UI**: Optimized Stats page layout to provide more horizontal space for Activity Summary and Viewing Time charts.
+- **UI**: Restructured Watch List to focus on date-based organization, moving manual ordering to the Watch Next page.
+
 ## [0.5.10] - 2026-02-22
+
 
 ### Added
 - **API**: Centralized CORS logic for shortcut endpoints to handle preflight requests and consistent header generation.

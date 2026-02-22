@@ -44,6 +44,13 @@ Things & Ideas to investigate:
 
 ## Implemented Features
 
+20260222 - Release 0.5.11:
+- [x] New "Watch Next" page with drag-and-drop manual ordering.
+- [x] New `/api/shortcuts/add-videos` endpoint for batch video addition.
+- [x] Optimized Stats page layout for charts and activity summary.
+- [x] Implementation of extensive keyboard shortcuts for navigation and search.
+- [x] Restructured watchlist to focus on date-based organization.
+
 20260222 - Release 0.5.10:
 - [x] Centralized CORS logic for shortcut endpoints.
 - [x] Console logging in API endpoints.
