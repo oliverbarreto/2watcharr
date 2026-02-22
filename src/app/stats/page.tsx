@@ -336,113 +336,117 @@ export default function StatsPage() {
 
                 <div className="grid grid-cols-1 gap-8">
                     {/* Top Row: Viewing Time and Activity Summary */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Play Time Stats */}
-                        <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="flex items-center gap-2 text-lg font-bold">
-                                    <Clock className="h-5 w-5 text-primary" />
-                                    Viewing Time
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                                    <div className="p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Today</p>
-                                        <p className="text-2xl font-black text-primary tracking-tighter">{formatDuration(stats.playTime.todaySeconds)}</p>
+                        <div className="lg:col-span-1">
+                            <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden h-full">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="flex items-center gap-2 text-lg font-bold">
+                                        <Clock className="h-5 w-5 text-primary" />
+                                        Viewing Time
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-3 lg:p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Today</p>
+                                            <p className="text-xl lg:text-2xl font-black text-primary tracking-tighter">{formatDuration(stats.playTime.todaySeconds)}</p>
+                                        </div>
+                                        <div className="p-3 lg:p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">This Week</p>
+                                            <p className="text-xl lg:text-2xl font-black tracking-tighter">{formatDuration(stats.playTime.thisWeekSeconds)}</p>
+                                        </div>
+                                        <div className="p-3 lg:p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total Time</p>
+                                            <p className="text-xl lg:text-2xl font-black tracking-tighter">{formatDetailedDuration(stats.playTime.totalSeconds)}</p>
+                                        </div>
+                                        <div className="p-3 lg:p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Avg/Video</p>
+                                            <p className="text-xl lg:text-2xl font-black tracking-tighter">{formatDuration(stats.playTime.averageSecondsPerVideo)}</p>
+                                        </div>
                                     </div>
-                                    <div className="p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">This Week</p>
-                                        <p className="text-2xl font-black tracking-tighter">{formatDuration(stats.playTime.thisWeekSeconds)}</p>
-                                    </div>
-                                    <div className="p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total Time</p>
-                                        <p className="text-2xl font-black tracking-tighter">{formatDetailedDuration(stats.playTime.totalSeconds)}</p>
-                                    </div>
-                                    <div className="p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Avg/Video</p>
-                                        <p className="text-2xl font-black tracking-tighter">{formatDuration(stats.playTime.averageSecondsPerVideo)}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        </div>
 
                         {/* Activity Summary (Full Width in its column) */}
-                        <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-lg font-bold">
-                                    <TrendingUp className="h-5 w-5 text-primary" />
-                                    Activity Summary
-                                </CardTitle>
-                                <CardDescription>{periodLabels[period]}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-4">
-                                    <div className="space-y-4">
-                                        <UsageItem 
-                                            label="Watched Today" 
-                                            value={stats.usage.watchedToday} 
-                                            icon={<Play className="h-4 w-4" />} 
-                                            color="text-emerald-500"
-                                            bg="bg-emerald-500/10"
-                                        />
-                                        <UsageItem 
-                                            label="Watched This Week" 
-                                            value={stats.usage.watchedThisWeek} 
-                                            icon={<TrendingUp className="h-4 w-4" />} 
-                                            color="text-indigo-500"
-                                            bg="bg-indigo-500/10"
-                                        />
+                        <div className="lg:col-span-2">
+                            <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl h-full">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-lg font-bold">
+                                        <TrendingUp className="h-5 w-5 text-primary" />
+                                        Activity Summary
+                                    </CardTitle>
+                                    <CardDescription>{periodLabels[period]}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-12 gap-y-4">
+                                        <div className="space-y-4">
+                                            <UsageItem 
+                                                label="Watched Today" 
+                                                value={stats.usage.watchedToday} 
+                                                icon={<Play className="h-4 w-4" />} 
+                                                color="text-emerald-500"
+                                                bg="bg-emerald-500/10"
+                                            />
+                                            <UsageItem 
+                                                label="Watched This Week" 
+                                                value={stats.usage.watchedThisWeek} 
+                                                icon={<TrendingUp className="h-4 w-4" />} 
+                                                color="text-indigo-500"
+                                                bg="bg-indigo-500/10"
+                                            />
+                                        </div>
+                                        <div className="space-y-4">
+                                            <UsageItem 
+                                                label="Added" 
+                                                value={stats.usage.added} 
+                                                icon={<Plus className="h-4 w-4" />} 
+                                                color="text-blue-500"
+                                                bg="bg-blue-500/10"
+                                            />
+                                            <UsageItem 
+                                                label="Watched" 
+                                                value={stats.usage.watched} 
+                                                icon={<Play className="h-4 w-4" />} 
+                                                color="text-green-500"
+                                                bg="bg-green-500/10"
+                                            />
+                                            <UsageItem 
+                                                label="Favorited" 
+                                                value={stats.usage.favorited} 
+                                                icon={<Star className="h-4 w-4" />} 
+                                                color="text-amber-500"
+                                                bg="bg-amber-500/10"
+                                            />
+                                        </div>
+                                        <div className="space-y-4">
+                                            <UsageItem 
+                                                label="Not Watched" 
+                                                value={stats.usage.unwatched} 
+                                                icon={<RotateCcw className="h-4 w-4" />} 
+                                                color="text-orange-500"
+                                                bg="bg-orange-500/10"
+                                            />
+                                            <UsageItem 
+                                                label="Tagged" 
+                                                value={stats.usage.tagged} 
+                                                icon={<TagIcon className="h-4 w-4" />} 
+                                                color="text-purple-500"
+                                                bg="bg-purple-500/10"
+                                            />
+                                            <UsageItem 
+                                                label="Removed" 
+                                                value={stats.usage.removed} 
+                                                icon={<Trash2 className="h-4 w-4" />} 
+                                                color="text-red-500"
+                                                bg="bg-red-500/10"
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="space-y-4">
-                                        <UsageItem 
-                                            label="Added" 
-                                            value={stats.usage.added} 
-                                            icon={<Plus className="h-4 w-4" />} 
-                                            color="text-blue-500"
-                                            bg="bg-blue-500/10"
-                                        />
-                                        <UsageItem 
-                                            label="Watched" 
-                                            value={stats.usage.watched} 
-                                            icon={<Play className="h-4 w-4" />} 
-                                            color="text-green-500"
-                                            bg="bg-green-500/10"
-                                        />
-                                        <UsageItem 
-                                            label="Favorited" 
-                                            value={stats.usage.favorited} 
-                                            icon={<Star className="h-4 w-4" />} 
-                                            color="text-amber-500"
-                                            bg="bg-amber-500/10"
-                                        />
-                                    </div>
-                                    <div className="space-y-4">
-                                        <UsageItem 
-                                            label="Not Watched" 
-                                            value={stats.usage.unwatched} 
-                                            icon={<RotateCcw className="h-4 w-4" />} 
-                                            color="text-orange-500"
-                                            bg="bg-orange-500/10"
-                                        />
-                                        <UsageItem 
-                                            label="Tagged" 
-                                            value={stats.usage.tagged} 
-                                            icon={<TagIcon className="h-4 w-4" />} 
-                                            color="text-purple-500"
-                                            bg="bg-purple-500/10"
-                                        />
-                                        <UsageItem 
-                                            label="Removed" 
-                                            value={stats.usage.removed} 
-                                            icon={<Trash2 className="h-4 w-4" />} 
-                                            color="text-red-500"
-                                            bg="bg-red-500/10"
-                                        />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
 
                     {/* Tabs Section taking full width */}
