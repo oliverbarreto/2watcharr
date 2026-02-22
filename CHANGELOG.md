@@ -4,18 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-+
-+## [0.5.12] - 2026-02-22
-+
-+### Fixed
-+- **UI**: Resolved issue where the navbar search icon did not reflect active status or channel filters.
-+
-+### Improved
-+- **API**: Refactored async operations and centralized database transaction management for better performance and reliability.
-+- **API**: Optimized bulk video addition with chunked processing and sequential writes.
-+
-+### Docs
-+- **Readme**: Added comprehensive testing documentation.
+
+## [0.5.12] - 2026-02-22
+
+### Fixed
+- **UI**: Resolved issue where the navbar search icon did not reflect active status or channel filters.
+
+### Improved
+- **API**: Refactored async operations and centralized database transaction management for better performance and reliability.
+- **API**: Optimized bulk video addition with chunked processing and sequential writes.
+
+### Docs
+- **Readme**: Added comprehensive testing documentation.
 
 ## [0.5.11] - 2026-02-22
 
@@ -29,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI**: Restructured Watch List to focus on date-based organization, moving manual ordering to the Watch Next page.
 
 ## [0.5.10] - 2026-02-22
-
 
 ### Added
 - **API**: Centralized CORS logic for shortcut endpoints to handle preflight requests and consistent header generation.
