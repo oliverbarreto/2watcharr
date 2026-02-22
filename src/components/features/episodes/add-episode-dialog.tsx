@@ -39,6 +39,12 @@ export function AddEpisodeDialog({ onEpisodeAdded, trigger }: AddEpisodeDialogPr
     const [showTags, setShowTags] = useState(false);
 
     useEffect(() => {
+        const handleOpen = () => setOpen(true);
+        window.addEventListener('open-add-episode', handleOpen);
+        return () => window.removeEventListener('open-add-episode', handleOpen);
+    }, []);
+
+    useEffect(() => {
         if (open) {
             const fetchTags = async () => {
                 try {

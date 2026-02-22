@@ -292,8 +292,15 @@ function ChannelsPageContent() {
         fetchChannels();
 
         const handleToggleFilters = () => setShowFilters((prev) => !prev);
+        const handleCloseFilters = () => setShowFilters(false);
+        
         window.addEventListener('toggle-filters', handleToggleFilters);
-        return () => window.removeEventListener('toggle-filters', handleToggleFilters);
+        window.addEventListener('close-filters', handleCloseFilters);
+        
+        return () => {
+            window.removeEventListener('toggle-filters', handleToggleFilters);
+            window.removeEventListener('close-filters', handleCloseFilters);
+        };
     }, [fetchChannels]);
 
     const handleFilterChange = (newFilters: Filters) => {

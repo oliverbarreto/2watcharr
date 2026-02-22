@@ -146,13 +146,16 @@ function HomePageContent() {
   useEffect(() => {
     const handleAdded = () => setRefreshKey((prev) => prev + 1);
     const handleToggleFilters = () => setShowFilters((prev) => !prev);
+    const handleCloseFilters = () => setShowFilters(false);
     
     window.addEventListener('episode-added', handleAdded);
     window.addEventListener('toggle-filters', handleToggleFilters);
+    window.addEventListener('close-filters', handleCloseFilters);
     
     return () => {
       window.removeEventListener('episode-added', handleAdded);
       window.removeEventListener('toggle-filters', handleToggleFilters);
+      window.removeEventListener('close-filters', handleCloseFilters);
     };
   }, []);
 

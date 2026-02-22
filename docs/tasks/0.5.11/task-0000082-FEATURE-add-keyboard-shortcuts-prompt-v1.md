@@ -1,4 +1,9 @@
-TASK: Add keyboard shortcuts
+# TASK: Add keyboard shortcuts
+- IDE: Antigravity - Agent Mode
+- Date: 2026-02-22
+- Model: Gemini 3 Flash
+
+## Overview
 
 We want to add keyboard shortcuts so the user can interact with some functionality of the app for different actions.
 
@@ -7,7 +12,7 @@ We want to add keyboard shortcuts so the user can interact with some functionali
 2. ESC closes the filter panel
 
 ## Navigation
-1. We want to add shortcuts to navigate bewteen pages:
+3. We want to add shortcuts to navigate bewteen pages:
 - CTRL+1, CMD+1 to navigate to "/" (the new Watch List page)
 - CTRL+2, CMD+2 to navigate to "/channels" 
 - CTRL+3, CMD+3 to navigate to "/watchnext" 
