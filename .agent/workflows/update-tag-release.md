@@ -8,7 +8,7 @@ After finishing a feature, we want to ensure that all tests pass and no linting 
 
 ## ARGUMENTS
 
-- Version bump: {{1}}
+- Version bump: {{1}}. Usage: /update-tag-release [patch|minor|major|x.x.x])
 
 ## Process 
 
