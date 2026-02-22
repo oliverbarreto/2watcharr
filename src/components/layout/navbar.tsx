@@ -81,7 +81,7 @@ export function Navbar() {
     
     // Check if any filters are active
     const hasActiveFilters = Array.from(searchParams.keys()).some(key => 
-        ['search', 'watched', 'watchStatus', 'tags', 'channels', 'favorite', 'hasNotes', 'likeStatus', 'type', 'isShort', 'priority'].includes(key)
+        ['search', 'status', 'watched', 'watchStatus', 'tags', 'channels', 'channelId', 'favorite', 'hasNotes', 'likeStatus', 'type', 'isShort', 'priority'].includes(key)
     );
 
     // Get dynamic title based on pathname
