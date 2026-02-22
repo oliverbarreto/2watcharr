@@ -9,6 +9,14 @@ These are some features we want to add to the app but are not specidifed yet:
 - [ ] FEATURE: Download transcript (only youtube videos for now. We need to investigate how to do it for other platforms such as for podcasts. We can always fallback to downloading the audio file and using a service to extract the transcript). (docs/specs/roadmap/todo/FEATURE-download-transcripts.md)
 - [ ] FEATURE: 2watcharr browser extension. (docs/specs/roadmap/todo/FEATURE-2watcharr-browser-extension.md)
 
+- [ ] FEATURE: We want to create a way to visualize some channels stats. We want to visualize:
+- videos added/watched by channel 
+- videos favorited/with priority/liked/disliked by channel 
+
+- [ ] FEATURE: Recommendations
+- we want to have a way to detect "forgotten" videos of a certain topic. Videos that were added in the past of a topic that are still not watched, or also, pending confirmation. 
+
+
 Things & Ideas to investigate:
 - [ ] a way to allow the user to not add a video via iOS Share Sheet or copya paste in the app, but instead the app or a browser extension could just intercept the url, see that it is a vido or podcast, and add it to a "watch list". 
 - [ ] Add a list of "Watch Next" that could be populated with videos from the watch list, and the user could order them with drag and drop. 
