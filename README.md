@@ -57,6 +57,28 @@ docker-compose down
 docker compose -f docker-compose.prod.yml up -d
 ```
 
+## Testing
+
+Automated tests are located alongside the source files they test in the `src/lib/` directory, following the pattern `*.test.ts`. 
+Example locations:
+- src/lib/repositories/episode.repository.test.ts
+- src/lib/services/media.service.test.ts
+- src/lib/utils/tag-utils.test.ts
+
+They are properly documented in `docs/documentation/development.md` under the "Testing" section.
+
+Summary of commands for testing:
+
+```bash
+# Run all tests once
+npm run test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Open the Vitest UI
+npm run test:ui
+```
 
 ## Project Structure
 
