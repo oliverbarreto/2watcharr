@@ -1,5 +1,5 @@
 ---
-description: Check Linting errors, Update docs, tag and release to Github (Usage: /update-tag-release [patch|minor|major|x.x.x])
+description: "Check Linting errors, Update docs, tag and release to Github"
 ---
 
 ## Goal
