@@ -62,9 +62,10 @@ interface FilterBarProps {
         order: 'asc' | 'desc';
     };
     availableChannels?: { id: string; name: string }[];
+    showManualSort?: boolean;
 }
 
-export function FilterBar({ onFilterChange, onSortChange, initialFilters, initialSort, availableChannels }: FilterBarProps) {
+export function FilterBar({ onFilterChange, onSortChange, initialFilters, initialSort, availableChannels, showManualSort = true }: FilterBarProps) {
     const [search, setSearch] = useState(initialFilters?.search || '');
     const [watchedFilter, setWatchedFilter] = useState<string>(
         initialFilters?.watchStatus === 'pending' ? 'pending' : 
@@ -368,7 +369,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                 <SelectValue placeholder="Sort by" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="custom">Manual</SelectItem>
+                                {showManualSort && <SelectItem value="custom">Manual</SelectItem>}
                                 <SelectItem value="date_added">Date Added</SelectItem>
                                 <SelectItem value="date_watched">Date Watched</SelectItem>
                                 <SelectItem value="date_favorited">Date Favorited</SelectItem>

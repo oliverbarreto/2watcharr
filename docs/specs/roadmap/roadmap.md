@@ -2,48 +2,37 @@
 
 ## Feature Requests
 
+## Working on:
+
 ### To be done:
 
 These are some features we want to add to the app but are not specidifed yet:
 
-- [ ] FEATURE: Download transcript (only youtube videos for now. We need to investigate how to do it for other platforms such as for podcasts. We can always fallback to downloading the audio file and using a service to extract the transcript). (docs/specs/roadmap/todo/FEATURE-download-transcripts.md)
+BROWSER EXTENSION (CODEX):
 - [ ] FEATURE: 2watcharr browser extension. (docs/specs/roadmap/todo/FEATURE-2watcharr-browser-extension.md)
+- [ ] a way to allow the user to not add a video via iOS Share Sheet or copya paste in the app, but instead the app or a browser extension could just intercept the url, see that it is a vido or podcast, and add it to a "watch list". 
+- [ ] How to download/import current playlist from youtube and youtube history ... also for other platforms
+
+- [ ] FEATURE: Download transcript 
+    - Only youtube videos for now. We need to investigate how to do it for other platforms such as for podcasts. We can always fallback to downloading the audio file and using a service to extract the transcript. (docs/specs/roadmap/todo/FEATURE-download-transcripts.md)
 
 - [ ] FEATURE: We want to create a way to visualize some channels stats. We want to visualize:
-- videos added/watched by channel 
-- videos favorited/with priority/liked/disliked by channel 
+    - videos added/watched by channel 
+    - videos favorited/with priority/liked/disliked by channel 
 
-- [ ] FEATURE: Recommendations
-- we want to have a way to detect "forgotten" videos of a certain topic. Videos that were added in the past of a topic that are still not watched, or also, pending confirmation. 
+- [ ] FEATURE: Recommendations 
+    - Create a new page to show the recommendations based on the user preferences.
+    - We want to have a way to detect "forgotten" videos of a certain topic. Videos that were added in the past of a topic that are still not watched, or also, pending confirmation. 
+    - Enable adding reminders to watch certain videos, or videos in a tag (in this sense we can consider a tag as a playlist for a certain topic).
 
-
-Things & Ideas to investigate:
-- [ ] a way to allow the user to not add a video via iOS Share Sheet or copya paste in the app, but instead the app or a browser extension could just intercept the url, see that it is a vido or podcast, and add it to a "watch list". 
-- [ ] Add a list of "Watch Next" that could be populated with videos from the watch list, and the user could order them with drag and drop. 
-- [ ] How to download current playlist from youtube and youtube history ... also for other platforms
-- [ ] Create our own algorithm to:
-    1. Analyze topics of added/watched videos to provide insights to the user of what he is interested in (e.g. "You watch a lot of videos about AI", "You watch a lot of videos from this channel", "This week you watched 5 videos about AI", "Three weeks and you have not watched any videos about personal development", ...). Time consumed in each topic is also a factor to consider. Provide a way to group them together (and add/remove topics manually?).
-    2. recommend videos based on user preferences (current watchlist videos, what has been watched, liked/dislike, channels, etc.) and history and have new page with this recommendations. 
-- [ ] Create a new page to show the recommendations based on the user preferences.
-- [ ] Enable adding reminders to watch certain videos, or videos in a tag (in this sense we can consider a tag as a playlist for a certain topic).
-
-
-#### AI TASKS:
-
-#### FEATURES:
-- [ ] `./docs/specs/roadmap/todo/task-0000000xx-BUGFIX-dont-scroll-when-update-fav-or-tags-episode-card-prompt-v1.md`
-
-- [ ] `./docs/specs/roadmap/todo/FEATURE-import-playlist-data.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-async-request-and-client-ui.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-return-episode-title-to-ios-shortcut-to-display-name-on-notification.md`
 
-#### UI:
-- [ ] `./docs/specs/roadmap/todo/UI-add-channels-list-view.md`
+Things & Ideas to investigate:
+- [ ] Create our own algorithm to:
+    1. Analyze topics of added/watched videos to provide insights to the user of what he is interested in (e.g. "You watch a lot of videos about AI", "You watch a lot of videos from this channel", "This week you watched 5 videos about AI", "Three weeks and you have not watched any videos about personal development", ...). Time consumed in each topic is also a factor to consider. Provide a way to group them together (and add/remove topics manually?).
+    2. recommend videos based on user preferences (current watchlist videos, what has been watched, liked/dislike, channels, etc.) and history and have new page with this recommendations. 
 
-#### CHORE:
-
-#### BUGFIXES Pending - Analysis:
-- [ ] `./docs/specs/roadmap/todo/BUGFIX-faviconerror-on-browser-console.md`
 
 ### ANALYSIS MADE - Not implemented:
 - [ ] `./docs/specs/roadmap/todo/CHORE-add-port-configuration-to-env-to-allow-other-ports-in-deployment-server.md`
@@ -52,7 +41,6 @@ Things & Ideas to investigate:
 - [ ] `./docs/specs/roadmap/todo/BUGFIX-images-not-showing-in-channels-page.md`: 
     - `./docs/tasks/0.0.1-0.5.3/task-0000041-BUGFIX-images-not-showing-in-channels-page-prompt-v1-implementation_plan.md`
 
-## Working on:
 
 ## Implemented Features
 

@@ -1,0 +1,22 @@
+# Task: Implement "Watch Next" Page and Refactor "Watch List"
+
+- [ ] Planning and Research [/]
+    - [ ] Explore current DND implementation in `EpisodeList`
+    - [ ] Understand priority management in `MediaService` or similar
+    - [ ] Identify menu and layout components to update
+- [ ] Refactor "/" Route (Watch List) [ ]
+    - [ ] Rename "Watch Later" to "Watch List" in Navbar
+    - [ ] Remove drag and drop functionality
+    - [ ] Remove manual ordering from filters
+    - [ ] Remove "Move to beginning/end" menu options
+- [ ] Implement "/watchnext" Route [ ]
+    - [ ] Create new page component for `/watchnext`
+    - [ ] Reuse/Adapt `EpisodeList` with DND enabled
+    - [ ] Filter by priority
+    - [ ] Add "Watch Next" to Navbar
+    - [ ] Implement "Move to beginning/end" menu options
+- [ ] Verification [ ]
+    - [ ] Verify DND works on `/watchnext`
+    - [ ] Verify DND is disabled on `/`
+    - [ ] Verify filtering and manual ordering
+    - [ ] Verify Navbar changes

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Plus, Settings, LogOut, User, BarChart3, Radio, Library, Search } from 'lucide-react';
+import { Plus, Settings, LogOut, User, BarChart3, Radio, Library, Search, Gem } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
@@ -49,13 +49,19 @@ const NavLinks = ({ className, onClick }: NavLinksProps) => {
             <Link href="/" onClick={onClick}>
                 <Button variant="ghost" className={getLinkClass("/")}>
                     <Library className="mr-2 h-4 w-4 sm:hidden" />
-                    Watch Later
+                    Watch List
                 </Button>
             </Link>
             <Link href="/channels" onClick={onClick}>
                 <Button variant="ghost" className={getLinkClass("/channels")}>
                     <Radio className="mr-2 h-4 w-4 sm:hidden" />
                     Channels
+                </Button>
+            </Link>
+            <Link href="/watchnext" onClick={onClick}>
+                <Button variant="ghost" className={getLinkClass("/watchnext")}>
+                    <Gem className="mr-2 h-4 w-4 sm:hidden" />
+                    Watch Next
                 </Button>
             </Link>
             <Link href="/stats" onClick={onClick}>
@@ -80,7 +86,8 @@ export function Navbar() {
 
     // Get dynamic title based on pathname
     const getPageTitle = () => {
-        if (pathname === '/') return 'Watch Later';
+        if (pathname === '/') return 'Watch List';
+        if (pathname === '/watchnext') return 'Watch Next';
         if (pathname === '/channels') return 'Channels';
         if (pathname === '/stats') return 'Stats';
         if (pathname === '/deleted') return 'Deleted';

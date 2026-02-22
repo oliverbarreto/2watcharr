@@ -51,9 +51,10 @@ interface EpisodeListProps {
     viewMode: 'grid' | 'list';
     onCountChange?: (current: number, total: number) => void;
     onChannelsChange?: (channels: { id: string; name: string }[] | ((prev: { id: string; name: string }[]) => { id: string; name: string }[])) => void;
+    showReorderOptions?: boolean;
 }
 
-export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountChange, onChannelsChange }: EpisodeListProps) {
+export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountChange, onChannelsChange, showReorderOptions = true }: EpisodeListProps) {
     const [episodes, setEpisodes] = useState<MediaEpisode[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -305,7 +306,8 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
                                     episode={episode}
                                     onUpdate={handleUpdate}
                                     onDelete={handleUpdate}
-                                    isDraggable={sort?.field === 'custom'}
+                                    isDraggable={showReorderOptions && sort?.field === 'custom'}
+                                    showReorderOptions={showReorderOptions}
                                 />
                             ) : (
                                 <EpisodeListRow
@@ -313,7 +315,8 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
                                     episode={episode}
                                     onUpdate={handleUpdate}
                                     onDelete={handleUpdate}
-                                    isDraggable={sort?.field === 'custom'}
+                                    isDraggable={showReorderOptions && sort?.field === 'custom'}
+                                    showReorderOptions={showReorderOptions}
                                 />
                             )
                         )}

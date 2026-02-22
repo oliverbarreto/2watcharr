@@ -19,3 +19,4 @@ You will explore and review docs to decide what to move to "completed".
 You're now zeroing in on the release merge and tagging. Your next moves include merging the develop branch into main and then tagging with a new version number (e.g. 0.1.0), increasing the version the user tells you: releavant changes (+1.*.*) minor (+0.+1.*) or patch (*.*.+1). 
 
 After tagging you will push both changes and the tag to GitHub. 
+

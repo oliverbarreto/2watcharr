@@ -55,9 +55,10 @@ interface EpisodeListRowProps {
     onUpdate?: (updatedEpisode?: MediaEpisode) => void;
     onDelete?: () => void;
     isDraggable?: boolean;
+    showReorderOptions?: boolean;
 }
 
-export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true }: EpisodeListRowProps) {
+export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true, showReorderOptions = true }: EpisodeListRowProps) {
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -577,22 +578,26 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
-                                    handleReorder('beginning');
-                                }}>
-                                    <ArrowUp className="mr-2 h-4 w-4" />
-                                    Move to beginning
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
-                                    handleReorder('end');
-                                }}>
-                                    <ArrowDown className="mr-2 h-4 w-4" />
-                                    Move to end
-                                </DropdownMenuItem>
-                                
-                                <DropdownMenuSeparator />
+                                {showReorderOptions && (
+                                    <>
+                                        <DropdownMenuItem onSelect={(e) => {
+                                            e.preventDefault();
+                                            handleReorder('beginning');
+                                        }}>
+                                            <ArrowUp className="mr-2 h-4 w-4" />
+                                            Move to beginning
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={(e) => {
+                                            e.preventDefault();
+                                            handleReorder('end');
+                                        }}>
+                                            <ArrowDown className="mr-2 h-4 w-4" />
+                                            Move to end
+                                        </DropdownMenuItem>
+                                        
+                                        <DropdownMenuSeparator />
+                                    </>
+                                )}
                                 
                                 <DropdownMenuItem onSelect={(e) => {
                                     e.preventDefault();

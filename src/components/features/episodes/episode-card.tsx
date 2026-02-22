@@ -56,9 +56,10 @@ interface EpisodeCardProps {
     onUpdate?: (updatedEpisode?: MediaEpisode) => void;
     onDelete?: () => void;
     isDraggable?: boolean;
+    showReorderOptions?: boolean;
 }
 
-export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }: EpisodeCardProps) {
+export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, showReorderOptions = true }: EpisodeCardProps) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isHardDeleteDialogOpen, setIsHardDeleteDialogOpen] = useState(false);
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
@@ -714,21 +715,25 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                         {likeStatus === 'dislike' ? "Remove don't like" : "Don't like"}
                                     </DropdownMenuItem>
                                     
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
-                                        handleReorder('beginning');
-                                    }}>
-                                        <ArrowUp className="mr-2 h-4 w-4" />
-                                        Move to beginning
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
-                                        handleReorder('end');
-                                    }}>
-                                        <ArrowDown className="mr-2 h-4 w-4" />
-                                        Move to end
-                                    </DropdownMenuItem>
+                                    {showReorderOptions && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onSelect={(e) => {
+                                                e.preventDefault();
+                                                handleReorder('beginning');
+                                            }}>
+                                                <ArrowUp className="mr-2 h-4 w-4" />
+                                                Move to beginning
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={(e) => {
+                                                e.preventDefault();
+                                                handleReorder('end');
+                                            }}>
+                                                <ArrowDown className="mr-2 h-4 w-4" />
+                                                Move to end
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
                                     
                                     <DropdownMenuSeparator />
                                     

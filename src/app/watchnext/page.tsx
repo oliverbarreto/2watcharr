@@ -27,7 +27,7 @@ interface Sort {
   order: 'asc' | 'desc';
 }
 
-function HomePageContent() {
+function WatchNextPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -53,6 +53,9 @@ function HomePageContent() {
   // Memoize filters from searchParams
   const filters: Filters = useMemo(() => {
     const status = searchParams.get('status');
+    // For Watch Next, we default to priority: 'high' if not specified
+    const priority = searchParams.get('priority') as Filters['priority'] || 'high';
+    
     return {
       search: searchParams.get('search') || undefined,
       watched: status === 'watched' ? true : (status === 'unwatched' ? false : undefined),
@@ -65,7 +68,7 @@ function HomePageContent() {
       type: (searchParams.get('type') as Filters['type']) || undefined,
       isShort: searchParams.get('isShort') === 'true' ? true : (searchParams.get('isShort') === 'false' ? false : undefined),
       likeStatus: (searchParams.get('likeStatus') as Filters['likeStatus']) || undefined,
-      priority: (searchParams.get('priority') as Filters['priority']) || undefined,
+      priority: priority,
     };
   }, [searchParams]);
 
@@ -74,19 +77,12 @@ function HomePageContent() {
     const field = searchParams.get('sort');
     const order = searchParams.get('order') as 'asc' | 'desc';
     
+    // For Watch Next, we default to 'custom' sort
     if (field && order) {
       return { field, order };
     }
 
-    if (typeof window !== 'undefined') {
-      const savedDefaultSortField = localStorage.getItem('defaultSortField');
-      if (savedDefaultSortField) {
-        let defaultOrder: 'asc' | 'desc' = 'desc';
-        if (savedDefaultSortField === 'title') defaultOrder = 'asc';
-        return { field: savedDefaultSortField, order: defaultOrder };
-      }
-    }
-    return { field: 'date_added', order: 'desc' };
+    return { field: 'custom', order: 'asc' };
   }, [searchParams]);
 
   const [refreshKey, setRefreshKey] = useState(0);
@@ -128,13 +124,13 @@ function HomePageContent() {
     if (merged.type) params.set('type', merged.type); else params.delete('type');
     if (merged.isShort !== undefined) params.set('isShort', String(merged.isShort)); else params.delete('isShort');
     if (merged.likeStatus) params.set('likeStatus', merged.likeStatus); else params.delete('likeStatus');
-    if (merged.priority) params.set('priority', merged.priority); else params.delete('priority');
+    if (merged.priority && merged.priority !== 'high') params.set('priority', merged.priority); else params.delete('priority');
     
     // channelId is used for direct navigation from channel pages, keep it if present
     if (merged.channelId) params.set('channelId', merged.channelId); else params.delete('channelId');
 
     const queryString = params.toString();
-    router.push(`/${queryString ? '?' + queryString : ''}`);
+    router.push(`/watchnext${queryString ? '?' + queryString : ''}`);
   };
 
   const handleSortChange = (newSort: Sort) => {
@@ -142,7 +138,7 @@ function HomePageContent() {
     params.set('sort', newSort.field);
     params.set('order', newSort.order);
     const queryString = params.toString();
-    router.push(`/${queryString ? '?' + queryString : ''}`);
+    router.push(`/watchnext${queryString ? '?' + queryString : ''}`);
   };
 
   useEffect(() => {
@@ -165,7 +161,7 @@ function HomePageContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('channelId');
     const queryString = params.toString();
-    router.push(`/${queryString ? '?' + queryString : ''}`);
+    router.push(`/watchnext${queryString ? '?' + queryString : ''}`);
   };
 
   return (
@@ -175,7 +171,7 @@ function HomePageContent() {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm font-medium text-muted-foreground">
-                Showing <span className="text-foreground">{counts.current}</span> of <span className="text-foreground">{counts.total}</span> episodes
+                Showing <span className="text-foreground">{counts.current}</span> of <span className="text-foreground">{counts.total}</span> prioritized episodes
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -219,7 +215,7 @@ function HomePageContent() {
                   initialFilters={filters}
                   initialSort={sort}
                   availableChannels={availableChannels}
-                  showManualSort={false}
+                  showManualSort={true}
                 />
               </div>
             </div>
@@ -233,14 +229,14 @@ function HomePageContent() {
             sort={sort} 
             viewMode={viewMode} 
             onCountChange={handleCountChange}
-            showReorderOptions={false}
+            showReorderOptions={true}
         />
       </div>
     </Layout>
   );
 }
 
-export default function HomePage() {
+export default function WatchNextPage() {
   return (
     <Suspense fallback={
       <Layout>
@@ -251,7 +247,7 @@ export default function HomePage() {
         </div>
       </Layout>
     }>
-      <HomePageContent />
+      <WatchNextPageContent />
     </Suspense>
   );
 }
