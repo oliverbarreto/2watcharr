@@ -127,7 +127,7 @@ export interface UpdateEpisodeDto {
     likeStatus?: LikeStatus;
     notes?: string | null;
     isArchived?: boolean;
-    archivedAt?: number;
+    archivedAt?: number | null;
 }
 
 

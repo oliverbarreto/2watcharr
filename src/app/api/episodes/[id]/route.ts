@@ -18,7 +18,7 @@ const updateEpisodeSchema = z.object({
     likeStatus: z.enum(['none', 'like', 'dislike']).optional(),
     notes: z.string().max(1000).optional().nullable(),
     isArchived: z.boolean().optional(),
-    archivedAt: z.number().optional(),
+    archivedAt: z.number().optional().nullable(),
 });
 
 

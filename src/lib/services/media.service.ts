@@ -395,10 +395,13 @@ export class MediaService {
         
         const now = Math.floor(Date.now() / 1000);
         for (const episode of episodes) {
-            await this.episodeRepo.update(episode.id, { 
-                isArchived: true,
-                archivedAt: now
-            });
+            // Only archive if it has a priority (not 'none')
+            if (episode.priority && episode.priority !== 'none') {
+                await this.episodeRepo.update(episode.id, { 
+                    isArchived: true,
+                    archivedAt: now
+                });
+            }
         }
     }
 
