@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.13] - 2026-02-25
+
+### Added
+- **UI**: Cycling like/dislike/meh button implemented for episode cards in both list and grid views, with tooltips and mobile support.
+- **Watch Next**: Display total queue duration ("Queue time: Xh Ym") next to the episode count.
+
+### Fixed
+- **Logic**: Resolved critical bug where newly added or prioritized episodes were incorrectly placed at the end of the manual order instead of the beginning.
+- **UI**: Fixed context menu persistence issue where menus would remain visible after selecting an action or clicking outside.
+- **UI**: Improved search experience by auto-focusing the search field when opening the filter panel on desktop.
+- **Lint**: Resolved various linting errors and warnings in service tests.
+
 ## [0.5.12] - 2026-02-22
 
 ### Fixed

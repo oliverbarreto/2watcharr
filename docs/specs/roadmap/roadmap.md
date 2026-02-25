@@ -58,6 +58,13 @@ Things & Ideas to investigate:
 
 ## Implemented Features
 
+20260225 - Release 0.5.13:
+- [x] Cycling like/dislike/meh button for episode cards in list and grid views.
+- [x] Total queue duration display in "Watch Next" page.
+- [x] Fixed reordering bug for new/prioritized episodes (moved to beginning).
+- [x] Auto-focus search field on desktop.
+- [x] Fixed context menu persistence bug.
+
 20260222 - Release 0.5.11:
 - [x] New "Watch Next" page with drag-and-drop manual ordering.
 - [x] New `/api/shortcuts/add-videos` endpoint for batch video addition.

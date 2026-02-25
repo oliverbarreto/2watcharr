@@ -45,7 +45,7 @@ describe('MediaService Priority Reordering', () => {
     });
 
     it('should move episode to beginning when priority is set to high via updateEpisode', async () => {
-        const e1 = await repository.create({
+        await repository.create({
             type: 'video', externalId: 'v1', title: 'Ep 1', url: 'u1', channelId: 'channel-id', userId
         });
         const e2 = await repository.create({
@@ -69,10 +69,10 @@ describe('MediaService Priority Reordering', () => {
         // but it's better to use the public addEpisodeFromUrl if we can or mock the metadata service.
         // Actually, I'll just add one and check its customOrder is 0.
         
-        const e2 = await (service as any).saveEpisodeFromMetadata({
+        const e2 = await (service as unknown as { saveEpisodeFromMetadata: (metadata: unknown, userId: string) => Promise<{ id: string }> }).saveEpisodeFromMetadata({
             episode: { externalId: 'v2', title: 'Ep 2', url: 'u2', type: 'video' },
             channel: { id: 'channel-id', name: 'Test', url: 'curl', type: 'video' }
-        } as any, userId);
+        }, userId);
 
         const episodes = await repository.findAll({ userId, isDeleted: false }, { field: 'custom', order: 'asc' });
         expect(episodes[0].id).toBe(e2.id);
