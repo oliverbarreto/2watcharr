@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-02-25
+
+### Added
+- **Archive**: New "Archive" feature to hide episodes from the main watchlist without deleting them.
+- **UI**: New dedicated "Archived" page to manage archived episodes with filtering and bulk actions.
+- **UI**: Added "Archive" and "Unarchive" actions to episode cards, list rows, and multi-select menus.
+
+### Fixed
+- **API**: Resolved `SQLITE_ERROR: ambiguous column name: created_at` in metrics and channel stats queries.
+- **Lint**: Fixed all remaining linting errors across the codebase.
+
 ## [0.5.13] - 2026-02-25
 
 ### Added

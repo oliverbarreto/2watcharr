@@ -45,6 +45,12 @@ Things & Ideas to investigate:
 
 
 ## Implemented Features
+ 
+20260225 - Release 0.6.0:
+- [x] "Archive" feature implementation (hide/unhide episodes).
+- [x] Dedicated "Archived" page with filtering and bulk actions.
+- [x] Resolved "ambiguous column name" SQL errors in stats queries.
+- [x] Fully clean linting and resolved all merge conflicts.
 
 20260225 - Release 0.5.13:
 - [x] Cycling like/dislike/meh button for episode cards in list and grid views.
