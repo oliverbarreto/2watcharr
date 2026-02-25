@@ -5,7 +5,7 @@ export type MediaType = 'video' | 'podcast';
 export type WatchStatus = 'unwatched' | 'pending' | 'watched';
 export type LikeStatus = 'none' | 'like' | 'dislike';
 
-export type MediaEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored' | 'tagged' | 'pending';
+export type MediaEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored' | 'tagged' | 'pending' | 'liked' | 'disliked' | 'like_reset' | 'priority_high' | 'priority_normal' | 'priority_low';
 
 export interface MediaEvent {
     id: string;
