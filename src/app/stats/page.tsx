@@ -125,7 +125,6 @@ export default function StatsPage() {
     const [visibleChannels, setVisibleChannels] = useState<string[]>([]);
     const [channelMetric, setChannelMetric] = useState<'added' | 'watched' | 'favorited' | 'priority' | 'liked' | 'disliked'>('added');
     const [channelSearchQuery, setChannelSearchQuery] = useState('');
-    const [isResetting, setIsResetting] = useState(false);
 
     // Handle search debouncing
     useEffect(() => {
