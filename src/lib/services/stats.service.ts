@@ -42,6 +42,14 @@ export interface DashboardStats {
         created_at: number;
         tags?: { name: string; color: string }[];
     }[];
+    channelsTimeSeries: {
+        added: { date: string; [channel: string]: number | string }[];
+        watched: { date: string; [channel: string]: number | string }[];
+        favorited: { date: string; [channel: string]: number | string }[];
+        priority: { date: string; [channel: string]: number | string }[];
+        liked: { date: string; [channel: string]: number | string }[];
+        disliked: { date: string; [channel: string]: number | string }[];
+    };
 }
 
 export class StatsService {
@@ -55,6 +63,7 @@ export class StatsService {
         const activityTimeSeries = await this.getActivityTimeSeries(userId, period);
         const tagsTimeSeries = await this.getTagsTimeSeries(userId, period);
         const detailedStats = await this.getDetailedStats(userId, period);
+        const channelsTimeSeries = await this.getChannelsTimeSeries(userId, period);
 
         return {
             counts,
@@ -62,7 +71,8 @@ export class StatsService {
             playTime,
             activityTimeSeries,
             tagsTimeSeries,
-            detailedStats
+            detailedStats,
+            channelsTimeSeries
         };
     }
 
@@ -346,5 +356,120 @@ export class StatsService {
         });
 
         return Object.values(bucketedData).sort((a, b) => (a.date as string).localeCompare(b.date as string)) as { [tag: string]: number | string; date: string }[];
+    }
+
+    private async getChannelsTimeSeries(userId: string, period: string) {
+        const metrics = ['added', 'watched', 'favorited', 'priority_high', 'liked', 'disliked'];
+        const result: DashboardStats['channelsTimeSeries'] = {
+            added: [],
+            watched: [],
+            favorited: [],
+            priority: [],
+            liked: [],
+            disliked: []
+        };
+
+        for (const metric of metrics) {
+            const timeSeries = await this.getChannelMetricTimeSeries(userId, period, metric);
+            if (metric === 'priority_high') {
+                result.priority = timeSeries;
+            } else {
+                result[metric as keyof DashboardStats['channelsTimeSeries']] = timeSeries;
+            }
+        }
+
+        return result;
+    }
+
+    private async getChannelMetricTimeSeries(userId: string, period: string, metric: string) {
+        let threshold = 0;
+        const now = Math.floor(Date.now() / 1000);
+        
+        let timeFormat = '';
+        if (period === 'day') {
+            threshold = now - 86400;
+            timeFormat = '%Y-%m-%dT%H:00:00';
+        } else if (period === 'week' || period === 'month') {
+            threshold = period === 'week' ? now - 604800 : now - 2592000;
+            timeFormat = '%Y-%m-%d';
+        } else if (period === 'year' || period === 'total') {
+            if (period === 'year') {
+                const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+                threshold = Math.floor(startOfYear.getTime() / 1000);
+            }
+            timeFormat = '%Y-%m';
+        }
+
+        // Base query for events
+        const query = `
+            SELECT 
+                strftime('${timeFormat}', me.created_at, 'unixepoch') as time_bucket,
+                c.name as channel_name,
+                COUNT(*) as count
+            FROM media_events me
+            JOIN episodes e ON me.episode_id = e.id
+            JOIN channels c ON e.channel_id = c.id
+            WHERE me.event_type = ? AND (e.user_id = ? OR e.user_id IS NULL) AND me.created_at >= ?
+            GROUP BY time_bucket, channel_name
+            ORDER BY time_bucket ASC
+        `;
+
+        const rows = await this.db.all(query, [metric, userId, threshold]);
+
+        // If no events for some metrics (like priority/likes which were just added), 
+        // fallback to current state for 'total' or 'year' if applicable?
+        // Actually, historical data for these won't have events, so maybe we query the episodes table directly for some metrics if events are missing.
+        
+        // Fallback for priority/likes if no events found and period is large
+        if (rows.length === 0 && (period === 'total' || period === 'year' || period === 'month')) {
+            if (metric === 'priority_high') {
+                return this.getFallbackChannelMetricTimeSeries(userId, period, timeFormat, threshold, 'priority', 'high');
+            } else if (metric === 'liked') {
+                return this.getFallbackChannelMetricTimeSeries(userId, period, timeFormat, threshold, 'like_status', 'like');
+            } else if (metric === 'disliked') {
+                return this.getFallbackChannelMetricTimeSeries(userId, period, timeFormat, threshold, 'like_status', 'dislike');
+            } else if (metric === 'favorited') {
+                return this.getFallbackChannelMetricTimeSeries(userId, period, timeFormat, threshold, 'favorite', 1);
+            }
+        }
+
+        // Group rows by time_bucket
+        const bucketedData: Record<string, Record<string, number | string>> = {};
+        rows.forEach(row => {
+            if (!bucketedData[row.time_bucket]) {
+                bucketedData[row.time_bucket] = { date: row.time_bucket };
+            }
+            bucketedData[row.time_bucket][row.channel_name] = row.count;
+        });
+
+        return Object.values(bucketedData).sort((a, b) => (a.date as string).localeCompare(b.date as string)) as { [channel: string]: number | string; date: string }[];
+    }
+
+    private async getFallbackChannelMetricTimeSeries(userId: string, period: string, timeFormat: string, threshold: number, column: string, value: string | number) {
+        // Query episodes directly based on their creation date as a proxy for when the metric was set
+        // (This is not perfect but better than an empty chart for existing data)
+        const query = `
+            SELECT 
+                strftime('${timeFormat}', e.created_at, 'unixepoch') as time_bucket,
+                c.name as channel_name,
+                COUNT(*) as count
+            FROM episodes e
+            JOIN channels c ON e.channel_id = c.id
+            WHERE e.${column} = ? AND e.user_id = ? AND e.created_at >= ? AND e.is_deleted = 0
+            GROUP BY time_bucket, channel_name
+            ORDER BY time_bucket ASC
+        `;
+
+        const rows = await this.db.all(query, [value, userId, threshold]);
+
+        const bucketedData: Record<string, Record<string, number | string>> = {};
+        rows.forEach(row => {
+            if (!bucketedData[row.time_bucket]) {
+                bucketedData[row.time_bucket] = { date: row.time_bucket };
+            }
+            bucketedData[row.time_bucket][row.channel_name] = row.count;
+        });
+
+        return Object.values(bucketedData).sort((a, b) => (a.date as string).localeCompare(b.date as string)) as { [channel: string]: number | string; date: string }[];
     }
 }

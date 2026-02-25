@@ -36,6 +36,8 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { 
     ChartContainer, 
@@ -91,6 +93,14 @@ interface DashboardStats {
         date: string;
         [tag: string]: number | string;
     }[];
+    channelsTimeSeries: {
+        added: { date: string; [channel: string]: number | string }[];
+        watched: { date: string; [channel: string]: number | string }[];
+        favorited: { date: string; [channel: string]: number | string }[];
+        priority: { date: string; [channel: string]: number | string }[];
+        liked: { date: string; [channel: string]: number | string }[];
+        disliked: { date: string; [channel: string]: number | string }[];
+    };
     detailedStats: {
         title: string;
         type: string;
@@ -110,6 +120,8 @@ export default function StatsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(20);
     const [visibleTags, setVisibleTags] = useState<string[]>([]);
+    const [visibleChannels, setVisibleChannels] = useState<string[]>([]);
+    const [channelMetric, setChannelMetric] = useState<'added' | 'watched' | 'favorited' | 'priority' | 'liked' | 'disliked'>('added');
 
     // Handle search debouncing
     useEffect(() => {
@@ -139,13 +151,24 @@ export default function StatsPage() {
                 // Show top 5 tags by default if many
                 setVisibleTags(Array.from(allTags).slice(0, 5));
             }
+
+            // Set initial visible channels (top 5 by current metric)
+            if (data.channelsTimeSeries[channelMetric].length > 0) {
+                const allChannels = new Set<string>();
+                data.channelsTimeSeries[channelMetric].forEach(point => {
+                    Object.keys(point).forEach(key => {
+                        if (key !== 'date') allChannels.add(key);
+                    });
+                });
+                setVisibleChannels(Array.from(allChannels).slice(0, 5));
+            }
         } catch (error) {
             console.error('Error fetching stats:', error);
             toast.error('Failed to load statistics');
         } finally {
             setIsLoading(false);
         }
-    }, [period]);
+    }, [period, channelMetric]);
 
     useEffect(() => {
         fetchStats();
@@ -289,6 +312,22 @@ export default function StatsPage() {
             prev.includes(tagName) 
                 ? prev.filter(t => t !== tagName)
                 : [...prev, tagName]
+        );
+    };
+
+    const allAvailableChannels = stats ? sortStringsAlphabetically(Array.from(new Set(
+        Object.values(stats.channelsTimeSeries).flatMap(points => 
+            points.flatMap(point => 
+                Object.keys(point).filter(key => key !== 'date')
+            )
+        )
+    ))) : [];
+
+    const toggleChannelVisibility = (channelName: string) => {
+        setVisibleChannels(prev => 
+            prev.includes(channelName) 
+                ? prev.filter(t => t !== channelName)
+                : [...prev, channelName]
         );
     };
 
@@ -456,6 +495,7 @@ export default function StatsPage() {
                                 <TabsList className="bg-muted/20 border border-border/50 p-1 rounded-xl">
                                     <TabsTrigger value="activity" className="rounded-lg px-6">Activity</TabsTrigger>
                                     <TabsTrigger value="tags" className="rounded-lg px-6">Tags</TabsTrigger>
+                                    <TabsTrigger value="channels" className="rounded-lg px-6">Channels</TabsTrigger>
                                     <TabsTrigger value="history" className="rounded-lg px-6">Events History</TabsTrigger>
                                 </TabsList>
 
@@ -888,6 +928,165 @@ export default function StatsPage() {
                                         )}
                                     </CardContent>
                                 </Card>
+                            </TabsContent>
+                            <TabsContent value="channels">
+                                <div className="space-y-8">
+                                    {/* Channels Trend Chart */}
+                                    <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden min-h-[450px]">
+                                        <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                            <div className="grid gap-1">
+                                                <CardTitle className="text-lg font-bold">Videos per Channel</CardTitle>
+                                                <CardDescription>Trends by channel over time ({periodLabels[period]})</CardDescription>
+                                            </div>
+                                            
+                                            <RadioGroup 
+                                                value={channelMetric} 
+                                                onValueChange={(v: typeof channelMetric) => setChannelMetric(v)}
+                                                className="flex flex-wrap gap-4 bg-muted/20 p-2 rounded-xl border border-border/50"
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="added" id="added" />
+                                                    <Label htmlFor="added" className="text-xs font-bold cursor-pointer">Added</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="watched" id="watched" />
+                                                    <Label htmlFor="watched" className="text-xs font-bold cursor-pointer">Watched</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="favorited" id="favorited" />
+                                                    <Label htmlFor="favorited" className="text-xs font-bold cursor-pointer">Favorited</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="priority" id="priority" />
+                                                    <Label htmlFor="priority" className="text-xs font-bold cursor-pointer">Priority</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="liked" id="liked" />
+                                                    <Label htmlFor="liked" className="text-xs font-bold cursor-pointer">Liked</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="disliked" id="disliked" />
+                                                    <Label htmlFor="disliked" className="text-xs font-bold cursor-pointer">Disliked</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </CardHeader>
+                                        <CardContent className="h-[380px] w-full pt-4">
+                                            {visibleChannels.length === 0 ? (
+                                                <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
+                                                    <Users className="h-8 w-8 opacity-20" />
+                                                    <p className="text-sm">Select channels to visualize their trend</p>
+                                                </div>
+                                            ) : (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={stats.channelsTimeSeries[channelMetric]} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                                                        <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                                        <XAxis 
+                                                            dataKey="date" 
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            tickMargin={8}
+                                                            tickFormatter={(value) => {
+                                                                const date = new Date(value);
+                                                                if (period === 'day') return date.toLocaleTimeString("en-US", { hour: 'numeric' });
+                                                                if (period === 'year' || period === 'total') return date.toLocaleDateString("en-US", { month: 'short', year: '2-digit' });
+                                                                return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                                                            }}
+                                                            fontSize={10}
+                                                            stroke="rgba(255,255,255,0.3)"
+                                                        />
+                                                        <YAxis 
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            tickMargin={8}
+                                                            fontSize={10}
+                                                            stroke="rgba(255,255,255,0.3)"
+                                                        />
+                                                        <Tooltip 
+                                                            contentStyle={{ 
+                                                                backgroundColor: 'rgba(9, 9, 11, 0.9)', 
+                                                                borderColor: 'rgba(39, 39, 42, 1)',
+                                                                borderRadius: '12px',
+                                                                backdropFilter: 'blur(8px)',
+                                                                color: '#fff',
+                                                                fontSize: '12px'
+                                                            }}
+                                                            itemStyle={{ fontWeight: 'bold' }}
+                                                        />
+                                                        <Legend />
+                                                        {visibleChannels.map((channel, index) => (
+                                                            <Line
+                                                                key={channel}
+                                                                type="monotone"
+                                                                dataKey={channel}
+                                                                stroke={`hsl(${index * 137.5 % 360}, 70%, 60%)`}
+                                                                strokeWidth={2.5}
+                                                                dot={{ r: 2, fill: `hsl(${index * 137.5 % 360}, 70%, 60%)`, strokeWidth: 0 }}
+                                                                activeDot={{ r: 6, strokeWidth: 0 }}
+                                                                connectNulls
+                                                                animationDuration={1000}
+                                                            />
+                                                        ))}
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Channel Selection Section */}
+                                    <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl">
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                                            <div className="grid gap-1">
+                                                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                                    <Users className="h-4 w-4" />
+                                                    Visible Channels
+                                                </CardTitle>
+                                                <CardDescription className="text-xs">Select channels to show in chart</CardDescription>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
+                                                    onClick={() => setVisibleChannels(allAvailableChannels)}
+                                                >
+                                                    Select All
+                                                </Button>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
+                                                    onClick={() => setVisibleChannels([])}
+                                                >
+                                                    Deselect All
+                                                </Button>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="flex flex-wrap gap-x-6 gap-y-3">
+                                                {allAvailableChannels.length === 0 ? (
+                                                    <p className="text-xs text-muted-foreground italic w-full text-center py-4">No channels found for this period</p>
+                                                ) : (
+                                                    allAvailableChannels.map(channel => (
+                                                        <div key={channel} className="flex items-center space-x-2 group shrink-0">
+                                                            <Checkbox 
+                                                                id={`channel-${channel}`} 
+                                                                checked={visibleChannels.includes(channel)}
+                                                                onCheckedChange={() => toggleChannelVisibility(channel)}
+                                                                className="border-border/50 data-[state=checked]:bg-primary"
+                                                            />
+                                                            <label 
+                                                                htmlFor={`channel-${channel}`}
+                                                                className="text-xs font-semibold leading-none cursor-pointer group-hover:text-primary transition-colors whitespace-nowrap"
+                                                            >
+                                                                {channel}
+                                                            </label>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </TabsContent>
                         </Tabs>
                     </div>

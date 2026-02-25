@@ -183,8 +183,21 @@ export class MediaService {
              await this.episodeRepo.addEvent(id, 'restored', episode.title, episode.type);
         }
 
-        if (updates.priority === 'high') {
-            await this.episodeRepo.moveToBeginning(id, episode.userId);
+        if (updates.priority !== undefined) {
+             const priorityEvent = updates.priority === 'high' ? 'priority_high' : 
+                                  updates.priority === 'none' ? 'priority_normal' : 
+                                  `priority_${updates.priority}` as MediaEventType;
+             await this.episodeRepo.addEvent(id, priorityEvent, episode.title, episode.type);
+             
+             if (updates.priority === 'high') {
+                 await this.episodeRepo.moveToBeginning(id, episode.userId);
+             }
+        }
+
+        if (updates.likeStatus !== undefined) {
+             const likeEvent = updates.likeStatus === 'like' ? 'liked' : 
+                              updates.likeStatus === 'dislike' ? 'disliked' : 'like_reset';
+             await this.episodeRepo.addEvent(id, likeEvent, episode.title, episode.type);
         }
 
         return episode;
@@ -319,6 +332,11 @@ export class MediaService {
         const newStatus = episode.likeStatus === status ? 'none' : status;
         const updated = await this.episodeRepo.update(id, { likeStatus: newStatus });
         
+        // Record event
+        const likeEvent = newStatus === 'like' ? 'liked' : 
+                         newStatus === 'dislike' ? 'disliked' : 'like_reset';
+        await this.episodeRepo.addEvent(id, likeEvent, updated.title, updated.type);
+        
         return updated;
     }
 
@@ -327,6 +345,13 @@ export class MediaService {
      */
     async setPriority(id: string, priority: Priority): Promise<MediaEpisode> {
         const episode = await this.episodeRepo.update(id, { priority });
+        
+        // Record event
+        const priorityEvent = priority === 'high' ? 'priority_high' : 
+                             priority === 'none' ? 'priority_normal' : 
+                             `priority_${priority}` as MediaEventType;
+        await this.episodeRepo.addEvent(id, priorityEvent, episode.title, episode.type);
+
         if (priority === 'high') {
             await this.episodeRepo.moveToBeginning(id, episode.userId);
         }
