@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Plus, Settings, LogOut, User, BarChart3, Radio, Library, Search, Gem } from 'lucide-react';
+import { Plus, Settings, LogOut, User, BarChart3, Radio, Library, Search, Gem, Archive, Trash2 } from 'lucide-react';
+
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
@@ -90,7 +91,9 @@ export function Navbar() {
         if (pathname === '/watchnext') return 'Watch Next';
         if (pathname === '/channels') return 'Channels';
         if (pathname === '/stats') return 'Stats';
+        if (pathname === '/archived') return 'Archived';
         if (pathname === '/deleted') return 'Deleted';
+
         if (pathname === '/settings') return 'Settings';
         if (pathname.startsWith('/channels/')) return 'Channel';
         return '';
@@ -177,6 +180,20 @@ export function Navbar() {
                         </Button>
                     )}
                     
+                    <Link href="/archived">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={cn(
+                                "rounded-full h-9 w-9",
+                                pathname === '/archived' && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90"
+                            )}
+                            title="Archived Episodes"
+                        >
+                            <Archive className="h-5 w-5" />
+                        </Button>
+                    </Link>
+
                     <Link href="/settings">
                         <Button 
                             variant="ghost" 
@@ -189,8 +206,6 @@ export function Navbar() {
                             <Settings className="h-5 w-5" />
                         </Button>
                     </Link>
-                    
-                    <ModeToggle />
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -231,6 +246,20 @@ export function Navbar() {
                                     <span>Stats</span>
                                 </Link>
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                                <Link href="/archived" className="cursor-pointer">
+                                    <Archive className="mr-2 h-4 w-4" />
+                                    <span>Archived</span>
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/deleted" className="cursor-pointer">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Deleted</span>
+                                </Link>
+                            </DropdownMenuItem>
+
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                                 className="text-red-500 hover:text-red-600 cursor-pointer"

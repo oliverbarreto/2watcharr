@@ -29,7 +29,10 @@ import {
     ThumbsDown,
     Link as LinkIcon,
     Gem,
+    Archive,
+    ArchiveRestore,
 } from 'lucide-react';
+
 import {
     Tooltip,
     TooltipContent,
@@ -76,6 +79,9 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
     const [isSavingNote, setIsSavingNote] = useState(false);
     const [likeStatus, setLikeStatus] = useState(episode.likeStatus);
     const [isCopying, setIsCopying] = useState(false);
+    const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+    const [isUnarchiveDialogOpen, setIsUnarchiveDialogOpen] = useState(false);
+
 
     // Sync state when episode prop changes
     useEffect(() => {
@@ -254,6 +260,44 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
             toast.error('Failed to restore episode');
         }
     };
+
+    const handleArchive = async () => {
+        try {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isArchived: true, archivedAt: Math.floor(Date.now() / 1000) }),
+            });
+
+            if (!response.ok) throw new Error('Failed to archive episode');
+
+            toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} moved to archive`);
+            setIsArchiveDialogOpen(false);
+            onDelete?.(); // Remove from current list
+        } catch {
+            toast.error('Failed to archive episode');
+        }
+    };
+
+    const handleUnarchive = async () => {
+        try {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isArchived: false, archivedAt: null }),
+            });
+
+            if (!response.ok) throw new Error('Failed to unarchive episode');
+
+            toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} restored from archive`);
+            setIsUnarchiveDialogOpen(false);
+            window.dispatchEvent(new Event('episode-unarchived'));
+            onDelete?.(); // Remove from archived list
+        } catch {
+            toast.error('Failed to unarchive episode');
+        }
+    };
+
 
     const handleReorder = async (position: 'beginning' | 'end') => {
         try {
@@ -636,6 +680,38 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                             <TagIcon className="h-4 w-4" />
                         </Button>
 
+                        {/* Archive/Unarchive Button */}
+                        {episode.isArchived ? (
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 flex text-green-500 hover:text-green-600 hover:bg-green-500/10"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsUnarchiveDialogOpen(true);
+                                }}
+                                title="Unarchive"
+                            >
+                                <ArchiveRestore className="h-4 w-4" />
+                            </Button>
+                        ) : (
+                            !episode.isDeleted && (
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 flex text-zinc-400 hover:text-zinc-100"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsArchiveDialogOpen(true);
+                                    }}
+                                    title="Archive"
+                                >
+                                    <Archive className="h-4 w-4" />
+                                </Button>
+                            )
+                        )}
+
+
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
@@ -734,8 +810,29 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                         Remove from list
                                     </DropdownMenuItem>
                                 )}
+
+                                {episode.isArchived ? (
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        setIsUnarchiveDialogOpen(true);
+                                    }} className="text-green-600 font-medium">
+                                        <ArchiveRestore className="mr-2 h-4 w-4" />
+                                        Unarchive
+                                    </DropdownMenuItem>
+                                ) : (
+                                    !episode.isDeleted && (
+                                        <DropdownMenuItem onSelect={(e) => {
+                                            e.preventDefault();
+                                            setIsArchiveDialogOpen(true);
+                                        }} className="text-zinc-400 font-medium">
+                                            <Archive className="mr-2 h-4 w-4" />
+                                            Archive
+                                        </DropdownMenuItem>
+                                    )
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
+
                     </div>
                 </div>
 
@@ -806,55 +903,45 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                 </div>
             </div>
 
-            <CommandDialog 
-                open={isTagPopoverOpen} 
-                onOpenChange={setIsTagPopoverOpen}
-                title="Manage Tags"
-                description="Search or create tags for this episode"
-            >
-                <CommandInput
-                    placeholder="Search or create tag..."
-                    value={searchQuery}
-                    onValueChange={setSearchQuery}
-                />
-                <CommandList>
-                    <CommandEmpty>
-                        {searchQuery.trim() && (
-                            <Button
-                                variant="ghost"
-                                className="w-full justify-start text-xs h-8"
-                                onClick={() => handleCreateTag(searchQuery)}
-                                disabled={isUpdatingTags}
-                            >
-                                <Plus className="h-3 w-3 mr-2" />
-                                Create &quot;{searchQuery}&quot;
-                            </Button>
-                        )}
-                        {!searchQuery.trim() && "No tags found."}
-                    </CommandEmpty>
-                    <CommandGroup heading="Recent Tags">
-                        {availableTags.map((tag) => {
-                            const isSelected = episode.tags?.some(t => t.id === tag.id);
-                            return (
-                                <CommandItem
-                                    key={tag.id}
-                                    onSelect={() => handleToggleTag(tag.id)}
-                                    className="flex items-center justify-between"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <div
-                                            className="w-2 h-2 rounded-full"
-                                            style={{ backgroundColor: tag.color || '#94a3b8' }}
-                                        />
-                                        <span>{tag.name}</span>
-                                    </div>
-                                    {isSelected && <Check className="h-3 w-3" />}
-                                </CommandItem>
-                            );
-                        })}
-                    </CommandGroup>
-                </CommandList>
-            </CommandDialog>
+            {/* Archive Confirmation Dialog */}
+            <Dialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+                <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle>Archive Episode</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Are you sure you want to archive &quot;{episode.title}&quot;? It will be moved to your archived list.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={() => setIsArchiveDialogOpen(false)} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleArchive} className="bg-zinc-800 hover:bg-zinc-700 text-white">
+                            Archive
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Unarchive Confirmation Dialog */}
+            <Dialog open={isUnarchiveDialogOpen} onOpenChange={setIsUnarchiveDialogOpen}>
+                <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle>Unarchive Episode</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Are you sure you want to unarchive &quot;{episode.title}&quot;? It will be moved back to your active list.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={() => setIsUnarchiveDialogOpen(false)} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleUnarchive} className="bg-green-600 hover:bg-green-700 text-white">
+                            Unarchive
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Note Modal */}
             <Dialog open={isNoteModalOpen} onOpenChange={setIsNoteModalOpen}>
@@ -892,6 +979,60 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                             {isSavingNote ? 'Saving...' : 'Save Note'}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
+                <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+                    <CommandDialog 
+                        open={isTagPopoverOpen} 
+                        onOpenChange={setIsTagPopoverOpen}
+                        title="Manage Tags"
+                        description="Search or create tags for this episode"
+                    >
+                        <CommandInput
+                            placeholder="Search or create tag..."
+                            value={searchQuery}
+                            onValueChange={setSearchQuery}
+                        />
+                        <CommandList>
+                            <CommandEmpty>
+                                {searchQuery.trim() && (
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full justify-start text-xs h-8"
+                                        onClick={() => handleCreateTag(searchQuery)}
+                                        disabled={isUpdatingTags}
+                                    >
+                                        <Plus className="h-3 w-3 mr-2" />
+                                        Create &quot;{searchQuery}&quot;
+                                    </Button>
+                                )}
+                                {!searchQuery.trim() && "No tags found."}
+                            </CommandEmpty>
+                            <CommandGroup heading="Recent Tags">
+                                {availableTags.map((tag) => {
+                                    const isSelected = episode.tags?.some(t => t.id === tag.id);
+                                    return (
+                                        <CommandItem
+                                            key={tag.id}
+                                            onSelect={() => handleToggleTag(tag.id)}
+                                            className="flex items-center justify-between pointer-events-auto cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="w-2 h-2 rounded-full"
+                                                    style={{ backgroundColor: tag.color || '#94a3b8' }}
+                                                />
+                                                <span>{tag.name}</span>
+                                            </div>
+                                            {isSelected && <Check className="h-3 w-3" />}
+                                        </CommandItem>
+                                    );
+                                })}
+                            </CommandGroup>
+                        </CommandList>
+                    </CommandDialog>
                 </DialogContent>
             </Dialog>
         </div>

@@ -17,7 +17,10 @@ const updateEpisodeSchema = z.object({
     tagIds: z.array(z.string()).optional(),
     likeStatus: z.enum(['none', 'like', 'dislike']).optional(),
     notes: z.string().max(1000).optional().nullable(),
+    isArchived: z.boolean().optional(),
+    archivedAt: z.number().optional(),
 });
+
 
 /**
  * GET /api/episodes/[id] - Get a single episode

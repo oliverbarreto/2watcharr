@@ -96,6 +96,7 @@ export class EpisodeRepository {
             FROM episodes e 
             LEFT JOIN channels c ON e.channel_id = c.id 
             WHERE e.id = ?
+
         `, id);
         if (!row) return null;
 
@@ -197,6 +198,15 @@ export class EpisodeRepository {
             // Default: only show non-deleted episodes
             conditions.push('e.is_deleted = 0');
         }
+
+        if (filters?.isArchived !== undefined) {
+            conditions.push('e.is_archived = ?');
+            params.push(filters.isArchived ? 1 : 0);
+        } else {
+            // Default: only show non-archived episodes
+            conditions.push('e.is_archived = 0');
+        }
+
 
         if (filters?.channelId) {
             conditions.push('e.channel_id = ?');
@@ -350,6 +360,14 @@ export class EpisodeRepository {
             conditions.push('e.is_deleted = 0');
         }
 
+        if (filters?.isArchived !== undefined) {
+            conditions.push('e.is_archived = ?');
+            params.push(filters.isArchived ? 1 : 0);
+        } else {
+            conditions.push('e.is_archived = 0');
+        }
+
+
         if (filters?.channelId) {
             conditions.push('e.channel_id = ?');
             params.push(filters.channelId);
@@ -470,6 +488,15 @@ export class EpisodeRepository {
             updates.push('notes = ?');
             params.push(dto.notes);
         }
+        if (dto.isArchived !== undefined) {
+            updates.push('is_archived = ?');
+            params.push(dto.isArchived ? 1 : 0);
+        }
+        if (dto.archivedAt !== undefined) {
+            updates.push('archived_at = ?');
+            params.push(dto.archivedAt);
+        }
+
 
         updates.push('updated_at = ?');
         params.push(Math.floor(Date.now() / 1000));
@@ -693,9 +720,12 @@ export class EpisodeRepository {
                 return `last_favorited_at ${direction}`;
             case 'date_removed':
                 return `last_removed_at ${direction}`;
+            case 'archived_at':
+                return `e.archived_at ${direction}, e.created_at DESC`;
             default:
                 return 'e.custom_order ASC, e.created_at DESC';
         }
+
     }
 
     private mapRowToEpisode(row: Record<string, unknown>): MediaEpisode {
@@ -722,9 +752,12 @@ export class EpisodeRepository {
             isShort: Boolean(row.is_short),
             likeStatus: (row.like_status as LikeStatus) || 'none',
             notes: row.notes as string | null,
+            isArchived: Boolean(row.is_archived),
+            archivedAt: row.archived_at as number | undefined,
             userId: row.user_id as string,
             createdAt: row.created_at as number,
             updatedAt: row.updated_at as number,
+
             lastAddedAt: (row.last_added_at as number) || undefined,
             lastWatchedAt: (row.last_watched_at as number) || undefined,
             lastPendingAt: (row.last_pending_at as number) || undefined,
