@@ -20,8 +20,9 @@ These are some features we want to add to the app but are not specidifed yet:
     - In the future, we will investigate how to do it for other platforms such as for podcasts. We can always fallback to downloading the audio file and using a service to extract the transcript. (docs/specs/roadmap/todo/FEATURE-download-transcripts.md)
 
 - [ ] FEATURE: We want to create a way to visualize some channels stats. We want to visualize:
-    - videos added/watched by channel 
-    - videos favorited/with priority/liked/disliked by channel 
+    - videos added/watched by channel: i think the best way to achieve this graphically is to create a chart like the one we already have for Videos per Tag, where we have the tags below and we allow selecting individual tags to show on the chart, and offer options for selecting and deselecting all, but for episodes by channel. 
+    
+    We then can have a radio buttons group where we can toggle to show added vs watched episodes, and favorited/with priority/liked/disliked by channel. 
 
 - [ ] FEATURE: Recommendations 
     - Create a new page to show the recommendations based on the user preferences.
