@@ -97,6 +97,7 @@ export async function GET(request: NextRequest) {
             channelIds,
             userId,
             isDeleted: searchParams.get('isDeleted') === 'true' ? true : undefined,
+            isArchived: searchParams.get('isArchived') === 'true' ? true : (searchParams.get('isArchived') === 'false' ? false : undefined),
             priority,
         };
 

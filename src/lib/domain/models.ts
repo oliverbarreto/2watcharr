@@ -52,7 +52,10 @@ export interface MediaEpisode {
     isShort: boolean;
     likeStatus: LikeStatus;
     notes: string | null;
+    isArchived: boolean;
+    archivedAt?: number;
     userId: string;
+
     tags?: Tag[];
     createdAt: number;
     updatedAt: number;
@@ -123,7 +126,10 @@ export interface UpdateEpisodeDto {
     isShort?: boolean;
     likeStatus?: LikeStatus;
     notes?: string | null;
+    isArchived?: boolean;
+    archivedAt?: number;
 }
+
 
 export interface CreateChannelDto {
     id: string;
@@ -157,10 +163,12 @@ export interface EpisodeFilters {
     likeStatus?: LikeStatus;
     hasNotes?: boolean;
     priority?: Priority;
+    isArchived?: boolean;
     userId?: string;
 }
 
-export type SortField = 'created_at' | 'priority' | 'favorite' | 'duration' | 'title' | 'custom' | 'date_added' | 'date_watched' | 'date_favorited' | 'date_removed';
+
+export type SortField = 'created_at' | 'priority' | 'favorite' | 'duration' | 'title' | 'custom' | 'date_added' | 'date_watched' | 'date_favorited' | 'date_removed' | 'archived_at';
 export type SortOrder = 'asc' | 'desc';
 
 export interface SortOptions {

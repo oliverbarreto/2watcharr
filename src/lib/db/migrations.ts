@@ -3,6 +3,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { addLikeStatus } from './migrations/add_like_status';
 import { addTagLastUsedAt } from './migrations/add_tag_last_used_at';
+import { addArchiveFields } from './migrations/add_archive_fields';
+
 
 /**
  * Run database migrations
@@ -704,4 +706,8 @@ export async function runMigrations(db: Database): Promise<void> {
 
   // Run last_used_at migration for tags
   await addTagLastUsedAt(db);
+
+  // Run archive fields migration
+  await addArchiveFields(db);
 }
+

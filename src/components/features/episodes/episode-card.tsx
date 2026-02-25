@@ -36,7 +36,10 @@ import {
     ThumbsDown,
     Link as LinkIcon,
     Gem,
+    Archive,
+    ArchiveRestore,
 } from 'lucide-react';
+
 import {
     CommandDialog,
     CommandEmpty,
@@ -71,6 +74,9 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
     const [isSavingNote, setIsSavingNote] = useState(false);
     const [likeStatus, setLikeStatus] = useState(episode.likeStatus);
     const [isCopying, setIsCopying] = useState(false);
+    const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+    const [isUnarchiveDialogOpen, setIsUnarchiveDialogOpen] = useState(false);
+
 
     // Sync state when episode prop changes
     useEffect(() => {
@@ -229,6 +235,44 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
             toast.error('Failed to restore episode');
         }
     };
+
+    const handleArchive = async () => {
+        try {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isArchived: true, archivedAt: Math.floor(Date.now() / 1000) }),
+            });
+
+            if (!response.ok) throw new Error('Failed to archive episode');
+
+            toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} moved to archive`);
+            setIsArchiveDialogOpen(false);
+            onDelete?.(); // Use onDelete to remove from current list
+        } catch {
+            toast.error('Failed to archive episode');
+        }
+    };
+
+    const handleUnarchive = async () => {
+        try {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isArchived: false, archivedAt: null }),
+            });
+
+            if (!response.ok) throw new Error('Failed to unarchive episode');
+
+            toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} restored from archive`);
+            setIsUnarchiveDialogOpen(false);
+            window.dispatchEvent(new Event('episode-unarchived'));
+            onDelete?.(); // Remove from archived view
+        } catch {
+            toast.error('Failed to unarchive episode');
+        }
+    };
+
 
     const handleReorder = async (position: 'beginning' | 'end') => {
         try {
@@ -624,6 +668,38 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                 <Star className={`h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                             </Button>
 
+                            {/* Archive/Unarchive Button */}
+                            {episode.isArchived ? (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsUnarchiveDialogOpen(true);
+                                    }}
+                                    className="flex-shrink-0 text-green-500 hover:text-green-600 hover:bg-green-500/10"
+                                    title="Unarchive"
+                                >
+                                    <ArchiveRestore className="h-4 w-4" />
+                                </Button>
+                            ) : (
+                                !episode.isDeleted && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsArchiveDialogOpen(true);
+                                        }}
+                                        className="flex-shrink-0 text-zinc-400 hover:text-zinc-100"
+                                        title="Archive"
+                                    >
+                                        <Archive className="h-4 w-4" />
+                                    </Button>
+                                )
+                            )}
+
+
                             <Button
                                 size="sm"
                                 variant="outline"
@@ -801,6 +877,25 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                         </DropdownMenuItem>
                                     )}
 
+                                    {episode.isArchived ? (
+                                        <DropdownMenuItem onSelect={(e) => {
+                                            e.preventDefault();
+                                            setIsUnarchiveDialogOpen(true);
+                                        }} className="text-green-600 font-medium">
+                                            <ArchiveRestore className="mr-2 h-4 w-4" />
+                                            Unarchive
+                                        </DropdownMenuItem>
+                                    ) : (
+                                        !episode.isDeleted && (
+                                            <DropdownMenuItem onSelect={(e) => {
+                                                e.preventDefault();
+                                                setIsArchiveDialogOpen(true);
+                                            }} className="text-zinc-400 font-medium">
+                                                <Archive className="mr-2 h-4 w-4" />
+                                                Archive
+                                            </DropdownMenuItem>
+                                        )
+                                    )}
                                     <DropdownMenuSeparator />
                                     
                                 </DropdownMenuContent>
@@ -834,8 +929,49 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                 </DialogContent>
             </Dialog>
 
+            {/* Archive Confirmation Dialog */}
+            <Dialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+                <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle>Archive Episode</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Are you sure you want to archive &quot;{episode.title}&quot;? It will be moved to your archived list.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={() => setIsArchiveDialogOpen(false)} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleArchive} className="bg-zinc-800 hover:bg-zinc-700 text-white">
+                            Archive
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Unarchive Confirmation Dialog */}
+            <Dialog open={isUnarchiveDialogOpen} onOpenChange={setIsUnarchiveDialogOpen}>
+                <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle>Unarchive Episode</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Are you sure you want to unarchive &quot;{episode.title}&quot;? It will be moved back to your active list.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={() => setIsUnarchiveDialogOpen(false)} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleUnarchive} className="bg-green-600 hover:bg-green-700 text-white">
+                            Unarchive
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {/* Note Modal */}
             <Dialog open={isNoteModalOpen} onOpenChange={setIsNoteModalOpen}>
+
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle>{episode.notes ? 'Edit Note' : 'Add Note'}</DialogTitle>

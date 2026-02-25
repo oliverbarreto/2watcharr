@@ -5,7 +5,17 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout';
 import { FilterBar, EpisodeList } from '@/components/features/episodes';
 import { Button } from '@/components/ui/button';
-import { X, List, LayoutGrid } from 'lucide-react';
+import { X, List, LayoutGrid, Archive } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
+
 
 interface Filters {
   search?: string;
@@ -97,6 +107,9 @@ function WatchNextPageContent() {
   });
 
   const [counts, setCounts] = useState({ current: 0, total: 0, totalDuration: 0 });
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+
 
   const handleCountChange = useCallback((current: number, total: number, totalDuration: number) => {
     setCounts(prev => {
@@ -154,6 +167,28 @@ function WatchNextPageContent() {
     const queryString = params.toString();
     router.push(`/watchnext${queryString ? '?' + queryString : ''}`);
   };
+
+  const handleArchiveAllWatched = async () => {
+    setIsArchiving(true);
+    try {
+      const response = await fetch('/api/episodes/archive-all-watched', {
+        method: 'POST',
+      });
+
+      if (!response.ok) throw new Error('Failed to archive watched episodes');
+
+      const data = await response.json();
+      toast.success(`Archived ${data.count} watched episodes`);
+      setIsArchiveDialogOpen(false);
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Error archiving watched episodes:', error);
+      toast.error('Failed to archive watched episodes');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
 
   useEffect(() => {
     const handleAdded = () => setRefreshKey((prev) => prev + 1);
@@ -223,8 +258,49 @@ function WatchNextPageContent() {
                 </>
               )}
             </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsArchiveDialogOpen(true)}
+              className="gap-2 text-zinc-400 hover:text-zinc-100"
+              title="Archive all watched episodes"
+            >
+              <Archive className="h-4 w-4" />
+              <span className="hidden sm:inline">Archive Watched</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/archived')}
+              className="gap-2"
+            >
+              <Archive className="h-4 w-4" />
+              <span className="hidden sm:inline">View Archived</span>
+            </Button>
           </div>
         </div>
+
+        <Dialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+            <DialogHeader>
+              <DialogTitle>Archive Watched Episodes</DialogTitle>
+              <DialogDescription className="text-zinc-400">
+                Are you sure you want to archive all watched episodes in your Watch Next list? This will move them to the archived section.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button variant="ghost" onClick={() => setIsArchiveDialogOpen(false)} className="text-zinc-400 hover:text-white" disabled={isArchiving}>
+                Cancel
+              </Button>
+              <Button onClick={handleArchiveAllWatched} className="bg-zinc-800 hover:bg-zinc-700 text-white" disabled={isArchiving}>
+                {isArchiving ? 'Archiving...' : 'Archive All Watched'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {/* Floating Filters */}
         {showFilters && (

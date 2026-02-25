@@ -333,6 +333,69 @@ export class MediaService {
         return episode;
     }
 
+    
+    /**
+     * Archive an episode
+     */
+    async archiveEpisode(id: string): Promise<MediaEpisode> {
+        const now = Math.floor(Date.now() / 1000);
+        const episode = await this.episodeRepo.update(id, { 
+            isArchived: true, 
+            archivedAt: now 
+        });
+        return episode;
+    }
+
+    /**
+     * Unarchive an episode
+     */
+    async unarchiveEpisode(id: string): Promise<MediaEpisode> {
+        const episode = await this.episodeRepo.update(id, { 
+            isArchived: false,
+            archivedAt: undefined
+        });
+        return episode;
+    }
+
+    /**
+     * Archive all watched episodes for a user
+     */
+    async bulkArchiveWatched(userId: string): Promise<void> {
+        const episodes = await this.episodeRepo.findAll({ 
+            userId, 
+            watchStatus: 'watched',
+            isArchived: false,
+            isDeleted: false
+        });
+        
+        const now = Math.floor(Date.now() / 1000);
+        for (const episode of episodes) {
+            await this.episodeRepo.update(episode.id, { 
+                isArchived: true,
+                archivedAt: now
+            });
+        }
+    }
+
+    /**
+     * Unarchive all archived episodes for a user
+     */
+    async bulkUnarchiveAll(userId: string): Promise<void> {
+        const episodes = await this.episodeRepo.findAll({ 
+            userId, 
+            isArchived: true,
+            isDeleted: false
+        });
+        
+        for (const episode of episodes) {
+            await this.episodeRepo.update(episode.id, { 
+                isArchived: false,
+                archivedAt: undefined
+            });
+        }
+    }
+
+
     /**
      * Reorder episodes
      */

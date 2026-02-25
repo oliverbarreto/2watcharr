@@ -4,7 +4,8 @@ import { format, isToday, isYesterday, startOfDay, isSameWeek } from 'date-fns';
 /**
  * Date-based sort fields that should trigger grouping
  */
-export const DATE_SORT_FIELDS = ['date_added', 'date_watched', 'date_favorited', 'date_removed'] as const;
+export const DATE_SORT_FIELDS = ['date_added', 'date_watched', 'date_favorited', 'date_removed', 'archived_at'] as const;
+
 
 /**
  * Grouped episodes structure
@@ -37,10 +38,13 @@ export function getTimestampForSort(episode: MediaEpisode, sortField: string): n
       return episode.lastFavoritedAt;
     case 'date_removed':
       return episode.lastRemovedAt;
+    case 'archived_at':
+      return episode.archivedAt;
     default:
       return undefined;
   }
 }
+
 
 /**
  * Format a Unix timestamp into a user-friendly date label
@@ -92,10 +96,13 @@ export function getNoDateLabel(sortField: string): string {
       return 'Not Removed';
     case 'date_added':
       return 'No Date';
+    case 'archived_at':
+      return 'Not Archived';
     default:
       return 'All Episodes';
   }
 }
+
 
 /**
  * Group episodes by date based on the sort field
