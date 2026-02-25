@@ -8,15 +8,6 @@
 
 These are some features we want to add to the app but are not specidifed yet:
 
-- [ ] FEATURE: we need to create a way to archive episodes from the "Watch Next" list to make it more organized and less cluttered with episodes that were already watched or are not going to be watched. 
-    - The first step is to create a new page to show the archived episodes.
-    - The second step is to create a way to move episodes from the "Watch Next" list to the archived episodes list. This includes a button in the episode cards both the list and the grid view to move a episode to the archived episodes list. This button should only be visible in the "Watch Next" page. It should show a confirmation modal to confirm the action.
-    - We also need to add a button to archive watched episodes from the watch next page. This button should be visible in both the list and the grid view to the left of the toggle for list/grid view. It should show a confirmation modal to confirm the action.
-    - In the archived episodes list page, we also need to add a button to unarchive episodes from the archived episodes list. This button should be visible in both the list and the grid view to the left of the toggle for list/grid view. It should show a confirmation modal to confirm the action. We can also add a button option in episode cards to move individual episodes back to the "Watch Next" list.
-
-- [ ] FEATURE: if not already done, we need to include infinite scrolling in the "Watch Next" page following the same pattern we got in the watchlist.
-
-
 - [ ] FEATURE: 2watcharr BROWSER EXTENSION (CODEX): (docs/specs/roadmap/todo/FEATURE-2watcharr-browser-extension.md)
     - we need to create a way to allow the user to not add a episode via iOS Share Sheet or copya paste in the app, but instead the app or a browser extension could just intercept the url, see that it is a vido or podcast, and add it to a "watch list". 
     - we need to create a way to allow the user to download/import current playlist from youtube and youtube history ... also for other platforms
