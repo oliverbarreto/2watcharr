@@ -8,13 +8,35 @@
 
 These are some features we want to add to the app but are not specidifed yet:
 
-BROWSER EXTENSION (CODEX):
-- [ ] FEATURE: 2watcharr browser extension. (docs/specs/roadmap/todo/FEATURE-2watcharr-browser-extension.md)
-- [ ] a way to allow the user to not add a video via iOS Share Sheet or copya paste in the app, but instead the app or a browser extension could just intercept the url, see that it is a vido or podcast, and add it to a "watch list". 
-- [ ] How to download/import current playlist from youtube and youtube history ... also for other platforms
+- [ ] BUGFIX: In the watch next page there is a weird bug when we use "Move to beginning" and "Move to end" options in the context menu of episode cards and list rows. In some random cases, i move a video to the end/beginning and it doesn't move it to the end/beginning, but instead:
+- if i want to place it at the beginning it is placed after the first epiosde in the queue, 
+- if i want to place it at the end of the queue it is placed before the last epiosde in the queue.
+
+- [ ] FEATURE: we need to include a similar way to add in the list view the like/dislike buttons (we already have them in the cards in the grid view). 
+
+Add the like/dislike buttons to the list view cards to be able to set like/dislike (and the empty status as well, remember that is a valid status, the user does not like nor dislike the episode, it's kind of `meh`) of a episode.
+
+I would like to only have one button with the empty status being represented by a thumbs up icon, but not filled, just the border and colored in gray. When the user clicks on it, it should rotate over the three states: like (thumbs up filled), dislike (thumbs down filled), and empty (thumbs up border, gray). 
+
+- [ ] FEATURE: we need to create a way to archive episodes from the "Watch Next" list to make it more organized and less cluttered with episodes that were already watched or are not going to be watched. 
+    - The first step is to create a new page to show the archived episodes.
+    - The second step is to create a way to move episodes from the "Watch Next" list to the archived episodes list. This includes a button in the episode cards both the list and the grid view to move a episode to the archived episodes list. This button should only be visible in the "Watch Next" page. It should show a confirmation modal to confirm the action.
+    - We also need to add a button to archive watched episodes from the watch next page. This button should be visible in both the list and the grid view to the left of the toggle for list/grid view. It should show a confirmation modal to confirm the action.
+    - In the archived episodes list page, we also need to add a button to unarchive episodes from the archived episodes list. This button should be visible in both the list and the grid view to the left of the toggle for list/grid view. It should show a confirmation modal to confirm the action. We can also add a button option in episode cards to move individual episodes back to the "Watch Next" list.
+
+- [ ] FEATURE: if not already done, we need to include infinite scrolling in the "Watch Next" page following the same pattern we got in the watchlist.
+
+
+- [ ] FEATURE: 2watcharr BROWSER EXTENSION (CODEX): (docs/specs/roadmap/todo/FEATURE-2watcharr-browser-extension.md)
+    - we need to create a way to allow the user to not add a episode via iOS Share Sheet or copya paste in the app, but instead the app or a browser extension could just intercept the url, see that it is a vido or podcast, and add it to a "watch list". 
+    - we need to create a way to allow the user to download/import current playlist from youtube and youtube history ... also for other platforms
+    - we need to publish the browser extension for Chrome, Firefox and Safari
 
 - [ ] FEATURE: Download transcript 
-    - Only youtube videos for now. We need to investigate how to do it for other platforms such as for podcasts. We can always fallback to downloading the audio file and using a service to extract the transcript. (docs/specs/roadmap/todo/FEATURE-download-transcripts.md)
+    - Only download transcript for Youtube videos for now. 
+    - We want to store the transcript in the database and have a way to show it in the episode page. We should only download the transcript with timestamps. We should have a method to convert the text with timestamps to a clean text without the timestamps and save it also in the database.
+    - We should have a way to allow the user to specify the language the user wants to download the transcript for. There should be a settings option to tell the system "Donwnload the transcript in spanish if available". If not available, download the transcript in the default language of the video. 
+    - In the future, we will investigate how to do it for other platforms such as for podcasts. We can always fallback to downloading the audio file and using a service to extract the transcript. (docs/specs/roadmap/todo/FEATURE-download-transcripts.md)
 
 - [ ] FEATURE: We want to create a way to visualize some channels stats. We want to visualize:
     - videos added/watched by channel 
@@ -24,6 +46,8 @@ BROWSER EXTENSION (CODEX):
     - Create a new page to show the recommendations based on the user preferences.
     - We want to have a way to detect "forgotten" videos of a certain topic. Videos that were added in the past of a topic that are still not watched, or also, pending confirmation. 
     - Enable adding reminders to watch certain videos, or videos in a tag (in this sense we can consider a tag as a playlist for a certain topic).
+    - We want to link 2watcharr with a calendar to create reminders for the user to watch the videos. For example, it could pick (following the defined order of priority) the first 5 videos in the watchlist and recommend to watch them in the next 3 days.
+    - we can implement some sort of recommendation of time slots to consume episodes to try to fit the max number of episodes according to their duration into a time slot of x hours. For example we got videos of 15, 20, 25, 30, 35, 40, 45, 50, 55, 60 minutes. We can try to fit the max number of episodes into a time slot of 60 minutes following the play list order. We can propose various episodes of 15, 20, but not various of 45 or larger.
 
 - [ ] `./docs/specs/roadmap/todo/FEATURE-async-request-and-client-ui.md`
 - [ ] `./docs/specs/roadmap/todo/FEATURE-return-episode-title-to-ios-shortcut-to-display-name-on-notification.md`

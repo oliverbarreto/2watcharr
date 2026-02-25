@@ -13,6 +13,7 @@ interface GroupedEpisodeListProps {
   viewMode: 'grid' | 'list';
   onUpdate?: () => void;
   onDelete?: () => void;
+  showReorderOptions?: boolean;
 }
 
 export function GroupedEpisodeList({
@@ -22,6 +23,7 @@ export function GroupedEpisodeList({
   viewMode,
   onUpdate,
   onDelete,
+  showReorderOptions = true,
 }: GroupedEpisodeListProps) {
   const groups = groupEpisodesByDate(episodes, sortField, sortOrder);
 
@@ -57,7 +59,8 @@ export function GroupedEpisodeList({
                   episode={episode}
                   onUpdate={onUpdate}
                   onDelete={onDelete}
-                  isDraggable={false}
+                  isDraggable={showReorderOptions && sortField === 'custom'}
+                  showReorderOptions={showReorderOptions}
                 />
               ) : (
                 <EpisodeListRow
@@ -65,7 +68,8 @@ export function GroupedEpisodeList({
                   episode={episode}
                   onUpdate={onUpdate}
                   onDelete={onDelete}
-                  isDraggable={false}
+                  isDraggable={showReorderOptions && sortField === 'custom'}
+                  showReorderOptions={showReorderOptions}
                 />
               )
             )}

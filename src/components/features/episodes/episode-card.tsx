@@ -694,21 +694,18 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                         size="sm"
                                         variant="ghost"
                                         className="flex-shrink-0"
-                                        onClick={(e) => e.stopPropagation()}
                                     >
                                         <MoreVertical className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onSelect={() => {
                                         handleToggleLike('like');
                                     }}>
                                         <ThumbsUp className={`mr-2 h-4 w-4 ${likeStatus === 'like' ? 'fill-primary text-primary' : ''}`} />
                                         {likeStatus === 'like' ? 'Remove like' : 'Like'}
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                    <DropdownMenuItem onSelect={() => {
                                         handleToggleLike('dislike');
                                     }}>
                                         <ThumbsDown className={`mr-2 h-4 w-4 ${likeStatus === 'dislike' ? 'fill-destructive text-destructive' : ''}`} />
@@ -718,15 +715,13 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                     {showReorderOptions && (
                                         <>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem onSelect={(e) => {
-                                                e.preventDefault();
+                                            <DropdownMenuItem onSelect={() => {
                                                 handleReorder('beginning');
                                             }}>
                                                 <ArrowUp className="mr-2 h-4 w-4" />
                                                 Move to beginning
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={(e) => {
-                                                e.preventDefault();
+                                            <DropdownMenuItem onSelect={() => {
                                                 handleReorder('end');
                                             }}>
                                                 <ArrowDown className="mr-2 h-4 w-4" />
@@ -737,39 +732,34 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                     
                                     <DropdownMenuSeparator />
                                     
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                    <DropdownMenuItem onSelect={() => {
                                         handleToggleWatched();
                                     }}>
                                         <Check className={`mr-2 h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
                                         {episode.watched ? 'Mark unwatched' : 'Mark watched'}
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                    <DropdownMenuItem onSelect={() => {
                                         setIsTagPopoverOpen(true);
                                         fetchTags();
                                     }}>
                                         <TagIcon className="mr-2 h-4 w-4" />
                                         Add tags
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                    <DropdownMenuItem onSelect={() => {
                                         handleToggleFavorite();
                                     }}>
                                         <Star className={`mr-2 h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                                         {episode.favorite ? 'Remove favorite' : 'Add favorite'}
                                     </DropdownMenuItem>
 
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                    <DropdownMenuItem onSelect={() => {
                                         handleTogglePriority();
                                     }}>
                                         <Gem className={`mr-2 h-4 w-4 ${episode.priority === 'high' ? 'fill-primary text-primary' : ''}`} />
                                         {episode.priority === 'high' ? 'Remove priority' : 'Mark as priority'}
                                     </DropdownMenuItem>
                                     
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                    <DropdownMenuItem onSelect={() => {
                                         setNoteText(episode.notes || '');
                                         setIsNoteModalOpen(true);
                                     }}>
@@ -777,8 +767,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                         {episode.notes ? 'Edit note' : 'Add note'}
                                     </DropdownMenuItem>
 
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                    <DropdownMenuItem onSelect={() => {
                                         handleCopyLink();
                                     }}>
                                         <LinkIcon className={`mr-2 h-4 w-4 ${isCopying ? 'animate-bounce text-primary' : ''}`} />
@@ -789,15 +778,13 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
 
                                     {episode.isDeleted ? (
                                         <>
-                                            <DropdownMenuItem onSelect={(e) => {
-                                                e.preventDefault();
+                                            <DropdownMenuItem onSelect={() => {
                                                 handleRestore();
                                             }} className="text-green-600 font-medium">
                                                 <Check className="mr-2 h-4 w-4" />
                                                 Restore to watch list
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={(e) => {
-                                                e.preventDefault();
+                                            <DropdownMenuItem onSelect={() => {
                                                 setIsHardDeleteDialogOpen(true);
                                             }} className="text-destructive font-medium">
                                                 <Trash2 className="mr-2 h-4 w-4" />

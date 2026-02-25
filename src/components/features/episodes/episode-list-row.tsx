@@ -572,23 +572,20 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                     size="icon"
                                     variant="ghost"
                                     className="h-8 w-8"
-                                    onClick={(e) => e.stopPropagation()}
                                 >
                                     <MoreVertical className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuContent align="end">
                                 {showReorderOptions && (
                                     <>
-                                        <DropdownMenuItem onSelect={(e) => {
-                                            e.preventDefault();
+                                        <DropdownMenuItem onSelect={() => {
                                             handleReorder('beginning');
                                         }}>
                                             <ArrowUp className="mr-2 h-4 w-4" />
                                             Move to beginning
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={(e) => {
-                                            e.preventDefault();
+                                        <DropdownMenuItem onSelect={() => {
                                             handleReorder('end');
                                         }}>
                                             <ArrowDown className="mr-2 h-4 w-4" />
@@ -599,39 +596,34 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                     </>
                                 )}
                                 
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
-                                    handleToggleWatched(e as unknown as React.MouseEvent);
+                                <DropdownMenuItem onSelect={() => {
+                                    handleToggleWatched({ stopPropagation: () => {} } as unknown as React.MouseEvent);
                                 }}>
                                     <Check className={`mr-2 h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
                                     {episode.watched ? 'Mark unwatched' : 'Mark watched'}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
+                                <DropdownMenuItem onSelect={() => {
                                     setIsTagPopoverOpen(true);
                                     fetchTags();
                                 }}>
                                     <TagIcon className="mr-2 h-4 w-4" />
                                     Add tags
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
-                                    handleToggleFavorite(e as unknown as React.MouseEvent);
+                                <DropdownMenuItem onSelect={() => {
+                                    handleToggleFavorite({ stopPropagation: () => {} } as unknown as React.MouseEvent);
                                 }}>
                                     <Star className={`mr-2 h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                                     {episode.favorite ? 'Remove favorite' : 'Add favorite'}
                                 </DropdownMenuItem>
 
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
-                                    handleTogglePriority(e as unknown as React.MouseEvent);
+                                <DropdownMenuItem onSelect={() => {
+                                    handleTogglePriority({ stopPropagation: () => {} } as unknown as React.MouseEvent);
                                 }}>
                                     <Gem className={`mr-2 h-4 w-4 ${episode.priority === 'high' ? 'fill-primary text-primary' : ''}`} />
                                     {episode.priority === 'high' ? 'Remove priority' : 'Mark as priority'}
                                 </DropdownMenuItem>
 
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
+                                <DropdownMenuItem onSelect={() => {
                                     setNoteText(episode.notes || '');
                                     setIsNoteModalOpen(true);
                                 }}>
@@ -639,9 +631,8 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                     {episode.notes ? 'Edit note' : 'Add note'}
                                 </DropdownMenuItem>
 
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
-                                    handleCopyLink(e as unknown as React.MouseEvent);
+                                <DropdownMenuItem onSelect={() => {
+                                    handleCopyLink({ stopPropagation: () => {} } as unknown as React.MouseEvent);
                                 }}>
                                     <LinkIcon className={`mr-2 h-4 w-4 ${isCopying ? 'animate-bounce text-primary' : ''}`} />
                                     {isCopying ? 'Copied!' : 'Copy Link'}
@@ -651,15 +642,13 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
 
                                 {episode.isDeleted ? (
                                     <>
-                                        <DropdownMenuItem onSelect={(e) => {
-                                            e.preventDefault();
+                                        <DropdownMenuItem onSelect={() => {
                                             handleRestore();
                                         }} className="text-green-600 font-medium">
                                             <Check className="mr-2 h-4 w-4" />
                                             Restore to watch list
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={(e) => {
-                                            e.preventDefault();
+                                        <DropdownMenuItem onSelect={() => {
                                             handleHardDelete();
                                         }} className="text-destructive font-medium">
                                             <Trash2 className="mr-2 h-4 w-4" />

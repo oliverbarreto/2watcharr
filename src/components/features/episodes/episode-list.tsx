@@ -273,6 +273,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
                         viewMode={viewMode}
                         onUpdate={handleUpdate}
                         onDelete={handleUpdate}
+                        showReorderOptions={showReorderOptions}
                     />
                 </div>
             );
