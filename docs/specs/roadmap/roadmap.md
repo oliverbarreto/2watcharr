@@ -8,16 +8,6 @@
 
 These are some features we want to add to the app but are not specidifed yet:
 
-- [ ] BUGFIX: In the watch next page there is a weird bug when we use "Move to beginning" and "Move to end" options in the context menu of episode cards and list rows. In some random cases, i move a video to the end/beginning and it doesn't move it to the end/beginning, but instead:
-- if i want to place it at the beginning it is placed after the first epiosde in the queue, 
-- if i want to place it at the end of the queue it is placed before the last epiosde in the queue.
-
-- [ ] FEATURE: we need to include a similar way to add in the list view the like/dislike buttons (we already have them in the cards in the grid view). 
-
-Add the like/dislike buttons to the list view cards to be able to set like/dislike (and the empty status as well, remember that is a valid status, the user does not like nor dislike the episode, it's kind of `meh`) of a episode.
-
-I would like to only have one button with the empty status being represented by a thumbs up icon, but not filled, just the border and colored in gray. When the user clicks on it, it should rotate over the three states: like (thumbs up filled), dislike (thumbs down filled), and empty (thumbs up border, gray). 
-
 - [ ] FEATURE: we need to create a way to archive episodes from the "Watch Next" list to make it more organized and less cluttered with episodes that were already watched or are not going to be watched. 
     - The first step is to create a new page to show the archived episodes.
     - The second step is to create a way to move episodes from the "Watch Next" list to the archived episodes list. This includes a button in the episode cards both the list and the grid view to move a episode to the archived episodes list. This button should only be visible in the "Watch Next" page. It should show a confirmation modal to confirm the action.

@@ -135,6 +135,9 @@ export class MediaService {
             }
         }
 
+        // Move to beginning of the list for new episodes
+        await this.episodeRepo.moveToBeginning(episode.id, userId);
+
         return episode;
     }
 
@@ -178,6 +181,10 @@ export class MediaService {
              await this.episodeRepo.addEvent(id, 'removed', episode.title, episode.type);
         } else if (updates.isDeleted === false) {
              await this.episodeRepo.addEvent(id, 'restored', episode.title, episode.type);
+        }
+
+        if (updates.priority === 'high') {
+            await this.episodeRepo.moveToBeginning(id, episode.userId);
         }
 
         return episode;
@@ -319,7 +326,11 @@ export class MediaService {
      * Set episode priority
      */
     async setPriority(id: string, priority: Priority): Promise<MediaEpisode> {
-        return this.episodeRepo.update(id, { priority });
+        const episode = await this.episodeRepo.update(id, { priority });
+        if (priority === 'high') {
+            await this.episodeRepo.moveToBeginning(id, episode.userId);
+        }
+        return episode;
     }
 
     /**
