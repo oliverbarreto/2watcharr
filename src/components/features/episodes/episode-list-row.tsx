@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { MediaEpisode, Tag } from '@/lib/domain/models';
 import { Badge } from '@/components/ui/badge';
@@ -25,9 +25,17 @@ import {
     Youtube,
     Mic,
     StickyNote,
+    ThumbsUp,
+    ThumbsDown,
     Link as LinkIcon,
     Gem,
 } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
     Dialog,
     DialogContent,
@@ -66,7 +74,13 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [noteText, setNoteText] = useState(episode.notes || '');
     const [isSavingNote, setIsSavingNote] = useState(false);
+    const [likeStatus, setLikeStatus] = useState(episode.likeStatus);
     const [isCopying, setIsCopying] = useState(false);
+
+    // Sync state when episode prop changes
+    useEffect(() => {
+        setLikeStatus(episode.likeStatus);
+    }, [episode]);
 
     const {
         attributes,
@@ -86,7 +100,45 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
         zIndex: isDragging ? 50 : 'auto',
     };
 
-    // handleToggleLike is intentionally not used in this view for now
+    const handleCycleLikeStatus = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            let nextStatus: 'none' | 'like' | 'dislike' = 'none';
+            if (likeStatus === 'none' || !likeStatus) nextStatus = 'like';
+            else if (likeStatus === 'like') nextStatus = 'dislike';
+            else if (likeStatus === 'dislike') nextStatus = 'none';
+
+            setLikeStatus(nextStatus);
+            
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ likeStatus: nextStatus }),
+            });
+
+            if (!response.ok) {
+                setLikeStatus(likeStatus); // Revert on failure
+                throw new Error('Failed to update like status');
+            }
+            
+            onUpdate?.();
+        } catch (error) {
+            console.error('Error updating like status:', error);
+            toast.error('Failed to update like status');
+        }
+    };
+
+    const getLikeIcon = () => {
+        if (likeStatus === 'like') return <ThumbsUp className="h-4 w-4 fill-primary text-primary" />;
+        if (likeStatus === 'dislike') return <ThumbsDown className="h-4 w-4 fill-destructive text-destructive" />;
+        return <ThumbsUp className="h-4 w-4 text-muted-foreground/50" />;
+    };
+
+    const getLikeLabel = () => {
+        if (likeStatus === 'like') return 'Like';
+        if (likeStatus === 'dislike') return 'Dislike';
+        return 'Meh';
+    };
 
     const handleToggleWatched = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -539,6 +591,24 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                         >
                             <Check className={`h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
                         </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8 flex"
+                                        onClick={handleCycleLikeStatus}
+                                    >
+                                        {getLikeIcon()}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{getLikeLabel()}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
                         <Button
                             size="icon"
                             variant="ghost"
@@ -682,6 +752,16 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                     >
                         <Check className={`h-3.5 w-3.5 ${episode.watched ? 'text-primary' : ''}`} />
                         {episode.watched ? 'Watched' : 'Mark Watched'}
+                    </Button>
+                    <div className="w-px h-4 bg-border/40" />
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 h-8 text-[10px] gap-2 font-medium"
+                        onClick={handleCycleLikeStatus}
+                    >
+                        {getLikeIcon()}
+                        {getLikeLabel()}
                     </Button>
                     <div className="w-px h-4 bg-border/40" />
                     <Button
