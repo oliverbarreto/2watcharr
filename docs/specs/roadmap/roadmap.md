@@ -46,6 +46,12 @@ Things & Ideas to investigate:
 
 ## Implemented Features
  
+20260225 - Release 0.6.1:
+- [x] Improved "Archive Watched Episodes" to target only watched episodes with priority.
+- [x] Fixed unarchive error on the Archived episodes page.
+- [x] Improved stats UX for "Channels" and "Tags" tabs with search and filtering.
+- [x] Resolved linting errors.
+
 20260225 - Release 0.6.0:
 - [x] "Archive" feature implementation (hide/unhide episodes).
 - [x] Dedicated "Archived" page with filtering and bulk actions.

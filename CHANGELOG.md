@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-02-25
+
+### Added
+- **Stats**: Added search textfield and "Top 5" reset button for both "Channels" and "Tags" tabs for better filtering and visualization.
+
+### Fixed
+- **Archive**: Improved "Archive Watched Episodes" logic to only target episodes that are both watched and marked with priority.
+- **Archive**: Resolved "Failed to unarchive episode" error on the Archived episodes page.
+- **Lint**: Fixed various linting errors to ensure a clean codebase.
+
 ## [0.6.0] - 2026-02-25
 
 ### Added
