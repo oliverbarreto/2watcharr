@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Layout } from '@/components/layout';
 import { FilterBar, EpisodeList } from '@/components/features/episodes';
 import { Button } from '@/components/ui/button';
-import { List, LayoutGrid, ArrowLeft, RotateCcw, X, Search } from 'lucide-react';
+import { List, LayoutGrid, ArrowLeft, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+
 import {
   Dialog,
   DialogContent,

@@ -1,0 +1,19 @@
+# Resolve Git Merge Issue
+
+The user attempted to merge `features/channelstats` into `develop` but ended up with staged changes and no merge commit. Additionally, `features/channelstats` is behind the current `develop` branch (which already includes `features/archive`).
+
+## Proposed Changes
+
+### Git Operations
+- Reset the current staged changes to return `develop` to its clean HEAD state.
+- Perform a proper `git merge features/channelstats` into `develop`.
+- Resolve any merge conflicts that may arise (especially since `develop` has moved ahead).
+- Commit the merge.
+
+## Verification Plan
+
+### Automated Tests
+- Run `npm run test` or `/test` workflow to ensure no regressions.
+
+### Manual Verification
+- Check `git status` and `git log` to ensure the history is correct and the state is clean.

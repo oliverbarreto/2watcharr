@@ -6,7 +6,7 @@ import { Plus, Settings, LogOut, User, BarChart3, Radio, Library, Search, Gem, A
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ModeToggle } from '@/components/mode-toggle';
+
 import { AddEpisodeDialog } from '@/components/features/episodes/add-episode-dialog';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
