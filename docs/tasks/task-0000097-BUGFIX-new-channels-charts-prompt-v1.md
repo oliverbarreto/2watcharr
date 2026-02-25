@@ -11,3 +11,9 @@ We need to fix a couple of things related to the "Channels Stats":
 
 2. In the section below where we show all channels, we need to add a search textfield to allow filtering the channels by name. Add a button to clear the selection. This is important because we have a lot of channels and it is difficult to find a specific channel.
 
+---
+
+## V2
+
+1. Change the trash bin icon used in the clear search textfield to a cross inside a circle like the one we use in the seach panel textfield
+2. Add a reset to defaults button to reset the chart to the default view (top 5 channels for the selected metric and period). Use a reset icon for the button.

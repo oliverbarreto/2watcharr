@@ -21,7 +21,8 @@ import {
     Search,
     ChevronLeft,
     ChevronRight,
-    RotateCcw
+    RotateCcw,
+    XCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -122,6 +123,8 @@ export default function StatsPage() {
     const [visibleTags, setVisibleTags] = useState<string[]>([]);
     const [visibleChannels, setVisibleChannels] = useState<string[]>([]);
     const [channelMetric, setChannelMetric] = useState<'added' | 'watched' | 'favorited' | 'priority' | 'liked' | 'disliked'>('added');
+    const [channelSearchQuery, setChannelSearchQuery] = useState('');
+    const [isResetting, setIsResetting] = useState(false);
 
     // Handle search debouncing
     useEffect(() => {
@@ -154,13 +157,20 @@ export default function StatsPage() {
 
             // Set initial visible channels (top 5 by current metric)
             if (data.channelsTimeSeries[channelMetric].length > 0) {
-                const allChannels = new Set<string>();
+                const channelCounts: Record<string, number> = {};
                 data.channelsTimeSeries[channelMetric].forEach(point => {
-                    Object.keys(point).forEach(key => {
-                        if (key !== 'date') allChannels.add(key);
+                    Object.entries(point).forEach(([key, value]) => {
+                        if (key !== 'date' && typeof value === 'number') {
+                            channelCounts[key] = (channelCounts[key] || 0) + value;
+                        }
                     });
                 });
-                setVisibleChannels(Array.from(allChannels).slice(0, 5));
+                
+                const sortedChannels = Object.entries(channelCounts)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([name]) => name);
+                
+                setVisibleChannels(sortedChannels.slice(0, 5));
             }
         } catch (error) {
             console.error('Error fetching stats:', error);
@@ -212,6 +222,29 @@ export default function StatsPage() {
             ? <ArrowUp className="ml-2 h-4 w-4 text-primary" /> 
             : <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
     };
+
+    const resetToDefaults = useCallback(() => {
+        if (!stats) return;
+        
+        // Reset to top 5 channels by current metric
+        if (stats.channelsTimeSeries[channelMetric].length > 0) {
+            const channelCounts: Record<string, number> = {};
+            stats.channelsTimeSeries[channelMetric].forEach(point => {
+                Object.entries(point).forEach(([key, value]) => {
+                    if (key !== 'date' && typeof value === 'number') {
+                        channelCounts[key] = (channelCounts[key] || 0) + value;
+                    }
+                });
+            });
+            
+            const sortedChannels = Object.entries(channelCounts)
+                .sort(([, a], [, b]) => b - a)
+                .map(([name]) => name);
+            
+            setVisibleChannels(sortedChannels.slice(0, 5));
+            toast.success(`Reset to top 5 channels for ${channelMetric}`);
+        }
+    }, [stats, channelMetric]);
 
     // Filter by search query
     const filteredStats = stats?.detailedStats ? stats.detailedStats.filter((event) => {
@@ -1042,23 +1075,53 @@ export default function StatsPage() {
                                                 </CardTitle>
                                                 <CardDescription className="text-xs">Select channels to show in chart</CardDescription>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
-                                                    onClick={() => setVisibleChannels(allAvailableChannels)}
-                                                >
-                                                    Select All
-                                                </Button>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
-                                                    onClick={() => setVisibleChannels([])}
-                                                >
-                                                    Deselect All
-                                                </Button>
+                                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                                <div className="relative">
+                                                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="Search channels..."
+                                                        value={channelSearchQuery}
+                                                        onChange={(e) => setChannelSearchQuery(e.target.value)}
+                                                        className="h-7 w-[200px] pl-7 pr-7 text-[10px] bg-muted/20 border-border/50 rounded-md"
+                                                    />
+                                                    {channelSearchQuery && (
+                                                        <button 
+                                                            onClick={() => setChannelSearchQuery('')}
+                                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <XCircle className="h-3 w-3" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40 gap-1.5"
+                                                        onClick={resetToDefaults}
+                                                        title="Reset to top 5 channels"
+                                                    >
+                                                        <RotateCcw className="h-3 w-3" />
+                                                        Top 5
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
+                                                        onClick={() => setVisibleChannels(allAvailableChannels)}
+                                                    >
+                                                        Select All
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
+                                                        onClick={() => setVisibleChannels([])}
+                                                    >
+                                                        Deselect All
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </CardHeader>
                                         <CardContent>
@@ -1066,22 +1129,27 @@ export default function StatsPage() {
                                                 {allAvailableChannels.length === 0 ? (
                                                     <p className="text-xs text-muted-foreground italic w-full text-center py-4">No channels found for this period</p>
                                                 ) : (
-                                                    allAvailableChannels.map(channel => (
-                                                        <div key={channel} className="flex items-center space-x-2 group shrink-0">
-                                                            <Checkbox 
-                                                                id={`channel-${channel}`} 
-                                                                checked={visibleChannels.includes(channel)}
-                                                                onCheckedChange={() => toggleChannelVisibility(channel)}
-                                                                className="border-border/50 data-[state=checked]:bg-primary"
-                                                            />
-                                                            <label 
-                                                                htmlFor={`channel-${channel}`}
-                                                                className="text-xs font-semibold leading-none cursor-pointer group-hover:text-primary transition-colors whitespace-nowrap"
-                                                            >
-                                                                {channel}
-                                                            </label>
-                                                        </div>
-                                                    ))
+                                                    allAvailableChannels
+                                                        .filter(channel => channel.toLowerCase().includes(channelSearchQuery.toLowerCase()))
+                                                        .map(channel => (
+                                                            <div key={channel} className="flex items-center space-x-2 group shrink-0">
+                                                                <Checkbox 
+                                                                    id={`channel-${channel}`} 
+                                                                    checked={visibleChannels.includes(channel)}
+                                                                    onCheckedChange={() => toggleChannelVisibility(channel)}
+                                                                    className="border-border/50 data-[state=checked]:bg-primary"
+                                                                />
+                                                                <label 
+                                                                    htmlFor={`channel-${channel}`}
+                                                                    className="text-xs font-semibold leading-none cursor-pointer group-hover:text-primary transition-colors whitespace-nowrap"
+                                                                >
+                                                                    {channel}
+                                                                </label>
+                                                            </div>
+                                                        ))
+                                                )}
+                                                {allAvailableChannels.length > 0 && allAvailableChannels.filter(channel => channel.toLowerCase().includes(channelSearchQuery.toLowerCase())).length === 0 && (
+                                                    <p className="text-xs text-muted-foreground italic w-full text-center py-4">No channels match your search</p>
                                                 )}
                                             </div>
                                         </CardContent>
