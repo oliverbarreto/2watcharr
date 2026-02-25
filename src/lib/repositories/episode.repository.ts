@@ -296,11 +296,11 @@ export class EpisodeRepository {
     }
 
     /**
-     * Count all episodes matching filters
+     * Get statistics (count and duration sum) for all episodes matching filters
      */
-    async countAll(filters?: EpisodeFilters): Promise<number> {
+    async getFilterStats(filters?: EpisodeFilters): Promise<{ count: number, totalDuration: number }> {
         const hasTagFilter = filters?.tagIds && filters.tagIds.length > 0;
-        let query = `SELECT COUNT(${hasTagFilter ? 'DISTINCT ' : ''}e.id) as count FROM episodes e`;
+        let query = `SELECT COUNT(${hasTagFilter ? 'DISTINCT ' : ''}e.id) as count, SUM(e.duration) as total_duration FROM episodes e`;
         const params: (string | number | null)[] = [];
 
         if (hasTagFilter) {
@@ -393,7 +393,18 @@ export class EpisodeRepository {
         }
 
         const result = await this.db.get(query, params);
-        return result?.count || 0;
+        return {
+            count: result?.count || 0,
+            totalDuration: result?.total_duration || 0
+        };
+    }
+
+    /**
+     * Backward compatibility for countAll
+     */
+    async countAll(filters?: EpisodeFilters): Promise<number> {
+        const stats = await this.getFilterStats(filters);
+        return stats.count;
     }
 
     /**

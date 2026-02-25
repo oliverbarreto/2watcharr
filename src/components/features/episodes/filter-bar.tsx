@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check, StickyNote, XCircle, Video, Youtube, Mic, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ import {
     CommandList,
 } from "@/components/ui/command";
 import { Tag } from '@/lib/domain/models';
-import { useEffect } from 'react';
+
 
 interface FilterBarProps {
     onFilterChange?: (filters: {
@@ -87,6 +87,14 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         (initialFilters?.type === 'video' && initialFilters?.isShort === false ? 'video' : 'all'))
     );
     const [isChannelMenuOpen, setIsChannelMenuOpen] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        // Only auto-focus on desktop (screen width >= 1024px to be safe and avoid tablets/mobile)
+        if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+            inputRef.current?.focus();
+        }
+    }, []);
 
     // Track previous props to sync state in render
     const [prevInitialFilters, setPrevInitialFilters] = useState(initialFilters);
@@ -291,6 +299,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                        ref={inputRef}
                         placeholder="Search episodes..."
                         value={search}
                         onChange={(e) => handleSearchChange(e.target.value)}

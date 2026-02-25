@@ -145,10 +145,10 @@ export class MediaService {
         filters?: EpisodeFilters,
         sort?: SortOptions,
         pagination?: PaginationOptions
-    ): Promise<{ episodes: MediaEpisode[], total: number }> {
+    ): Promise<{ episodes: MediaEpisode[], total: number, totalDuration: number }> {
         const episodes = await this.episodeRepo.findAll(filters, sort, pagination);
-        const total = await this.episodeRepo.countAll(filters);
-        return { episodes, total };
+        const { count: total, totalDuration } = await this.episodeRepo.getFilterStats(filters);
+        return { episodes, total, totalDuration };
     }
 
     /**

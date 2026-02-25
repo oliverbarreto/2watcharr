@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Youtube, Mic, Tag as TagIcon, X, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,14 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilters?.tagIds || []);
     const [tags, setTags] = useState<Tag[]>([]);
     const [showTags, setShowTags] = useState(initialFilters?.tagIds && initialFilters.tagIds.length > 0);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        // Only auto-focus on desktop (screen width >= 1024px to be safe and avoid tablets/mobile)
+        if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+            inputRef.current?.focus();
+        }
+    }, []);
 
     // Sync local state when initialFilters changes (URL changes)
     useEffect(() => {
@@ -123,6 +131,7 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                        ref={inputRef}
                         placeholder="Search sources..."
                         value={search}
                         onChange={(e) => handleSearchChange(e.target.value)}

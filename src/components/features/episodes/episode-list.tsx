@@ -49,7 +49,7 @@ interface EpisodeListProps {
         order: 'asc' | 'desc';
     };
     viewMode: 'grid' | 'list';
-    onCountChange?: (current: number, total: number) => void;
+    onCountChange?: (current: number, total: number, totalDuration: number) => void;
     onChannelsChange?: (channels: { id: string; name: string }[] | ((prev: { id: string; name: string }[]) => { id: string; name: string }[])) => void;
     showReorderOptions?: boolean;
 }
@@ -59,6 +59,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
+    const [totalDuration, setTotalDuration] = useState(0);
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
@@ -154,6 +155,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
             }
             
             setTotalCount(data.total);
+            setTotalDuration(data.totalDuration || 0);
             setHasMore(data.episodes.length === PAGE_SIZE && (currentOffset + data.episodes.length) < data.total);
             setOffset(currentOffset);
 
@@ -200,9 +202,9 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
 
     useEffect(() => {
         if (onCountChange) {
-            onCountChange(episodes.length, totalCount);
+            onCountChange(episodes.length, totalCount, totalDuration);
         }
-    }, [episodes.length, totalCount, onCountChange]);
+    }, [episodes.length, totalCount, totalDuration, onCountChange]);
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;

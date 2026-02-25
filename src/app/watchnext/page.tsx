@@ -96,14 +96,28 @@ function WatchNextPageContent() {
     return 'list';
   });
 
-  const [counts, setCounts] = useState({ current: 0, total: 0 });
+  const [counts, setCounts] = useState({ current: 0, total: 0, totalDuration: 0 });
 
-  const handleCountChange = useCallback((current: number, total: number) => {
+  const handleCountChange = useCallback((current: number, total: number, totalDuration: number) => {
     setCounts(prev => {
-      if (prev.current === current && prev.total === total) return prev;
-      return { current, total };
+      if (prev.current === current && prev.total === total && prev.totalDuration === totalDuration) return prev;
+      return { current, total, totalDuration };
     });
   }, []);
+
+  const formatQueueTime = (seconds: number) => {
+    if (!seconds || seconds <= 0) return null;
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    if (hours > 0) {
+      if (minutes > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      return `${hours}h`;
+    }
+    return `${minutes}m`;
+  };
 
   const toggleViewMode = () => {
     const newMode = viewMode === 'grid' ? 'list' : 'grid';
@@ -170,8 +184,18 @@ function WatchNextPageContent() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-muted-foreground">
-                Showing <span className="text-foreground">{counts.current}</span> of <span className="text-foreground">{counts.total}</span> prioritized episodes
+            <div className="text-sm font-medium text-muted-foreground flex items-center gap-3">
+                <span>
+                    Showing <span className="text-foreground">{counts.current}</span> of <span className="text-foreground">{counts.total}</span> prioritized episodes
+                </span>
+                {counts.totalDuration > 0 && (
+                    <>
+                        <span className="text-muted-foreground/30 font-light">|</span>
+                        <span>
+                            Queue time: <span className="text-foreground">{formatQueueTime(counts.totalDuration)}</span>
+                        </span>
+                    </>
+                )}
             </div>
           </div>
           <div className="flex items-center gap-2">

@@ -122,11 +122,12 @@ export async function GET(request: NextRequest) {
         const db = await getDatabase();
         const mediaService = new MediaService(db);
 
-        const { episodes, total } = await mediaService.listEpisodes(filters, sort, pagination);
+        const { episodes, total, totalDuration } = await mediaService.listEpisodes(filters, sort, pagination);
 
         return NextResponse.json({
             episodes,
             total,
+            totalDuration,
         });
     } catch (error) {
         console.error('Error listing episodes:', error);
