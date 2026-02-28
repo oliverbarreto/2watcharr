@@ -33,13 +33,13 @@ interface NavLinksProps {
 
 const NavLinks = ({ className, onClick }: NavLinksProps) => {
     const pathname = usePathname();
-    
+
     const getLinkClass = (path: string) => {
         const isActive = pathname === path || (path === '/channels' && pathname.startsWith('/channels/'));
         return cn(
             "w-full justify-start sm:w-auto transition-all duration-200",
             isActive
-                ? "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90" 
+                ? "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90"
                 : "hover:bg-accent hover:text-accent-foreground",
             className
         );
@@ -65,6 +65,12 @@ const NavLinks = ({ className, onClick }: NavLinksProps) => {
                     Watch Next
                 </Button>
             </Link>
+            <Link href="/archived" onClick={onClick}>
+                <Button variant="ghost" className={getLinkClass("/archived")}>
+                    <Archive className="mr-2 h-4 w-4 sm:hidden" />
+                    Archive
+                </Button>
+            </Link>
             <Link href="/stats" onClick={onClick}>
                 <Button variant="ghost" className={getLinkClass("/stats")}>
                     <BarChart3 className="mr-2 h-4 w-4 sm:hidden" />
@@ -79,9 +85,9 @@ export function Navbar() {
     const { data: session } = useSession();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    
+
     // Check if any filters are active
-    const hasActiveFilters = Array.from(searchParams.keys()).some(key => 
+    const hasActiveFilters = Array.from(searchParams.keys()).some(key =>
         ['search', 'status', 'watched', 'watchStatus', 'tags', 'channels', 'channelId', 'favorite', 'hasNotes', 'likeStatus', 'type', 'isShort', 'priority'].includes(key)
     );
 
@@ -119,6 +125,11 @@ export function Navbar() {
                             <Button variant="ghost" className="sm:hidden -ml-2 p-0 hover:bg-transparent flex items-center gap-2 font-bold text-xl">
                                 <Image src="/2watcharr-icon-v1.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
                                 <span className="hidden">2watcharr</span>
+                                {getPageTitle() && (
+                                    <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider ml-1">
+                                        {getPageTitle()}
+                                    </span>
+                                )}
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="w-[280px] sm:w-[350px]">
@@ -129,7 +140,7 @@ export function Navbar() {
                                 </SheetTitle>
                             </SheetHeader>
                             <div className="flex flex-col gap-2 mt-8">
-                                <NavLinks className="text-lg py-6" onClick={() => {}} />
+                                <NavLinks className="text-lg py-6" onClick={() => { }} />
                             </div>
                         </SheetContent>
                     </Sheet>
@@ -139,14 +150,6 @@ export function Navbar() {
                         <span className="hidden xs:inline-block">2watcharr</span>
                     </Link>
 
-                    {getPageTitle() && (
-                        <div className="flex items-center gap-2">
-                            <div className="h-6 w-px bg-border mx-1 hidden xs:block" />
-                            <h1 className="text-sm font-medium text-muted-foreground uppercase tracking-wider hidden xs:block">
-                                {getPageTitle()}
-                            </h1>
-                        </div>
-                    )}
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -179,25 +182,12 @@ export function Navbar() {
                             <Search className={cn("h-5 w-5", hasActiveFilters && "stroke-[2.5px]")} />
                         </Button>
                     )}
-                    
-                    <Link href="/archived">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className={cn(
-                                "rounded-full h-9 w-9",
-                                pathname === '/archived' && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90"
-                            )}
-                            title="Archived Episodes"
-                        >
-                            <Archive className="h-5 w-5" />
-                        </Button>
-                    </Link>
+
 
                     <Link href="/settings">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             className={cn(
                                 "rounded-full h-9 w-9",
                                 pathname === '/settings' && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90"
@@ -211,7 +201,7 @@ export function Navbar() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-10 w-10 relative overflow-hidden rounded-lg p-0">
                                 {user?.emoji ? (
-                                    <div 
+                                    <div
                                         className="flex h-full w-full items-center justify-center text-xl"
                                         style={{ backgroundColor: user.color || '#333' }}
                                     >
@@ -261,7 +251,7 @@ export function Navbar() {
                             </DropdownMenuItem>
 
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                                 className="text-red-500 hover:text-red-600 cursor-pointer"
                                 onClick={handleSignOut}
                             >

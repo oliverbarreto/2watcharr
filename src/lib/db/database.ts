@@ -2,6 +2,7 @@ import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 import { runMigrations } from './migrations';
 import path from 'path';
+import fs from 'fs';
 
 let db: Database | null = null;
 
@@ -12,10 +13,16 @@ let db: Database | null = null;
 export async function getDatabase(): Promise<Database> {
     if (!db) {
         let dbPath = process.env.DATABASE_PATH || './data/2watcharr.db';
-        
+
         // Ensure path is absolute for reliability in different environments
         if (!path.isAbsolute(dbPath)) {
             dbPath = path.resolve(process.cwd(), dbPath);
+        }
+
+        // Ensure the directory exists
+        const dbDir = path.dirname(dbPath);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
         }
 
         db = await open({
