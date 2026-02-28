@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { MediaEpisode, Tag } from '@/lib/domain/models';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,7 +31,15 @@ import {
     Plus,
     Youtube,
     Mic,
+    StickyNote,
+    ThumbsUp,
+    ThumbsDown,
+    Link as LinkIcon,
+    Gem,
+    Archive,
+    ArchiveRestore,
 } from 'lucide-react';
+
 import {
     CommandDialog,
     CommandEmpty,
@@ -44,21 +52,36 @@ import { toast } from 'sonner';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { formatDistanceToNow } from 'date-fns';
+import { Textarea } from '@/components/ui/textarea';
 
 interface EpisodeCardProps {
     episode: MediaEpisode;
-    onUpdate?: () => void;
+    onUpdate?: (updatedEpisode?: MediaEpisode) => void;
     onDelete?: () => void;
     isDraggable?: boolean;
+    showReorderOptions?: boolean;
 }
 
-export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }: EpisodeCardProps) {
+export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, showReorderOptions = true }: EpisodeCardProps) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isHardDeleteDialogOpen, setIsHardDeleteDialogOpen] = useState(false);
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isUpdatingTags, setIsUpdatingTags] = useState(false);
+    const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+    const [noteText, setNoteText] = useState(episode.notes || '');
+    const [isSavingNote, setIsSavingNote] = useState(false);
+    const [likeStatus, setLikeStatus] = useState(episode.likeStatus);
+    const [isCopying, setIsCopying] = useState(false);
+    const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+    const [isUnarchiveDialogOpen, setIsUnarchiveDialogOpen] = useState(false);
+
+
+    // Sync state when episode prop changes
+    useEffect(() => {
+        setLikeStatus(episode.likeStatus);
+    }, [episode]);
 
     const {
         attributes,
@@ -74,6 +97,29 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
+    };
+
+    const handleToggleLike = async (status: 'like' | 'dislike') => {
+        try {
+            const newStatus = likeStatus === status ? 'none' : status;
+            setLikeStatus(newStatus);
+            
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ likeStatus: newStatus }),
+            });
+
+            if (!response.ok) {
+                setLikeStatus(likeStatus); // Revert on failure
+                throw new Error('Failed to update like status');
+            }
+            
+            onUpdate?.({ ...episode, likeStatus: newStatus });
+        } catch (error) {
+            console.error('Error updating like status:', error);
+            toast.error('Failed to update like status');
+        }
     };
 
     const handleToggleWatched = async () => {
@@ -107,6 +153,36 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
             onUpdate?.();
         } catch {
             toast.error('Failed to update episode');
+        }
+    };
+
+    const handleTogglePriority = async () => {
+        try {
+            const newPriority = episode.priority === 'high' ? 'none' : 'high';
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ priority: newPriority }),
+            });
+
+            if (!response.ok) throw new Error('Failed to update priority');
+
+            toast.success(newPriority === 'high' ? 'Marked as priority' : 'Removed priority');
+            if (onUpdate) onUpdate();
+        } catch (error) {
+            console.error('Error toggling priority:', error);
+            toast.error('Failed to update priority');
+        }
+    };
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(episode.url);
+            setIsCopying(true);
+            toast.success('Link copied to clipboard');
+            setTimeout(() => setIsCopying(false), 2000);
+        } catch {
+            toast.error('Failed to copy link');
         }
     };
 
@@ -160,6 +236,44 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
         }
     };
 
+    const handleArchive = async () => {
+        try {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isArchived: true, archivedAt: Math.floor(Date.now() / 1000) }),
+            });
+
+            if (!response.ok) throw new Error('Failed to archive episode');
+
+            toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} moved to archive`);
+            setIsArchiveDialogOpen(false);
+            onDelete?.(); // Use onDelete to remove from current list
+        } catch {
+            toast.error('Failed to archive episode');
+        }
+    };
+
+    const handleUnarchive = async () => {
+        try {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isArchived: false, archivedAt: null }),
+            });
+
+            if (!response.ok) throw new Error('Failed to unarchive episode');
+
+            toast.success(`${episode.type === 'podcast' ? 'Podcast' : 'Video'} restored from archive`);
+            setIsUnarchiveDialogOpen(false);
+            window.dispatchEvent(new Event('episode-unarchived'));
+            onDelete?.(); // Remove from archived view
+        } catch {
+            toast.error('Failed to unarchive episode');
+        }
+    };
+
+
     const handleReorder = async (position: 'beginning' | 'end') => {
         try {
             const response = await fetch(`/api/episodes/${episode.id}/reorder`, {
@@ -202,7 +316,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
 
     const fetchTags = async () => {
         try {
-            const response = await fetch('/api/tags');
+            const response = await fetch('/api/tags?sort=alphabetical');
             const data = await response.json();
             if (data.tags) {
                 setAvailableTags(data.tags);
@@ -235,6 +349,27 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
             toast.error('Failed to update tags');
         } finally {
             setIsUpdatingTags(false);
+        }
+    };
+
+    const handleSaveNote = async () => {
+        setIsSavingNote(true);
+        try {
+            const response = await fetch(`/api/episodes/${episode.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: noteText.trim() || null }),
+            });
+
+            if (!response.ok) throw new Error('Failed to save note');
+
+            toast.success('Note saved');
+            setIsNoteModalOpen(false);
+            onUpdate?.();
+        } catch {
+            toast.error('Failed to save note');
+        } finally {
+            setIsSavingNote(false);
         }
     };
 
@@ -277,14 +412,10 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
-            case 'high':
-                return 'bg-red-500';
-            case 'medium':
-                return 'bg-yellow-500';
-            case 'low':
-                return 'bg-blue-500';
-            default:
-                return 'bg-gray-500';
+            case 'high': return 'text-primary fill-primary';
+            case 'medium': return 'text-blue-500 fill-blue-500';
+            case 'low': return 'text-slate-400 fill-slate-400';
+            default: return 'text-slate-400';
         }
     };
 
@@ -359,6 +490,11 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                     <Mic className="h-3 w-3 mr-1" />
                                     Podcast
                                 </Badge>
+                            ) : episode.isShort ? (
+                                <Badge className="bg-red-600 text-white border-none px-1.5 py-0.5">
+                                    <Youtube className="h-3 w-3 mr-1" />
+                                    Shorts
+                                </Badge>
                             ) : (
                                 <Badge className="bg-red-600 text-white border-none px-1.5 py-0.5">
                                     <Youtube className="h-3 w-3 mr-1" />
@@ -380,6 +516,21 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                 <Check className="h-12 w-12 text-white" />
                             </div>
                         )}
+
+                        {/* Thumbnail Indicators */}
+                        <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 drop-shadow-md">
+                            {episode.priority !== 'none' && (
+                                <Gem className={`h-5 w-5 ${getPriorityColor(episode.priority)}`} />
+                            )}
+                            {episode.favorite && (
+                                <Star className="h-5 w-5 text-primary fill-primary" />
+                            )}
+                            {episode.notes && (
+                                <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black border-none p-1 h-6 w-6 flex items-center justify-center">
+                                    <StickyNote className="h-4 w-4" />
+                                </Badge>
+                            )}
+                        </div>
                     </div>
 
                     <CardContent className="p-4 flex-1 flex flex-col">
@@ -406,7 +557,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                             <div className="flex flex-wrap items-center gap-x-1 gap-y-0 text-xs text-muted-foreground">
                                 <span
                                     className="hover:text-foreground cursor-pointer font-medium"
-                                    onClick={() => window.location.href = `/channels?channelId=${episode.channelId}`}
+                                    onClick={() => window.location.href = `/channels/${episode.channelId}`}
                                 >
                                     {episode.channelName || 'Unknown Channel'}
                                 </span>
@@ -433,11 +584,6 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
 
                         {/* Badges */}
                         <div className="flex flex-wrap gap-2 mb-auto pb-3">
-                            {episode.priority !== 'none' && (
-                                <Badge className={getPriorityColor(episode.priority)}>
-                                    {episode.priority.charAt(0).toUpperCase() + episode.priority.slice(1)}
-                                </Badge>
-                            )}
                             {episode.tags?.map((tag) => (
                                 <Badge
                                     key={tag.id}
@@ -454,6 +600,36 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                             ))}
                         </div>
 
+                        {/* Like/Dislike Buttons */}
+                        <div className="flex items-center gap-2 mb-3 pt-3 border-t">
+                            <Button
+                                size="sm"
+                                variant={likeStatus === 'like' ? 'secondary' : 'outline'}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleLike('like');
+                                }}
+                                className={`flex-1 h-8 ${likeStatus === 'like' ? 'bg-primary/10 hover:bg-primary/20 border-primary/20' : ''}`}
+                                title="Like"
+                            >
+                                <ThumbsUp className={`h-4 w-4 mr-2 ${likeStatus === 'like' ? 'fill-primary text-primary' : ''}`} />
+                                <span className={likeStatus === 'like' ? 'text-primary' : ''}>Like</span>
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant={likeStatus === 'dislike' ? 'secondary' : 'outline'}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleLike('dislike');
+                                }}
+                                className={`flex-1 h-8 ${likeStatus === 'dislike' ? 'bg-destructive/10 hover:bg-destructive/20 border-destructive/20' : ''}`}
+                                title="Don't like"
+                            >
+                                <ThumbsDown className={`h-4 w-4 mr-2 ${likeStatus === 'dislike' ? 'fill-destructive text-destructive' : ''}`} />
+                                <span className={likeStatus === 'dislike' ? 'text-destructive' : ''}>Dislike</span>
+                            </Button>
+                        </div>
+
                         {/* Actions */}
                         <div className="flex items-center gap-2 mt-2">
                             <Button
@@ -467,10 +643,10 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                 title={episode.watchStatus === 'pending' ? "Confirm watched" : (episode.watched ? "Mark as unwatched" : "Mark as watched")}
                             >
                                 {episode.watchStatus === 'pending' ? (
-                                    <>
-                                        <Check className="h-4 w-4 mr-2" />
+                                    <span className="text-[11px] flex items-center">
+                                        <Check className="h-3.5 w-3.5 mr-1" />
                                         Confirm Watched
-                                    </>
+                                    </span>
                                 ) : (
                                     <>
                                         <Check className={`h-4 w-4 mr-2 ${episode.watched ? 'text-primary' : ''}`} />
@@ -486,10 +662,43 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                     e.stopPropagation();
                                     handleToggleFavorite();
                                 }}
+                                className="flex-shrink-0"
                                 title={episode.favorite ? "Remove from favorites" : "Add to favorites"}
                             >
                                 <Star className={`h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                             </Button>
+
+                            {/* Archive/Unarchive Button */}
+                            {episode.isArchived ? (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsUnarchiveDialogOpen(true);
+                                    }}
+                                    className="flex-shrink-0 text-green-500 hover:text-green-600 hover:bg-green-500/10"
+                                    title="Unarchive"
+                                >
+                                    <ArchiveRestore className="h-4 w-4" />
+                                </Button>
+                            ) : (
+                                !episode.isDeleted && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsArchiveDialogOpen(true);
+                                        }}
+                                        className="flex-shrink-0 text-zinc-400 hover:text-zinc-100"
+                                        title="Archive"
+                                    >
+                                        <Archive className="h-4 w-4" />
+                                    </Button>
+                                )
+                            )}
+
 
                             <Button
                                 size="sm"
@@ -499,6 +708,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                     setIsTagPopoverOpen(true);
                                     fetchTags();
                                 }}
+                                className="flex-shrink-0"
                                 title="Manage Tags"
                             >
                                 <TagIcon className="h-4 w-4" />
@@ -559,65 +769,98 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                     <Button
                                         size="sm"
                                         variant="ghost"
-                                        onClick={(e) => e.stopPropagation()}
+                                        className="flex-shrink-0"
                                     >
                                         <MoreVertical className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
-                                        handleReorder('beginning');
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onSelect={() => {
+                                        handleToggleLike('like');
                                     }}>
-                                        <ArrowUp className="mr-2 h-4 w-4" />
-                                        Move to beginning
+                                        <ThumbsUp className={`mr-2 h-4 w-4 ${likeStatus === 'like' ? 'fill-primary text-primary' : ''}`} />
+                                        {likeStatus === 'like' ? 'Remove like' : 'Like'}
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
-                                        handleReorder('end');
+                                    <DropdownMenuItem onSelect={() => {
+                                        handleToggleLike('dislike');
                                     }}>
-                                        <ArrowDown className="mr-2 h-4 w-4" />
-                                        Move to end
+                                        <ThumbsDown className={`mr-2 h-4 w-4 ${likeStatus === 'dislike' ? 'fill-destructive text-destructive' : ''}`} />
+                                        {likeStatus === 'dislike' ? "Remove don't like" : "Don't like"}
                                     </DropdownMenuItem>
+                                    
+                                    {showReorderOptions && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onSelect={() => {
+                                                handleReorder('beginning');
+                                            }}>
+                                                <ArrowUp className="mr-2 h-4 w-4" />
+                                                Move to beginning
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => {
+                                                handleReorder('end');
+                                            }}>
+                                                <ArrowDown className="mr-2 h-4 w-4" />
+                                                Move to end
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
                                     
                                     <DropdownMenuSeparator />
                                     
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                    <DropdownMenuItem onSelect={() => {
                                         handleToggleWatched();
                                     }}>
                                         <Check className={`mr-2 h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
                                         {episode.watched ? 'Mark unwatched' : 'Mark watched'}
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                    <DropdownMenuItem onSelect={() => {
                                         setIsTagPopoverOpen(true);
                                         fetchTags();
                                     }}>
                                         <TagIcon className="mr-2 h-4 w-4" />
                                         Add tags
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={(e) => {
-                                        e.preventDefault();
+                                    <DropdownMenuItem onSelect={() => {
                                         handleToggleFavorite();
                                     }}>
                                         <Star className={`mr-2 h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                                         {episode.favorite ? 'Remove favorite' : 'Add favorite'}
                                     </DropdownMenuItem>
 
+                                    <DropdownMenuItem onSelect={() => {
+                                        handleTogglePriority();
+                                    }}>
+                                        <Gem className={`mr-2 h-4 w-4 ${episode.priority === 'high' ? 'fill-primary text-primary' : ''}`} />
+                                        {episode.priority === 'high' ? 'Remove priority' : 'Mark as priority'}
+                                    </DropdownMenuItem>
+                                    
+                                    <DropdownMenuItem onSelect={() => {
+                                        setNoteText(episode.notes || '');
+                                        setIsNoteModalOpen(true);
+                                    }}>
+                                        <StickyNote className="mr-2 h-4 w-4" />
+                                        {episode.notes ? 'Edit note' : 'Add note'}
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem onSelect={() => {
+                                        handleCopyLink();
+                                    }}>
+                                        <LinkIcon className={`mr-2 h-4 w-4 ${isCopying ? 'animate-bounce text-primary' : ''}`} />
+                                        {isCopying ? 'Copied!' : 'Copy Link'}
+                                    </DropdownMenuItem>
+
                                     <DropdownMenuSeparator />
 
                                     {episode.isDeleted ? (
                                         <>
-                                            <DropdownMenuItem onSelect={(e) => {
-                                                e.preventDefault();
+                                            <DropdownMenuItem onSelect={() => {
                                                 handleRestore();
                                             }} className="text-green-600 font-medium">
                                                 <Check className="mr-2 h-4 w-4" />
                                                 Restore to watch list
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={(e) => {
-                                                e.preventDefault();
+                                            <DropdownMenuItem onSelect={() => {
                                                 setIsHardDeleteDialogOpen(true);
                                             }} className="text-destructive font-medium">
                                                 <Trash2 className="mr-2 h-4 w-4" />
@@ -633,6 +876,28 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                                             Remove from list
                                         </DropdownMenuItem>
                                     )}
+
+                                    {episode.isArchived ? (
+                                        <DropdownMenuItem onSelect={(e) => {
+                                            e.preventDefault();
+                                            setIsUnarchiveDialogOpen(true);
+                                        }} className="text-green-600 font-medium">
+                                            <ArchiveRestore className="mr-2 h-4 w-4" />
+                                            Unarchive
+                                        </DropdownMenuItem>
+                                    ) : (
+                                        !episode.isDeleted && (
+                                            <DropdownMenuItem onSelect={(e) => {
+                                                e.preventDefault();
+                                                setIsArchiveDialogOpen(true);
+                                            }} className="text-zinc-400 font-medium">
+                                                <Archive className="mr-2 h-4 w-4" />
+                                                Archive
+                                            </DropdownMenuItem>
+                                        )
+                                    )}
+                                    <DropdownMenuSeparator />
+                                    
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -659,6 +924,86 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true }:
                         </Button>
                         <Button variant="destructive" onClick={handleDelete}>
                             Remove
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Archive Confirmation Dialog */}
+            <Dialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+                <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle>Archive Episode</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Are you sure you want to archive &quot;{episode.title}&quot;? It will be moved to your archived list.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={() => setIsArchiveDialogOpen(false)} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleArchive} className="bg-zinc-800 hover:bg-zinc-700 text-white">
+                            Archive
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Unarchive Confirmation Dialog */}
+            <Dialog open={isUnarchiveDialogOpen} onOpenChange={setIsUnarchiveDialogOpen}>
+                <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-zinc-100 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle>Unarchive Episode</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Are you sure you want to unarchive &quot;{episode.title}&quot;? It will be moved back to your active list.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={() => setIsUnarchiveDialogOpen(false)} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleUnarchive} className="bg-green-600 hover:bg-green-700 text-white">
+                            Unarchive
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Note Modal */}
+            <Dialog open={isNoteModalOpen} onOpenChange={setIsNoteModalOpen}>
+
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>{episode.notes ? 'Edit Note' : 'Add Note'}</DialogTitle>
+                        <DialogDescription>
+                            Add a personal note to this episode.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            placeholder="Enter your note here..."
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            className="min-h-[150px] resize-none"
+                            maxLength={1000}
+                        />
+                        <div className="flex justify-end mt-2 text-xs text-muted-foreground">
+                            {noteText.length} / 1000 characters
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setIsNoteModalOpen(false)}
+                            disabled={isSavingNote}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleSaveNote}
+                            disabled={isSavingNote}
+                        >
+                            {isSavingNote ? 'Saving...' : 'Save Note'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

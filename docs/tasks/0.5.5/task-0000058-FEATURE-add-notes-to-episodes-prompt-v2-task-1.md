@@ -1,0 +1,25 @@
+# Task: Add Notes to Episodes
+
+- [x] Research and Planning
+    - [x] Explore database schema and character limits
+    - [x] Explore episode card and options menu implementation
+    - [x] Propose and get approval for implementation plan
+- [x] Database Implementation
+    - [x] Update database schema (column in `episodes`)
+    - [x] Create migration in [migrations.ts](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/db/migrations.ts)
+- [x] Backend Implementation
+    - [x] Update [MediaEpisode](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/domain/models.ts#31-64) and DTOs in [models.ts](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/domain/models.ts)
+    - [x] Update `EpisodeRepository.ts` to handle notes
+    - [x] Update API route validation in [route.ts](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/app/api/episodes/route.ts)
+- [x] Frontend Implementation
+    - [x] Update [EpisodeCard](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-card.tsx#57-779) with note icon and edit modal
+    - [x] Implement character count (max 1000)
+- [x] Verification
+    - [x] Verify modal functionality (Esc, click outside, save, cancel)
+    - [x] Verify notes are correctly saved and retrieved
+    - [x] Verify retro-compatibility
+- [/] Notes Filter Implementation
+    - [/] Update [EpisodeFilters](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/domain/models.ts#142-155) in [models.ts](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/domain/models.ts)
+    - [ ] Update `EpisodeRepository.ts` to support `hasNotes` filter
+    - [ ] Add notes filter button to [FilterBar](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/filter-bar.tsx#57-477) UI
+    - [ ] Verify filtering functionality

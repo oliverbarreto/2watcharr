@@ -34,28 +34,41 @@ interface EpisodeListProps {
         watched?: boolean;
         favorite?: boolean;
         channelId?: string;
+        channelIds?: string[];
         tagIds?: string[];
         watchStatus?: 'unwatched' | 'pending' | 'watched';
         isDeleted?: boolean;
+        hasNotes?: boolean;
+        type?: 'video' | 'podcast';
+        isShort?: boolean;
+        likeStatus?: 'none' | 'like' | 'dislike';
+        priority?: 'none' | 'low' | 'medium' | 'high';
+        isArchived?: boolean;
     };
+
     sort?: {
         field: string;
         order: 'asc' | 'desc';
     };
     viewMode: 'grid' | 'list';
-    onCountChange?: (current: number, total: number) => void;
+    onCountChange?: (current: number, total: number, totalDuration: number) => void;
+    onChannelsChange?: (channels: { id: string; name: string }[] | ((prev: { id: string; name: string }[]) => { id: string; name: string }[])) => void;
+    showReorderOptions?: boolean;
 }
 
-export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountChange }: EpisodeListProps) {
+export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountChange, onChannelsChange, showReorderOptions = true }: EpisodeListProps) {
     const [episodes, setEpisodes] = useState<MediaEpisode[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
+    const [totalDuration, setTotalDuration] = useState(0);
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     
     const observerTarget = useRef<HTMLDivElement>(null);
+    const [showBubble, setShowBubble] = useState(false);
+    const bubbleTimeoutRef = useRef<NodeJS.Timeout>(null);
 
     useEffect(() => {
         const checkMobile = () => {
@@ -77,11 +90,13 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
         })
     );
 
-    const fetchEpisodes = useCallback(async (currentOffset: number = 0, append: boolean = false) => {
-        if (currentOffset === 0) {
-            setLoading(true);
-        } else {
-            setLoadingMore(true);
+    const fetchEpisodes = useCallback(async (currentOffset: number = 0, append: boolean = false, silent: boolean = false) => {
+        if (!silent) {
+            if (currentOffset === 0) {
+                setLoading(true);
+            } else {
+                setLoadingMore(true);
+            }
         }
 
         try {
@@ -91,11 +106,21 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
             if (filters?.watched !== undefined) params.append('watched', String(filters.watched));
             if (filters?.favorite !== undefined) params.append('favorite', String(filters.favorite));
             if (filters?.channelId) params.append('channelId', filters.channelId);
+            if (filters?.channelIds && filters.channelIds.length > 0) {
+                params.append('channels', filters.channelIds.join(','));
+            }
             if (filters?.tagIds && filters.tagIds.length > 0) {
                 params.append('tags', filters.tagIds.join(','));
             }
             if (filters?.watchStatus) params.append('watchStatus', filters.watchStatus);
             if (filters?.isDeleted !== undefined) params.append('isDeleted', String(filters.isDeleted));
+            if (filters?.hasNotes !== undefined) params.append('hasNotes', String(filters.hasNotes));
+            if (filters?.type) params.append('type', filters.type);
+            if (filters?.isShort !== undefined) params.append('isShort', String(filters.isShort));
+            if (filters?.likeStatus !== undefined) params.append('likeStatus', filters.likeStatus);
+            if (filters?.priority !== undefined) params.append('priority', filters.priority);
+            if (filters?.isArchived !== undefined) params.append('isArchived', String(filters.isArchived));
+
             if (sort?.field) params.append('sort', sort.field);
             if (sort?.order) params.append('order', sort.order);
             
@@ -112,23 +137,55 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
                 setEpisodes(prev => [...prev, ...data.episodes]);
             } else {
                 setEpisodes(data.episodes);
+                
+                // Extract unique channels for the filter menu
+                if (onChannelsChange) {
+                    const channelsMap = new Map<string, {id: string, name: string}>();
+                    data.episodes.forEach((ep: MediaEpisode) => {
+                        if (ep.channelId && ep.channelName) {
+                            channelsMap.set(ep.channelId, { id: ep.channelId, name: ep.channelName });
+                        }
+                    });
+                    const newChannels = Array.from(channelsMap.values());
+                    
+                    // Only trigger update if channels have actually changed (shallow comparison is enough for IDs)
+                    onChannelsChange((prev: { id: string; name: string }[]) => {
+                        const prevIds = (prev || []).map((c: { id: string; name: string }) => c.id).sort().join(',');
+                        const nextIds = newChannels.map((c: { id: string; name: string }) => c.id).sort().join(',');
+                        if (prevIds === nextIds) return prev;
+                        return newChannels;
+                    });
+                }
             }
             
             setTotalCount(data.total);
+            setTotalDuration(data.totalDuration || 0);
             setHasMore(data.episodes.length === PAGE_SIZE && (currentOffset + data.episodes.length) < data.total);
             setOffset(currentOffset);
+
+            // Show floating bubble when loading more
+            if (append) {
+                setShowBubble(true);
+                if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+                bubbleTimeoutRef.current = setTimeout(() => {
+                    setShowBubble(false);
+                }, 5000);
+            }
         } catch (error) {
             console.error('Error fetching episodes:', error);
         } finally {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [filters, sort]);
+    }, [JSON.stringify(filters), JSON.stringify(sort), onChannelsChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Reset pagination when filters or sort change
+    const channelIdsStr = filters?.channelIds?.join(',');
+    const tagIdsStr = filters?.tagIds?.join(',');
     useEffect(() => {
         fetchEpisodes(0, false);
-    }, [fetchEpisodes]);
+    }, [filters?.search, filters?.watched, filters?.favorite, filters?.hasNotes, filters?.type, filters?.isShort, filters?.likeStatus, filters?.priority, filters?.isArchived, filters?.channelId, channelIdsStr, tagIdsStr, filters?.watchStatus, filters?.isDeleted, sort?.field, sort?.order, fetchEpisodes]);
+
 
     // Intersection Observer for infinite scroll
     useEffect(() => {
@@ -150,9 +207,9 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
 
     useEffect(() => {
         if (onCountChange) {
-            onCountChange(episodes.length, totalCount);
+            onCountChange(episodes.length, totalCount, totalDuration);
         }
-    }, [episodes.length, totalCount, onCountChange]);
+    }, [episodes.length, totalCount, totalDuration, onCountChange]);
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
@@ -179,7 +236,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
         }
     };
 
-    const handleUpdate = () => fetchEpisodes(0, false);
+    const handleUpdate = () => fetchEpisodes(0, false, true);
 
     if (loading && offset === 0) {
         return (
@@ -223,6 +280,7 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
                         viewMode={viewMode}
                         onUpdate={handleUpdate}
                         onDelete={handleUpdate}
+                        showReorderOptions={showReorderOptions}
                     />
                 </div>
             );
@@ -256,7 +314,8 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
                                     episode={episode}
                                     onUpdate={handleUpdate}
                                     onDelete={handleUpdate}
-                                    isDraggable={sort?.field === 'custom'}
+                                    isDraggable={showReorderOptions && sort?.field === 'custom'}
+                                    showReorderOptions={showReorderOptions}
                                 />
                             ) : (
                                 <EpisodeListRow
@@ -264,7 +323,8 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
                                     episode={episode}
                                     onUpdate={handleUpdate}
                                     onDelete={handleUpdate}
-                                    isDraggable={sort?.field === 'custom'}
+                                    isDraggable={showReorderOptions && sort?.field === 'custom'}
+                                    showReorderOptions={showReorderOptions}
                                 />
                             )
                         )}
@@ -286,6 +346,17 @@ export function EpisodeList({ filters, sort, viewMode: initialViewMode, onCountC
                         <span>Loading more...</span>
                     </div>
                 )}
+            </div>
+
+            {/* Floating Count Bubble */}
+            <div className={`fixed bottom-6 left-6 z-50 transition-all duration-500 transform ${
+                showBubble ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'
+            }`}>
+                <div className="bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg border border-primary/20 flex items-center gap-2 backdrop-blur-sm bg-primary/90">
+                    <span className="text-sm font-medium">
+                        Showing {episodes.length} of {totalCount} episodes
+                    </span>
+                </div>
             </div>
         </div>
     );

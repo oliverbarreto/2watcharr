@@ -21,8 +21,8 @@ import {
     Search,
     ChevronLeft,
     ChevronRight,
-    CircleDashed,
-    RotateCcw
+    RotateCcw,
+    XCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,8 +33,12 @@ import {
     TableBody, 
     TableHead, 
     TableRow, 
-    TableCell 
+    TableCell,
 } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { 
     ChartContainer, 
@@ -46,9 +50,15 @@ import {
     Area, 
     XAxis, 
     YAxis, 
-    CartesianGrid
+    CartesianGrid,
+    LineChart,
+    Line,
+    ResponsiveContainer,
+    Legend,
+    Tooltip
 } from 'recharts';
 import { Input } from '@/components/ui/input';
+import { sortStringsAlphabetically } from '@/lib/utils/tag-utils';
 
 interface DashboardStats {
     counts: {
@@ -65,10 +75,13 @@ interface DashboardStats {
         tagged: number;
         unwatched: number;
         pending: number;
+        watchedToday: number;
+        watchedThisWeek: number;
     };
     playTime: {
         totalSeconds: number;
         averageSecondsPerVideo: number;
+        todaySeconds: number;
         thisWeekSeconds: number;
         thisMonthSeconds: number;
     };
@@ -77,6 +90,18 @@ interface DashboardStats {
         added: number;
         watched: number;
     }[];
+    tagsTimeSeries: {
+        date: string;
+        [tag: string]: number | string;
+    }[];
+    channelsTimeSeries: {
+        added: { date: string; [channel: string]: number | string }[];
+        watched: { date: string; [channel: string]: number | string }[];
+        favorited: { date: string; [channel: string]: number | string }[];
+        priority: { date: string; [channel: string]: number | string }[];
+        liked: { date: string; [channel: string]: number | string }[];
+        disliked: { date: string; [channel: string]: number | string }[];
+    };
     detailedStats: {
         title: string;
         type: string;
@@ -95,6 +120,11 @@ export default function StatsPage() {
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(20);
+    const [visibleTags, setVisibleTags] = useState<string[]>([]);
+    const [tagSearchQuery, setTagSearchQuery] = useState('');
+    const [visibleChannels, setVisibleChannels] = useState<string[]>([]);
+    const [channelMetric, setChannelMetric] = useState<'added' | 'watched' | 'favorited' | 'priority' | 'liked' | 'disliked'>('added');
+    const [channelSearchQuery, setChannelSearchQuery] = useState('');
 
     // Handle search debouncing
     useEffect(() => {
@@ -110,15 +140,52 @@ export default function StatsPage() {
         try {
             const response = await fetch(`/api/stats?period=${period}`);
             if (!response.ok) throw new Error('Failed to fetch stats');
-            const data = await response.json();
+            const data: DashboardStats = await response.json();
             setStats(data);
+            
+            // Set initial visible tags once stats are loaded
+            if (data.tagsTimeSeries.length > 0) {
+                // Show top 5 tags by default if many
+                const tagCounts: Record<string, number> = {};
+                data.tagsTimeSeries.forEach(point => {
+                    Object.entries(point).forEach(([key, value]) => {
+                        if (key !== 'date' && typeof value === 'number') {
+                            tagCounts[key] = (tagCounts[key] || 0) + value;
+                        }
+                    });
+                });
+                
+                const sortedTags = Object.entries(tagCounts)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([name]) => name);
+                
+                setVisibleTags(sortedTags.slice(0, 5));
+            }
+
+            // Set initial visible channels (top 5 by current metric)
+            if (data.channelsTimeSeries[channelMetric].length > 0) {
+                const channelCounts: Record<string, number> = {};
+                data.channelsTimeSeries[channelMetric].forEach(point => {
+                    Object.entries(point).forEach(([key, value]) => {
+                        if (key !== 'date' && typeof value === 'number') {
+                            channelCounts[key] = (channelCounts[key] || 0) + value;
+                        }
+                    });
+                });
+                
+                const sortedChannels = Object.entries(channelCounts)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([name]) => name);
+                
+                setVisibleChannels(sortedChannels.slice(0, 5));
+            }
         } catch (error) {
             console.error('Error fetching stats:', error);
             toast.error('Failed to load statistics');
         } finally {
             setIsLoading(false);
         }
-    }, [period]);
+    }, [period, channelMetric]);
 
     useEffect(() => {
         fetchStats();
@@ -162,6 +229,52 @@ export default function StatsPage() {
             ? <ArrowUp className="ml-2 h-4 w-4 text-primary" /> 
             : <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
     };
+
+    const resetToDefaults = useCallback(() => {
+        if (!stats) return;
+        
+        // Reset to top 5 channels by current metric
+        if (stats.channelsTimeSeries[channelMetric].length > 0) {
+            const channelCounts: Record<string, number> = {};
+            stats.channelsTimeSeries[channelMetric].forEach(point => {
+                Object.entries(point).forEach(([key, value]) => {
+                    if (key !== 'date' && typeof value === 'number') {
+                        channelCounts[key] = (channelCounts[key] || 0) + value;
+                    }
+                });
+            });
+            
+            const sortedChannels = Object.entries(channelCounts)
+                .sort(([, a], [, b]) => b - a)
+                .map(([name]) => name);
+            
+            setVisibleChannels(sortedChannels.slice(0, 5));
+            toast.success(`Reset to top 5 channels for ${channelMetric}`);
+        }
+    }, [stats, channelMetric]);
+
+    const resetTagsToDefaults = useCallback(() => {
+        if (!stats) return;
+        
+        // Reset to top 5 tags by usage
+        if (stats.tagsTimeSeries.length > 0) {
+            const tagCounts: Record<string, number> = {};
+            stats.tagsTimeSeries.forEach(point => {
+                Object.entries(point).forEach(([key, value]) => {
+                    if (key !== 'date' && typeof value === 'number') {
+                        tagCounts[key] = (tagCounts[key] || 0) + value;
+                    }
+                });
+            });
+            
+            const sortedTags = Object.entries(tagCounts)
+                .sort(([, a], [, b]) => b - a)
+                .map(([name]) => name);
+            
+            setVisibleTags(sortedTags.slice(0, 5));
+            toast.success('Reset to top 5 most used tags');
+        }
+    }, [stats]);
 
     // Filter by search query
     const filteredStats = stats?.detailedStats ? stats.detailedStats.filter((event) => {
@@ -250,15 +363,42 @@ export default function StatsPage() {
         total: "All Time"
     };
 
+    // Get all unique tags from time series
+    const allAvailableTags = stats ? sortStringsAlphabetically(Array.from(new Set(
+        stats.tagsTimeSeries.flatMap(point => 
+            Object.keys(point).filter(key => key !== 'date')
+        )
+    ))) : [];
+
+    const toggleTagVisibility = (tagName: string) => {
+        setVisibleTags(prev => 
+            prev.includes(tagName) 
+                ? prev.filter(t => t !== tagName)
+                : [...prev, tagName]
+        );
+    };
+
+    const allAvailableChannels = stats ? sortStringsAlphabetically(Array.from(new Set(
+        Object.values(stats.channelsTimeSeries).flatMap(points => 
+            points.flatMap(point => 
+                Object.keys(point).filter(key => key !== 'date')
+            )
+        )
+    ))) : [];
+
+    const toggleChannelVisibility = (channelName: string) => {
+        setVisibleChannels(prev => 
+            prev.includes(channelName) 
+                ? prev.filter(t => t !== channelName)
+                : [...prev, channelName]
+        );
+    };
+
     return (
         <Layout>
             <div className="animate-in fade-in duration-500 pb-20">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Usage Statistics</h1>
-                        <p className="text-muted-foreground">Detailed insights into your watch history and library.</p>
-                    </div>
-                </div>
+                {/* Removed Page Title and Subtitle */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8"></div>
 
                 {/* Summary Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -296,105 +436,133 @@ export default function StatsPage() {
                     />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Activity Summary (Side List) */}
-                    <Card className="lg:col-span-1 border-none bg-card/50 backdrop-blur-sm self-start shadow-xl">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg font-bold">
-                                <TrendingUp className="h-5 w-5 text-primary" />
-                                Activity Summary
-                            </CardTitle>
-                            <CardDescription>{periodLabels[period]}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-5">
-                            <UsageItem 
-                                label="Added" 
-                                value={stats.usage.added} 
-                                icon={<Plus className="h-4 w-4" />} 
-                                color="text-blue-500"
-                                bg="bg-blue-500/10"
-                            />
-                            <UsageItem 
-                                label="Watched" 
-                                value={stats.usage.watched} 
-                                icon={<Play className="h-4 w-4" />} 
-                                color="text-green-500"
-                                bg="bg-green-500/10"
-                            />
-                            <UsageItem 
-                                label="Not Watched" 
-                                value={stats.usage.unwatched} 
-                                icon={<RotateCcw className="h-4 w-4" />} 
-                                color="text-orange-500"
-                                bg="bg-orange-500/10"
-                            />
-                            <UsageItem 
-                                label="Pending Confirmation" 
-                                value={stats.usage.pending} 
-                                icon={<CircleDashed className="h-4 w-4" />} 
-                                color="text-cyan-500"
-                                bg="bg-cyan-500/10"
-                            />
-                            <UsageItem 
-                                label="Favorited" 
-                                value={stats.usage.favorited} 
-                                icon={<Star className="h-4 w-4" />} 
-                                color="text-amber-500"
-                                bg="bg-amber-500/10"
-                            />
-                            <UsageItem 
-                                label="Tagged" 
-                                value={stats.usage.tagged} 
-                                icon={<TagIcon className="h-4 w-4" />} 
-                                color="text-indigo-500"
-                                bg="bg-indigo-500/10"
-                            />
-                            <UsageItem 
-                                label="Removed" 
-                                value={stats.usage.removed} 
-                                icon={<Trash2 className="h-4 w-4" />} 
-                                color="text-red-500"
-                                bg="bg-red-500/10"
-                            />
-                        </CardContent>
-                    </Card>
-
-                    {/* Charts Section */}
-                    <div className="lg:col-span-2 space-y-8">
+                <div className="grid grid-cols-1 gap-8">
+                    {/* Top Row: Viewing Time and Activity Summary */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Play Time Stats */}
-                        <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="flex items-center gap-2 text-lg font-bold">
-                                    <Clock className="h-5 w-5 text-primary" />
-                                    Viewing Time
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                                    <div className="p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total Time</p>
-                                        <p className="text-2xl font-black text-primary tracking-tighter">{formatDetailedDuration(stats.playTime.totalSeconds)}</p>
+                        <div className="lg:col-span-1">
+                            <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden h-full">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="flex items-center gap-2 text-lg font-bold">
+                                        <Clock className="h-5 w-5 text-primary" />
+                                        Viewing Time
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-3 lg:p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Today</p>
+                                            <p className="text-xl lg:text-2xl font-black text-primary tracking-tighter">{formatDuration(stats.playTime.todaySeconds)}</p>
+                                        </div>
+                                        <div className="p-3 lg:p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">This Week</p>
+                                            <p className="text-xl lg:text-2xl font-black tracking-tighter">{formatDuration(stats.playTime.thisWeekSeconds)}</p>
+                                        </div>
+                                        <div className="p-3 lg:p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total Time</p>
+                                            <p className="text-xl lg:text-2xl font-black tracking-tighter">{formatDetailedDuration(stats.playTime.totalSeconds)}</p>
+                                        </div>
+                                        <div className="p-3 lg:p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Avg/Video</p>
+                                            <p className="text-xl lg:text-2xl font-black tracking-tighter">{formatDuration(stats.playTime.averageSecondsPerVideo)}</p>
+                                        </div>
                                     </div>
-                                    <div className="p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">This Week</p>
-                                        <p className="text-2xl font-black tracking-tighter">{formatDuration(stats.playTime.thisWeekSeconds)}</p>
-                                    </div>
-                                    <div className="p-4 rounded-2xl bg-muted/30 flex flex-col items-center text-center transition-colors hover:bg-muted/40">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Avg/Video</p>
-                                        <p className="text-2xl font-black tracking-tighter">{formatDuration(stats.playTime.averageSecondsPerVideo)}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        </div>
 
-                        {/* Activity Timeline Chart */}
-                        <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
-                            <CardHeader className="flex items-center gap-2 space-y-0 border-b border-border/10 py-5 sm:flex-row">
-                                <div className="grid flex-1 gap-1">
-                                    <CardTitle className="text-lg font-bold">Activity Trend</CardTitle>
-                                    <CardDescription>{periodLabels[period]} visualization</CardDescription>
-                                </div>
-                                <div className="flex flex-col items-end gap-3">
+                        {/* Activity Summary (Full Width in its column) */}
+                        <div className="lg:col-span-2">
+                            <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl h-full">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-lg font-bold">
+                                        <TrendingUp className="h-5 w-5 text-primary" />
+                                        Activity Summary
+                                    </CardTitle>
+                                    <CardDescription>{periodLabels[period]}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-12 gap-y-4">
+                                        <div className="space-y-4">
+                                            <UsageItem 
+                                                label="Watched Today" 
+                                                value={stats.usage.watchedToday} 
+                                                icon={<Play className="h-4 w-4" />} 
+                                                color="text-emerald-500"
+                                                bg="bg-emerald-500/10"
+                                            />
+                                            <UsageItem 
+                                                label="Watched This Week" 
+                                                value={stats.usage.watchedThisWeek} 
+                                                icon={<TrendingUp className="h-4 w-4" />} 
+                                                color="text-indigo-500"
+                                                bg="bg-indigo-500/10"
+                                            />
+                                        </div>
+                                        <div className="space-y-4">
+                                            <UsageItem 
+                                                label="Added" 
+                                                value={stats.usage.added} 
+                                                icon={<Plus className="h-4 w-4" />} 
+                                                color="text-blue-500"
+                                                bg="bg-blue-500/10"
+                                            />
+                                            <UsageItem 
+                                                label="Watched" 
+                                                value={stats.usage.watched} 
+                                                icon={<Play className="h-4 w-4" />} 
+                                                color="text-green-500"
+                                                bg="bg-green-500/10"
+                                            />
+                                            <UsageItem 
+                                                label="Favorited" 
+                                                value={stats.usage.favorited} 
+                                                icon={<Star className="h-4 w-4" />} 
+                                                color="text-amber-500"
+                                                bg="bg-amber-500/10"
+                                            />
+                                        </div>
+                                        <div className="space-y-4">
+                                            <UsageItem 
+                                                label="Not Watched" 
+                                                value={stats.usage.unwatched} 
+                                                icon={<RotateCcw className="h-4 w-4" />} 
+                                                color="text-orange-500"
+                                                bg="bg-orange-500/10"
+                                            />
+                                            <UsageItem 
+                                                label="Tagged" 
+                                                value={stats.usage.tagged} 
+                                                icon={<TagIcon className="h-4 w-4" />} 
+                                                color="text-purple-500"
+                                                bg="bg-purple-500/10"
+                                            />
+                                            <UsageItem 
+                                                label="Removed" 
+                                                value={stats.usage.removed} 
+                                                icon={<Trash2 className="h-4 w-4" />} 
+                                                color="text-red-500"
+                                                bg="bg-red-500/10"
+                                            />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+
+                    {/* Tabs Section taking full width */}
+                    <div className="w-full">
+                        <Tabs defaultValue="activity" className="w-full">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                                <TabsList className="bg-muted/20 border border-border/50 p-1 rounded-xl">
+                                    <TabsTrigger value="activity" className="rounded-lg px-6">Activity</TabsTrigger>
+                                    <TabsTrigger value="tags" className="rounded-lg px-6">Tags</TabsTrigger>
+                                    <TabsTrigger value="channels" className="rounded-lg px-6">Channels</TabsTrigger>
+                                    <TabsTrigger value="history" className="rounded-lg px-6">Events History</TabsTrigger>
+                                </TabsList>
+
+                                <div className="flex items-center gap-3">
                                     <Select value={period} onValueChange={(v: typeof period) => setPeriod(v)}>
                                         <SelectTrigger className="w-[160px] rounded-lg bg-muted/20 border-border/50">
                                             <SelectValue placeholder="Select period" />
@@ -407,286 +575,655 @@ export default function StatsPage() {
                                             <SelectItem value="total" className="rounded-lg">All Time</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <div className="flex items-center gap-3">
-                                        {Object.entries(chartConfig).map(([key, config]) => (
-                                            <div key={key} className="flex items-center gap-1.5">
-                                                <div 
-                                                    className="h-1.5 w-1.5 rounded-full" 
-                                                    style={{ backgroundColor: config.color }}
-                                                />
-                                                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                                                    {config.label}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
-                            </CardHeader>
-                            <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-                                <ChartContainer config={chartConfig} className="aspect-[16/6] w-full">
-                                    <AreaChart
-                                        data={stats.activityTimeSeries}
-                                        margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                                    >
-                                        <defs>
-                                            <linearGradient id="fillAdded" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                            </linearGradient>
-                                            <linearGradient id="fillWatched" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                                        <XAxis
-                                            dataKey="date"
-                                            tickLine={false}
-                                            axisLine={false}
-                                            tickMargin={8}
-                                            tickFormatter={(value) => {
-                                                const date = new Date(value);
-                                                if (period === 'day') {
-                                                    return date.toLocaleTimeString("en-US", { hour: 'numeric' });
-                                                }
-                                                if (period === 'year' || period === 'total') {
-                                                    return date.toLocaleDateString("en-US", { month: 'short', year: '2-digit' });
-                                                }
-                                                return date.toLocaleDateString("en-US", {
-                                                    month: "short",
-                                                    day: "numeric",
-                                                });
-                                            }}
-                                            fontSize={10}
-                                            stroke="rgba(255,255,255,0.3)"
-                                        />
-                                        <YAxis 
-                                            hide 
-                                            domain={[0, 'auto']} 
-                                        />
-                                        <ChartTooltip
-                                            cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
-                                            content={
-                                                <ChartTooltipContent 
-                                                    indicator="dot" 
-                                                    className="bg-zinc-950/90 border-zinc-800 backdrop-blur-md shadow-2xl"
-                                                />
-                                            }
-                                        />
-                                        <Area
-                                            dataKey="added"
-                                            type="monotone"
-                                            fill="url(#fillAdded)"
-                                            stroke="#3b82f6"
-                                            strokeWidth={2}
-                                            stackId="a"
-                                            animationDuration={1500}
-                                        />
-                                        <Area
-                                            dataKey="watched"
-                                            type="monotone"
-                                            fill="url(#fillWatched)"
-                                            stroke="#22c55e"
-                                            strokeWidth={2}
-                                            stackId="a"
-                                            animationDuration={1500}
-                                        />
-                                    </AreaChart>
-                                </ChartContainer>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-
-                {/* Detailed Stats Table */}
-                <Card className="mt-8 border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg font-bold">
-                            <BarChart3 className="h-5 w-5 text-primary" />
-                            Detailed History
-                        </CardTitle>
-                        <CardDescription>Most recent events for {periodLabels[period]}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {/* Search and Pagination Controls */}
-                        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    type="text"
-                                    placeholder="Search by title..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10 bg-muted/20 border-border/50"
-                                />
                             </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page:</span>
-                                <Select 
-                                    value={rowsPerPage.toString()} 
-                                    onValueChange={(v) => setRowsPerPage(Number(v))}
-                                >
-                                    <SelectTrigger className="w-[100px] bg-muted/20 border-border/50">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl bg-zinc-950/90 backdrop-blur-md border-zinc-800">
-                                        <SelectItem value="10" className="rounded-lg">10</SelectItem>
-                                        <SelectItem value="20" className="rounded-lg">20</SelectItem>
-                                        <SelectItem value="50" className="rounded-lg">50</SelectItem>
-                                        <SelectItem value="100" className="rounded-lg">100</SelectItem>
-                                        <SelectItem value="200" className="rounded-lg">200</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
 
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="hover:bg-transparent border-border/50">
-                                    <TableHead 
-                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
-                                        onClick={() => handleSort('title')}
-                                    >
-                                        <div className="flex items-center">
-                                            Title
-                                            {getSortIcon('title')}
+                            <TabsContent value="activity">
+                                {/* Activity Timeline Chart */}
+                                <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
+                                    <CardHeader className="flex items-center gap-2 space-y-0 border-b border-border/10 py-5 sm:flex-row">
+                                        <div className="grid flex-1 gap-1">
+                                            <CardTitle className="text-lg font-bold">Activity Trend</CardTitle>
+                                            <CardDescription>{periodLabels[period]} visualization</CardDescription>
                                         </div>
-                                    </TableHead>
-                                    <TableHead 
-                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
-                                        onClick={() => handleSort('type')}
-                                    >
-                                        <div className="flex items-center">
-                                            Type
-                                            {getSortIcon('type')}
-                                        </div>
-                                    </TableHead>
-                                    <TableHead 
-                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
-                                        onClick={() => handleSort('event_type')}
-                                    >
-                                        <div className="flex items-center">
-                                            Action
-                                            {getSortIcon('event_type')}
-                                        </div>
-                                    </TableHead>
-                                    <TableHead 
-                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
-                                        onClick={() => handleSort('tags')}
-                                    >
-                                        <div className="flex items-center">
-                                            Tags
-                                            {getSortIcon('tags')}
-                                        </div>
-                                    </TableHead>
-                                    <TableHead 
-                                        className="font-bold uppercase tracking-wider text-[10px] text-right cursor-pointer hover:text-foreground transition-colors"
-                                        onClick={() => handleSort('created_at')}
-                                    >
-                                        <div className="flex items-center justify-end">
-                                            Date
-                                            {getSortIcon('created_at')}
-                                        </div>
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {paginatedStats.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                                            {searchQuery ? 'No results found for your search.' : 'No activity found for this period.'}
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    paginatedStats.map((event, i) => (
-                                        <TableRow key={i} className="border-border/20 hover:bg-white/5 transition-colors">
-                                            <TableCell className="font-medium max-w-[300px] truncate">{event.title}</TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-1.5">
-                                                    {event.type === 'video' ? <Video className="h-3 w-3 text-red-400" /> : <Mic className="h-3 w-3 text-purple-400" />}
-                                                    <span className="capitalize text-xs">{event.type}</span>
+                                        <div className="flex items-center gap-3">
+                                            {Object.entries(chartConfig).map(([key, config]) => (
+                                                <div key={key} className="flex items-center gap-1.5">
+                                                    <div 
+                                                        className="h-1.5 w-1.5 rounded-full" 
+                                                        style={{ backgroundColor: config.color }}
+                                                    />
+                                                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                        {config.label}
+                                                    </span>
                                                 </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${
-                                                    event.event_type === 'watched' ? 'bg-green-500/10 text-green-500' : 
-                                                    event.event_type === 'added' ? 'bg-blue-500/10 text-blue-500' :
-                                                    event.event_type === 'favorited' ? 'bg-amber-500/10 text-amber-500' :
-                                                    'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    {event.event_type}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {event.tags && event.tags.length > 0 ? (
-                                                        event.tags.map((tag, idx) => (
-                                                            <span 
-                                                                key={idx} 
-                                                                className="px-1.5 py-0.5 rounded text-[9px] font-bold"
-                                                                style={{ 
-                                                                    backgroundColor: tag.color ? `${tag.color}20` : 'rgba(255,255,255,0.1)',
-                                                                    color: tag.color || 'inherit',
-                                                                    border: `1px solid ${tag.color ? `${tag.color}40` : 'rgba(255,255,255,0.2)'}`
-                                                                }}
-                                                            >
-                                                                {tag.name}
-                                                            </span>
-                                                        ))
-                                                    ) : (
-                                                        <span className="text-[10px] text-muted-foreground italic">No tags</span>
+                                            ))}
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+                                        <ChartContainer config={chartConfig} className="aspect-[16/6] w-full">
+                                            <AreaChart
+                                                data={stats.activityTimeSeries}
+                                                margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                                            >
+                                                <defs>
+                                                    <linearGradient id="fillAdded" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                    <linearGradient id="fillWatched" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                                                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                                <XAxis
+                                                    dataKey="date"
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                    tickMargin={8}
+                                                    tickFormatter={(value) => {
+                                                        const date = new Date(value);
+                                                        if (period === 'day') {
+                                                            return date.toLocaleTimeString("en-US", { hour: 'numeric' });
+                                                        }
+                                                        if (period === 'year' || period === 'total') {
+                                                            return date.toLocaleDateString("en-US", { month: 'short', year: '2-digit' });
+                                                        }
+                                                        return date.toLocaleDateString("en-US", {
+                                                            month: "short",
+                                                            day: "numeric",
+                                                        });
+                                                    }}
+                                                    fontSize={10}
+                                                    stroke="rgba(255,255,255,0.3)"
+                                                />
+                                                <YAxis 
+                                                    hide 
+                                                    domain={[0, 'auto']} 
+                                                />
+                                                <ChartTooltip
+                                                    cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
+                                                    content={
+                                                        <ChartTooltipContent 
+                                                            indicator="dot" 
+                                                            className="bg-zinc-950/90 border-zinc-800 backdrop-blur-md shadow-2xl"
+                                                        />
+                                                    }
+                                                />
+                                                <Area
+                                                    dataKey="added"
+                                                    type="monotone"
+                                                    fill="url(#fillAdded)"
+                                                    stroke="#3b82f6"
+                                                    strokeWidth={2}
+                                                    stackId="a"
+                                                    animationDuration={1500}
+                                                />
+                                                <Area
+                                                    dataKey="watched"
+                                                    type="monotone"
+                                                    fill="url(#fillWatched)"
+                                                    stroke="#22c55e"
+                                                    strokeWidth={2}
+                                                    stackId="a"
+                                                    animationDuration={1500}
+                                                />
+                                            </AreaChart>
+                                        </ChartContainer>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            <TabsContent value="tags">
+                                <div className="space-y-8">
+                                    {/* Tags Distribution Chart */}
+                                    <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden min-h-[450px]">
+                                        <CardHeader>
+                                            <CardTitle className="text-lg font-bold">Videos per Tag</CardTitle>
+                                            <CardDescription>Popularity of tags over time ({periodLabels[period]})</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="h-[380px] w-full pt-4">
+                                            {visibleTags.length === 0 ? (
+                                                <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
+                                                    <TagIcon className="h-8 w-8 opacity-20" />
+                                                    <p className="text-sm">Select tags to visualize their trend</p>
+                                                </div>
+                                            ) : (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={stats.tagsTimeSeries} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                                                        <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                                        <XAxis 
+                                                            dataKey="date" 
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            tickMargin={8}
+                                                            tickFormatter={(value) => {
+                                                                const date = new Date(value);
+                                                                if (period === 'day') return date.toLocaleTimeString("en-US", { hour: 'numeric' });
+                                                                if (period === 'year' || period === 'total') return date.toLocaleDateString("en-US", { month: 'short', year: '2-digit' });
+                                                                return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                                                            }}
+                                                            fontSize={10}
+                                                            stroke="rgba(255,255,255,0.3)"
+                                                        />
+                                                        <YAxis 
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            tickMargin={8}
+                                                            fontSize={10}
+                                                            stroke="rgba(255,255,255,0.3)"
+                                                        />
+                                                        <Tooltip 
+                                                            contentStyle={{ 
+                                                                backgroundColor: 'rgba(9, 9, 11, 0.9)', 
+                                                                borderColor: 'rgba(39, 39, 42, 1)',
+                                                                borderRadius: '12px',
+                                                                backdropFilter: 'blur(8px)',
+                                                                color: '#fff',
+                                                                fontSize: '12px'
+                                                            }}
+                                                            itemStyle={{ fontWeight: 'bold' }}
+                                                        />
+                                                        <Legend />
+                                                        {visibleTags.map((tag, index) => (
+                                                            <Line
+                                                                key={tag}
+                                                                type="monotone"
+                                                                dataKey={tag}
+                                                                stroke={`hsl(${index * 137.5 % 360}, 70%, 60%)`}
+                                                                strokeWidth={2.5}
+                                                                dot={{ r: 2, fill: `hsl(${index * 137.5 % 360}, 70%, 60%)`, strokeWidth: 0 }}
+                                                                activeDot={{ r: 6, strokeWidth: 0 }}
+                                                                connectNulls
+                                                                animationDuration={1000}
+                                                            />
+                                                        ))}
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Tag Selection Section */}
+                                    <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl">
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                                            <div className="grid gap-1">
+                                                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                                    <TagIcon className="h-4 w-4" />
+                                                    Visible Tags
+                                                </CardTitle>
+                                                <CardDescription className="text-xs">Select tags to show in chart</CardDescription>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                                <div className="relative">
+                                                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="Search tags..."
+                                                        value={tagSearchQuery}
+                                                        onChange={(e) => setTagSearchQuery(e.target.value)}
+                                                        className="h-7 w-[200px] pl-7 pr-7 text-[10px] bg-muted/20 border-border/50 rounded-md"
+                                                    />
+                                                    {tagSearchQuery && (
+                                                        <button 
+                                                            onClick={() => setTagSearchQuery('')}
+                                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <XCircle className="h-3 w-3" />
+                                                        </button>
                                                     )}
                                                 </div>
-                                            </TableCell>
-                                            <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
-                                                {new Date(event.created_at * 1000).toLocaleDateString(undefined, {
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    year: 'numeric',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                })}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                                                <div className="flex items-center gap-2">
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40 gap-1.5"
+                                                        onClick={resetTagsToDefaults}
+                                                        title="Reset to top 5 tags"
+                                                    >
+                                                        <RotateCcw className="h-3 w-3" />
+                                                        Top 5
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
+                                                        onClick={() => setVisibleTags(allAvailableTags)}
+                                                    >
+                                                        Select All
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
+                                                        onClick={() => setVisibleTags([])}
+                                                    >
+                                                        Deselect All
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="flex flex-wrap gap-x-6 gap-y-3">
+                                                {allAvailableTags.length === 0 ? (
+                                                    <p className="text-xs text-muted-foreground italic w-full text-center py-4">No tags found for this period</p>
+                                                ) : (
+                                                    allAvailableTags
+                                                        .filter(tag => tag.toLowerCase().includes(tagSearchQuery.toLowerCase()))
+                                                        .map(tag => (
+                                                            <div key={tag} className="flex items-center space-x-2 group shrink-0">
+                                                                <Checkbox 
+                                                                    id={`tag-${tag}`} 
+                                                                    checked={visibleTags.includes(tag)}
+                                                                    onCheckedChange={() => toggleTagVisibility(tag)}
+                                                                    className="border-border/50 data-[state=checked]:bg-primary"
+                                                                />
+                                                                <label 
+                                                                    htmlFor={`tag-${tag}`}
+                                                                    className="text-xs font-semibold leading-none cursor-pointer group-hover:text-primary transition-colors whitespace-nowrap"
+                                                                >
+                                                                    {tag}
+                                                                </label>
+                                                            </div>
+                                                        ))
+                                                )}
+                                                {allAvailableTags.length > 0 && allAvailableTags.filter(tag => tag.toLowerCase().includes(tagSearchQuery.toLowerCase())).length === 0 && (
+                                                    <p className="text-xs text-muted-foreground italic w-full text-center py-4">No tags match your search</p>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </TabsContent>
 
-                        {/* Pagination Info and Navigation */}
-                        {totalRows > 0 && (
-                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-                                <div className="text-sm text-muted-foreground">
-                                    Showing {startIndex + 1} to {Math.min(endIndex, totalRows)} of {totalRows} {totalRows === 1 ? 'entry' : 'entries'}
-                                    {searchQuery && ` (filtered from ${stats?.detailedStats.length || 0} total)`}
+                            <TabsContent value="history">
+                                {/* Detailed Stats Table */}
+                                <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2 text-lg font-bold">
+                                            <BarChart3 className="h-5 w-5 text-primary" />
+                                            Detailed History
+                                        </CardTitle>
+                                        <CardDescription>Most recent events for {periodLabels[period]}</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {/* Search and Pagination Controls */}
+                                        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                                            <div className="relative flex-1">
+                                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    type="text"
+                                                    placeholder="Search by title..."
+                                                    value={searchQuery}
+                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                    className="pl-10 bg-muted/20 border-border/50"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page:</span>
+                                                <Select 
+                                                    value={rowsPerPage.toString()} 
+                                                    onValueChange={(v) => setRowsPerPage(Number(v))}
+                                                >
+                                                    <SelectTrigger className="w-[100px] bg-muted/20 border-border/50">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-xl bg-zinc-950/90 backdrop-blur-md border-zinc-800">
+                                                        <SelectItem value="10" className="rounded-lg">10</SelectItem>
+                                                        <SelectItem value="20" className="rounded-lg">20</SelectItem>
+                                                        <SelectItem value="50" className="rounded-lg">50</SelectItem>
+                                                        <SelectItem value="100" className="rounded-lg">100</SelectItem>
+                                                        <SelectItem value="200" className="rounded-lg">200</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="hover:bg-transparent border-border/50">
+                                                    <TableHead 
+                                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
+                                                        onClick={() => handleSort('title')}
+                                                    >
+                                                        <div className="flex items-center">
+                                                            Title
+                                                            {getSortIcon('title')}
+                                                        </div>
+                                                    </TableHead>
+                                                    <TableHead 
+                                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
+                                                        onClick={() => handleSort('type')}
+                                                    >
+                                                        <div className="flex items-center">
+                                                            Type
+                                                            {getSortIcon('type')}
+                                                        </div>
+                                                    </TableHead>
+                                                    <TableHead 
+                                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
+                                                        onClick={() => handleSort('event_type')}
+                                                    >
+                                                        <div className="flex items-center">
+                                                            Action
+                                                            {getSortIcon('event_type')}
+                                                        </div>
+                                                    </TableHead>
+                                                    <TableHead 
+                                                        className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
+                                                        onClick={() => handleSort('tags')}
+                                                    >
+                                                        <div className="flex items-center">
+                                                            Tags
+                                                            {getSortIcon('tags')}
+                                                        </div>
+                                                    </TableHead>
+                                                    <TableHead 
+                                                        className="font-bold uppercase tracking-wider text-[10px] text-right cursor-pointer hover:text-foreground transition-colors"
+                                                        onClick={() => handleSort('created_at')}
+                                                    >
+                                                        <div className="flex items-center justify-end">
+                                                            Date
+                                                            {getSortIcon('created_at')}
+                                                        </div>
+                                                    </TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {paginatedStats.length === 0 ? (
+                                                    <TableRow>
+                                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                                            {searchQuery ? 'No results found for your search.' : 'No activity found for this period.'}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ) : (
+                                                    paginatedStats.map((event, i) => (
+                                                        <TableRow key={i} className="border-border/20 hover:bg-white/5 transition-colors">
+                                                            <TableCell className="font-medium max-w-[300px] truncate">{event.title}</TableCell>
+                                                            <TableCell>
+                                                                <div className="flex items-center gap-1.5">
+                                                                    {event.type === 'video' ? <Video className="h-3 w-3 text-red-400" /> : <Mic className="h-3 w-3 text-purple-400" />}
+                                                                    <span className="capitalize text-xs">{event.type}</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${
+                                                                    event.event_type === 'watched' ? 'bg-green-500/10 text-green-500' : 
+                                                                    event.event_type === 'added' ? 'bg-blue-500/10 text-blue-500' :
+                                                                    event.event_type === 'favorited' ? 'bg-amber-500/10 text-amber-500' :
+                                                                    'bg-muted text-muted-foreground'
+                                                                }`}>
+                                                                    {event.event_type}
+                                                                </span>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {event.tags && event.tags.length > 0 ? (
+                                                                        event.tags.map((tag, idx) => (
+                                                                            <span 
+                                                                                key={idx} 
+                                                                                className="px-1.5 py-0.5 rounded text-[9px] font-bold"
+                                                                                style={{ 
+                                                                                    backgroundColor: tag.color ? `${tag.color}20` : 'rgba(255,255,255,0.1)',
+                                                                                    color: tag.color || 'inherit',
+                                                                                    border: `1px solid ${tag.color ? `${tag.color}40` : 'rgba(255,255,255,0.2)'}`
+                                                                                }}
+                                                                            >
+                                                                                {tag.name}
+                                                                            </span>
+                                                                        ))
+                                                                    ) : (
+                                                                        <span className="text-[10px] text-muted-foreground italic">No tags</span>
+                                                                    )}
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
+                                                                {new Date(event.created_at * 1000).toLocaleDateString(undefined, {
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                    year: 'numeric',
+                                                                    hour: '2-digit',
+                                                                    minute: '2-digit'
+                                                                })}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))
+                                                )}
+                                            </TableBody>
+                                        </Table>
+
+                                        {/* Pagination Info and Navigation */}
+                                        {totalRows > 0 && (
+                                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+                                                <div className="text-sm text-muted-foreground">
+                                                    Showing {startIndex + 1} to {Math.min(endIndex, totalRows)} of {totalRows} {totalRows === 1 ? 'entry' : 'entries'}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                                        disabled={currentPage === 1}
+                                                        className="h-8 w-8 p-0"
+                                                    >
+                                                        <ChevronLeft className="h-4 w-4" />
+                                                    </Button>
+                                                    <div className="text-sm font-medium">
+                                                        Page {currentPage} of {totalPages}
+                                                    </div>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                                        disabled={currentPage === totalPages}
+                                                        className="h-8 w-8 p-0"
+                                                    >
+                                                        <ChevronRight className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="channels">
+                                <div className="space-y-8">
+                                    {/* Channels Trend Chart */}
+                                    <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden min-h-[450px]">
+                                        <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                            <div className="grid gap-1">
+                                                <CardTitle className="text-lg font-bold">Videos per Channel</CardTitle>
+                                                <CardDescription>Trends by channel over time ({periodLabels[period]})</CardDescription>
+                                            </div>
+                                            
+                                            <RadioGroup 
+                                                value={channelMetric} 
+                                                onValueChange={(v: typeof channelMetric) => setChannelMetric(v)}
+                                                className="flex flex-wrap gap-4 bg-muted/20 p-2 rounded-xl border border-border/50"
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="added" id="added" />
+                                                    <Label htmlFor="added" className="text-xs font-bold cursor-pointer">Added</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="watched" id="watched" />
+                                                    <Label htmlFor="watched" className="text-xs font-bold cursor-pointer">Watched</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="favorited" id="favorited" />
+                                                    <Label htmlFor="favorited" className="text-xs font-bold cursor-pointer">Favorited</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="priority" id="priority" />
+                                                    <Label htmlFor="priority" className="text-xs font-bold cursor-pointer">Priority</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="liked" id="liked" />
+                                                    <Label htmlFor="liked" className="text-xs font-bold cursor-pointer">Liked</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="disliked" id="disliked" />
+                                                    <Label htmlFor="disliked" className="text-xs font-bold cursor-pointer">Disliked</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </CardHeader>
+                                        <CardContent className="h-[380px] w-full pt-4">
+                                            {visibleChannels.length === 0 ? (
+                                                <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
+                                                    <Users className="h-8 w-8 opacity-20" />
+                                                    <p className="text-sm">Select channels to visualize their trend</p>
+                                                </div>
+                                            ) : (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={stats.channelsTimeSeries[channelMetric]} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                                                        <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                                        <XAxis 
+                                                            dataKey="date" 
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            tickMargin={8}
+                                                            tickFormatter={(value) => {
+                                                                const date = new Date(value);
+                                                                if (period === 'day') return date.toLocaleTimeString("en-US", { hour: 'numeric' });
+                                                                if (period === 'year' || period === 'total') return date.toLocaleDateString("en-US", { month: 'short', year: '2-digit' });
+                                                                return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                                                            }}
+                                                            fontSize={10}
+                                                            stroke="rgba(255,255,255,0.3)"
+                                                        />
+                                                        <YAxis 
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            tickMargin={8}
+                                                            fontSize={10}
+                                                            stroke="rgba(255,255,255,0.3)"
+                                                        />
+                                                        <Tooltip 
+                                                            contentStyle={{ 
+                                                                backgroundColor: 'rgba(9, 9, 11, 0.9)', 
+                                                                borderColor: 'rgba(39, 39, 42, 1)',
+                                                                borderRadius: '12px',
+                                                                backdropFilter: 'blur(8px)',
+                                                                color: '#fff',
+                                                                fontSize: '12px'
+                                                            }}
+                                                            itemStyle={{ fontWeight: 'bold' }}
+                                                        />
+                                                        <Legend />
+                                                        {visibleChannels.map((channel, index) => (
+                                                            <Line
+                                                                key={channel}
+                                                                type="monotone"
+                                                                dataKey={channel}
+                                                                stroke={`hsl(${index * 137.5 % 360}, 70%, 60%)`}
+                                                                strokeWidth={2.5}
+                                                                dot={{ r: 2, fill: `hsl(${index * 137.5 % 360}, 70%, 60%)`, strokeWidth: 0 }}
+                                                                activeDot={{ r: 6, strokeWidth: 0 }}
+                                                                connectNulls
+                                                                animationDuration={1000}
+                                                            />
+                                                        ))}
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Channel Selection Section */}
+                                    <Card className="border-none bg-card/50 backdrop-blur-sm shadow-xl">
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                                            <div className="grid gap-1">
+                                                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                                    <Users className="h-4 w-4" />
+                                                    Visible Channels
+                                                </CardTitle>
+                                                <CardDescription className="text-xs">Select channels to show in chart</CardDescription>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                                <div className="relative">
+                                                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="Search channels..."
+                                                        value={channelSearchQuery}
+                                                        onChange={(e) => setChannelSearchQuery(e.target.value)}
+                                                        className="h-7 w-[200px] pl-7 pr-7 text-[10px] bg-muted/20 border-border/50 rounded-md"
+                                                    />
+                                                    {channelSearchQuery && (
+                                                        <button 
+                                                            onClick={() => setChannelSearchQuery('')}
+                                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <XCircle className="h-3 w-3" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40 gap-1.5"
+                                                        onClick={resetToDefaults}
+                                                        title="Reset to top 5 channels"
+                                                    >
+                                                        <RotateCcw className="h-3 w-3" />
+                                                        Top 5
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
+                                                        onClick={() => setVisibleChannels(allAvailableChannels)}
+                                                    >
+                                                        Select All
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
+                                                        onClick={() => setVisibleChannels([])}
+                                                    >
+                                                        Deselect All
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="flex flex-wrap gap-x-6 gap-y-3">
+                                                {allAvailableChannels.length === 0 ? (
+                                                    <p className="text-xs text-muted-foreground italic w-full text-center py-4">No channels found for this period</p>
+                                                ) : (
+                                                    allAvailableChannels
+                                                        .filter(channel => channel.toLowerCase().includes(channelSearchQuery.toLowerCase()))
+                                                        .map(channel => (
+                                                            <div key={channel} className="flex items-center space-x-2 group shrink-0">
+                                                                <Checkbox 
+                                                                    id={`channel-${channel}`} 
+                                                                    checked={visibleChannels.includes(channel)}
+                                                                    onCheckedChange={() => toggleChannelVisibility(channel)}
+                                                                    className="border-border/50 data-[state=checked]:bg-primary"
+                                                                />
+                                                                <label 
+                                                                    htmlFor={`channel-${channel}`}
+                                                                    className="text-xs font-semibold leading-none cursor-pointer group-hover:text-primary transition-colors whitespace-nowrap"
+                                                                >
+                                                                    {channel}
+                                                                </label>
+                                                            </div>
+                                                        ))
+                                                )}
+                                                {allAvailableChannels.length > 0 && allAvailableChannels.filter(channel => channel.toLowerCase().includes(channelSearchQuery.toLowerCase())).length === 0 && (
+                                                    <p className="text-xs text-muted-foreground italic w-full text-center py-4">No channels match your search</p>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                        disabled={currentPage === 1}
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <ChevronLeft className="h-4 w-4" />
-                                    </Button>
-                                    <div className="text-sm font-medium">
-                                        Page {currentPage} of {totalPages}
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                        disabled={currentPage === totalPages}
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+                </div>
             </div>
         </Layout>
     );

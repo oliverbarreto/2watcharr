@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, use, Suspense } from 'react';
 import Image from 'next/image';
 import { Layout } from '@/components/layout';
 import { EpisodeList } from '@/components/features/episodes';
@@ -33,7 +33,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 interface Tag {
     id: string;
@@ -52,14 +52,16 @@ interface Channel {
     tags?: Tag[];
 }
 
-export default function ChannelDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+function ChannelDetailsContent({ id }: { id: string }) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [channel, setChannel] = useState<Channel | null>(null);
     const [loading, setLoading] = useState(true);
     const [isSyncing, setIsSyncing] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [refreshEpisodesKey, setRefreshEpisodesKey] = useState(0);
+
+    const selectedTagIds = searchParams.get('tags')?.split(',').filter(Boolean) || [];
 
     const fetchChannel = useCallback(async () => {
         try {
@@ -132,6 +134,21 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
             console.error('Error updating watch status:', error);
             toast.error('Failed to update episodes');
         }
+    };
+
+    const toggleTag = (tagId: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        const newSelected = selectedTagIds.includes(tagId)
+            ? selectedTagIds.filter(id => id !== tagId)
+            : [...selectedTagIds, tagId];
+        
+        if (newSelected.length > 0) {
+            params.set('tags', newSelected.join(','));
+        } else {
+            params.delete('tags');
+        }
+        
+        router.push(`/channels/${id}?${params.toString()}`);
     };
 
     if (loading) {
@@ -283,7 +300,7 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
                     {/* Description & Tags */}
                     <div className="p-6 md:p-8 pt-0 space-y-6">
                         {channel.description && channel.description !== "No description available. Sync metadata to refresh." && (
-                            <div className="max-w-3xl">
+                            <div>
                                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                                     {channel.description}
                                 </p>
@@ -292,20 +309,25 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
 
                         {channel.tags && channel.tags.length > 0 && (
                             <div className="flex flex-wrap gap-2">
-                                {channel.tags.map((tag) => (
-                                    <Badge
-                                        key={tag.id}
-                                        variant="outline"
-                                        className="text-xs px-3 py-1 rounded-full font-medium"
-                                        style={tag.color ? {
-                                            backgroundColor: `${tag.color}20`,
-                                            color: tag.color,
-                                            borderColor: `${tag.color}40`,
-                                        } : undefined}
-                                    >
-                                        {tag.name}
-                                    </Badge>
-                                ))}
+                                {channel.tags.map((tag) => {
+                                    const isSelected = selectedTagIds.includes(tag.id);
+                                    return (
+                                        <Badge
+                                            key={tag.id}
+                                            variant={isSelected ? "default" : "outline"}
+                                            className="text-xs px-3 py-1 rounded-full font-medium cursor-pointer transition-all hover:scale-105"
+                                            style={{
+                                                backgroundColor: isSelected ? tag.color || undefined : `${tag.color}20`,
+                                                color: isSelected ? '#fff' : tag.color || 'inherit',
+                                                borderColor: isSelected ? tag.color || undefined : `${tag.color}40`,
+                                                boxShadow: isSelected ? `0 2px 8px ${tag.color}40` : 'none',
+                                            }}
+                                            onClick={() => toggleTag(tag.id)}
+                                        >
+                                            {tag.name}
+                                        </Badge>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -318,7 +340,7 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
                     </div>
                     <EpisodeList 
                         key={`${refreshEpisodesKey}-${id}`}
-                        filters={{ channelId: id }} 
+                        filters={{ channelId: id, tagIds: selectedTagIds }} 
                         viewMode="grid" 
                     />
                 </div>
@@ -345,5 +367,24 @@ export default function ChannelDetailsPage({ params }: { params: Promise<{ id: s
                 </DialogContent>
             </Dialog>
         </Layout>
+    );
+}
+
+export default function ChannelDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
+    return (
+        <Suspense fallback={
+            <Layout>
+                <div className="space-y-8">
+                    <Skeleton className="h-[300px] w-full rounded-xl" />
+                    <div className="space-y-4">
+                        <Skeleton className="h-10 w-1/3" />
+                        <Skeleton className="h-4 w-full" />
+                    </div>
+                </div>
+            </Layout>
+        }>
+            <ChannelDetailsContent id={id} />
+        </Suspense>
     );
 }

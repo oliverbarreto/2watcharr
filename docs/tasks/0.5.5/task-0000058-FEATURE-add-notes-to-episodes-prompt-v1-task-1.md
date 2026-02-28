@@ -1,0 +1,21 @@
+# Task: Add Notes to Episodes
+
+- [x] Research and Planning
+    - [x] Explore database schema and character limits
+    - [x] Explore episode card and options menu implementation
+    - [/] Propose and get approval for implementation plan
+- [ ] Database Implementation
+    - [ ] Update database schema (column vs table)
+    - [ ] Create migration/update script if needed
+- [ ] Backend Implementation
+    - [ ] Update DTOs and Services to handle notes
+    - [ ] Add/Update API endpoints for notes
+- [ ] Frontend Implementation
+    - [ ] Create Note Modal component
+    - [ ] Add "Add/Edit Note" button to episode options menu
+    - [ ] Add note icon to episode cards
+    - [ ] Implement character count and validation
+- [ ] Verification
+    - [ ] Verify modal functionality (Esc, click outside, save, cancel)
+    - [ ] Verify notes are correctly saved and retrieved
+    - [ ] Verify retro-compatibility

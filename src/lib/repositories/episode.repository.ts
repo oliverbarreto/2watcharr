@@ -9,13 +9,37 @@ import {
     MediaEventType,
     MediaType,
     WatchStatus,
+    LikeStatus,
     Priority,
     Tag,
     PaginationOptions,
 } from '../domain/models';
 
 export class EpisodeRepository {
+    private static writeLock: Promise<void> = Promise.resolve();
+
     constructor(private db: Database) { }
+
+    private async runInTransaction<T>(work: () => Promise<T>): Promise<T> {
+        const lock = EpisodeRepository.writeLock;
+        let resolveLock: () => void;
+        EpisodeRepository.writeLock = new Promise(res => resolveLock = res);
+
+        try {
+            await lock;
+            await this.db.run('BEGIN TRANSACTION');
+            try {
+                const result = await work();
+                await this.db.run('COMMIT');
+                return result;
+            } catch (error) {
+                await this.db.run('ROLLBACK');
+                throw error;
+            }
+        } finally {
+            resolveLock!();
+        }
+    }
 
     /**
      * Create a new episode
@@ -28,8 +52,8 @@ export class EpisodeRepository {
             `INSERT INTO episodes (
         id, type, external_id, title, description, duration, thumbnail_url,
         url, upload_date, published_date, view_count, channel_id, user_id,
-        watch_status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        watch_status, is_short, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 id,
                 dto.type,
@@ -45,6 +69,7 @@ export class EpisodeRepository {
                 dto.channelId,
                 dto.userId,
                 'unwatched',
+                dto.isShort ? 1 : 0,
                 now,
                 now,
             ]
@@ -71,6 +96,7 @@ export class EpisodeRepository {
             FROM episodes e 
             LEFT JOIN channels c ON e.channel_id = c.id 
             WHERE e.id = ?
+
         `, id);
         if (!row) return null;
 
@@ -173,14 +199,51 @@ export class EpisodeRepository {
             conditions.push('e.is_deleted = 0');
         }
 
+        if (filters?.isArchived !== undefined) {
+            conditions.push('e.is_archived = ?');
+            params.push(filters.isArchived ? 1 : 0);
+        } else {
+            // Default: only show non-archived episodes
+            conditions.push('e.is_archived = 0');
+        }
+
+
         if (filters?.channelId) {
             conditions.push('e.channel_id = ?');
             params.push(filters.channelId);
         }
 
+        if (filters?.channelIds && filters.channelIds.length > 0) {
+            const placeholders = filters.channelIds.map(() => '?').join(',');
+            conditions.push(`e.channel_id IN (${placeholders})`);
+            params.push(...filters.channelIds);
+        }
+
         if (filters?.userId) {
             conditions.push('e.user_id = ?');
             params.push(filters.userId);
+        }
+
+        if (filters?.isShort !== undefined) {
+            conditions.push('e.is_short = ?');
+            params.push(filters.isShort ? 1 : 0);
+        }
+
+        if (filters?.likeStatus !== undefined) {
+            conditions.push('e.like_status = ?');
+            params.push(filters.likeStatus);
+        }
+        if (filters?.priority) {
+            conditions.push("e.priority = ?");
+            params.push(filters.priority);
+        }
+
+        if (filters?.hasNotes !== undefined) {
+            if (filters.hasNotes) {
+                conditions.push("(e.notes IS NOT NULL AND e.notes != '')");
+            } else {
+                conditions.push("(e.notes IS NULL OR e.notes = '')");
+            }
         }
 
         if (conditions.length > 0) {
@@ -243,11 +306,11 @@ export class EpisodeRepository {
     }
 
     /**
-     * Count all episodes matching filters
+     * Get statistics (count and duration sum) for all episodes matching filters
      */
-    async countAll(filters?: EpisodeFilters): Promise<number> {
+    async getFilterStats(filters?: EpisodeFilters): Promise<{ count: number, totalDuration: number }> {
         const hasTagFilter = filters?.tagIds && filters.tagIds.length > 0;
-        let query = `SELECT COUNT(${hasTagFilter ? 'DISTINCT ' : ''}e.id) as count FROM episodes e`;
+        let query = `SELECT COUNT(${hasTagFilter ? 'DISTINCT ' : ''}e.id) as count, SUM(e.duration) as total_duration FROM episodes e`;
         const params: (string | number | null)[] = [];
 
         if (hasTagFilter) {
@@ -297,9 +360,23 @@ export class EpisodeRepository {
             conditions.push('e.is_deleted = 0');
         }
 
+        if (filters?.isArchived !== undefined) {
+            conditions.push('e.is_archived = ?');
+            params.push(filters.isArchived ? 1 : 0);
+        } else {
+            conditions.push('e.is_archived = 0');
+        }
+
+
         if (filters?.channelId) {
             conditions.push('e.channel_id = ?');
             params.push(filters.channelId);
+        }
+
+        if (filters?.channelIds && filters.channelIds.length > 0) {
+            const placeholders = filters.channelIds.map(() => '?').join(',');
+            conditions.push(`e.channel_id IN (${placeholders})`);
+            params.push(...filters.channelIds);
         }
 
         if (filters?.userId) {
@@ -307,12 +384,45 @@ export class EpisodeRepository {
             params.push(filters.userId);
         }
 
+        if (filters?.isShort !== undefined) {
+            conditions.push('e.is_short = ?');
+            params.push(filters.isShort ? 1 : 0);
+        }
+
+        if (filters?.likeStatus !== undefined) {
+            conditions.push('e.like_status = ?');
+            params.push(filters.likeStatus);
+        }
+        if (filters?.priority) {
+            conditions.push("e.priority = ?");
+            params.push(filters.priority);
+        }
+
+        if (filters?.hasNotes !== undefined) {
+            if (filters.hasNotes) {
+                conditions.push("(e.notes IS NOT NULL AND e.notes != '')");
+            } else {
+                conditions.push("(e.notes IS NULL OR e.notes = '')");
+            }
+        }
+
         if (conditions.length > 0) {
             query += ' WHERE ' + conditions.join(' AND ');
         }
 
         const result = await this.db.get(query, params);
-        return result?.count || 0;
+        return {
+            count: result?.count || 0,
+            totalDuration: result?.total_duration || 0
+        };
+    }
+
+    /**
+     * Backward compatibility for countAll
+     */
+    async countAll(filters?: EpisodeFilters): Promise<number> {
+        const stats = await this.getFilterStats(filters);
+        return stats.count;
     }
 
     /**
@@ -366,6 +476,27 @@ export class EpisodeRepository {
             updates.push('view_count = ?');
             params.push(dto.viewCount);
         }
+        if (dto.isShort !== undefined) {
+            updates.push('is_short = ?');
+            params.push(dto.isShort ? 1 : 0);
+        }
+        if (dto.likeStatus !== undefined) {
+            updates.push('like_status = ?');
+            params.push(dto.likeStatus);
+        }
+        if (dto.notes !== undefined) {
+            updates.push('notes = ?');
+            params.push(dto.notes);
+        }
+        if (dto.isArchived !== undefined) {
+            updates.push('is_archived = ?');
+            params.push(dto.isArchived ? 1 : 0);
+        }
+        if (dto.archivedAt !== undefined) {
+            updates.push('archived_at = ?');
+            params.push(dto.archivedAt);
+        }
+
 
         updates.push('updated_at = ?');
         params.push(Math.floor(Date.now() / 1000));
@@ -403,9 +534,7 @@ export class EpisodeRepository {
         // Get all applicable episodes first to create events
         const episodes = await this.findAll({ channelId, userId, isDeleted: false });
 
-        await this.db.run('BEGIN TRANSACTION');
-
-        try {
+        await this.runInTransaction(async () => {
             await this.db.run(
                 `UPDATE episodes 
                  SET watched = ?, watch_status = ?, updated_at = ? 
@@ -420,12 +549,7 @@ export class EpisodeRepository {
                     await this.addEvent(episode.id, eventType, episode.title, episode.type);
                 }
             }
-
-            await this.db.run('COMMIT');
-        } catch (error) {
-            await this.db.run('ROLLBACK');
-            throw error;
-        }
+        });
     }
 
     /**
@@ -453,9 +577,7 @@ export class EpisodeRepository {
      * Removes the episode and all associated data from the database
      */
     async hardDelete(id: string): Promise<void> {
-        await this.db.run('BEGIN TRANSACTION');
-
-        try {
+        await this.runInTransaction(async () => {
             // Delete associated tags
             await this.db.run('DELETE FROM episode_tags WHERE episode_id = ?', id);
 
@@ -464,28 +586,21 @@ export class EpisodeRepository {
 
             // Delete the episode itself
             await this.db.run('DELETE FROM episodes WHERE id = ?', id);
-
-            await this.db.run('COMMIT');
-        } catch (error) {
-            await this.db.run('ROLLBACK');
-            throw error;
-        }
+        });
     }
 
     /**
      * Permanently delete all soft-deleted episodes for a user
      */
     async bulkHardDelete(userId: string): Promise<void> {
-        await this.db.run('BEGIN TRANSACTION');
-
-        try {
+        await this.runInTransaction(async () => {
             // Find all soft-deleted episode IDs first for cleaning up relations
             const rows = await this.db.all('SELECT id FROM episodes WHERE user_id = ? AND is_deleted = 1', userId);
             const ids = rows.map(row => row.id);
 
             if (ids.length > 0) {
                 const placeholders = ids.map(() => '?').join(',');
-                
+
                 // Delete associated tags
                 await this.db.run(`DELETE FROM episode_tags WHERE episode_id IN (${placeholders})`, ids);
 
@@ -495,12 +610,7 @@ export class EpisodeRepository {
                 // Delete the episodes
                 await this.db.run(`DELETE FROM episodes WHERE user_id = ? AND is_deleted = 1`, userId);
             }
-
-            await this.db.run('COMMIT');
-        } catch (error) {
-            await this.db.run('ROLLBACK');
-            throw error;
-        }
+        });
     }
 
 
@@ -524,37 +634,31 @@ export class EpisodeRepository {
         const now = Math.floor(Date.now() / 1000);
 
         // Use a transaction for consistency
-        await this.db.run('BEGIN TRANSACTION');
-
-        try {
+        await this.runInTransaction(async () => {
             for (let i = 0; i < episodeIds.length; i++) {
                 await this.db.run(
                     'UPDATE episodes SET custom_order = ?, updated_at = ? WHERE id = ?',
                     [i, now, episodeIds[i]]
                 );
             }
-            await this.db.run('COMMIT');
-        } catch (error) {
-            await this.db.run('ROLLBACK');
-            throw error;
-        }
+        });
     }
 
     /**
-     * Move episode to the beginning of the list
+     * Move episode to the beginning of the list for a specific user
      */
-    async moveToBeginning(id: string): Promise<void> {
-        const episodes = await this.findAll({ watched: false }, { field: 'custom', order: 'asc' });
+    async moveToBeginning(id: string, userId: string): Promise<void> {
+        const episodes = await this.findAll({ userId, isDeleted: false }, { field: 'custom', order: 'asc' });
         const episodeIds = episodes.map(e => e.id).filter(vid => vid !== id);
         episodeIds.unshift(id);
         await this.reorder(episodeIds);
     }
 
     /**
-     * Move episode to the end of the list
+     * Move episode to the end of the list for a specific user
      */
-    async moveToEnd(id: string): Promise<void> {
-        const episodes = await this.findAll({ watched: false }, { field: 'custom', order: 'asc' });
+    async moveToEnd(id: string, userId: string): Promise<void> {
+        const episodes = await this.findAll({ userId, isDeleted: false }, { field: 'custom', order: 'asc' });
         const episodeIds = episodes.map(e => e.id).filter(vid => vid !== id);
         episodeIds.push(id);
         await this.reorder(episodeIds);
@@ -616,9 +720,12 @@ export class EpisodeRepository {
                 return `last_favorited_at ${direction}`;
             case 'date_removed':
                 return `last_removed_at ${direction}`;
+            case 'archived_at':
+                return `e.archived_at ${direction}, e.created_at DESC`;
             default:
                 return 'e.custom_order ASC, e.created_at DESC';
         }
+
     }
 
     private mapRowToEpisode(row: Record<string, unknown>): MediaEpisode {
@@ -642,9 +749,15 @@ export class EpisodeRepository {
             isDeleted: Boolean(row.is_deleted),
             priority: row.priority as Priority,
             customOrder: row.custom_order as number | null,
+            isShort: Boolean(row.is_short),
+            likeStatus: (row.like_status as LikeStatus) || 'none',
+            notes: row.notes as string | null,
+            isArchived: Boolean(row.is_archived),
+            archivedAt: row.archived_at as number | undefined,
             userId: row.user_id as string,
             createdAt: row.created_at as number,
             updatedAt: row.updated_at as number,
+
             lastAddedAt: (row.last_added_at as number) || undefined,
             lastWatchedAt: (row.last_watched_at as number) || undefined,
             lastPendingAt: (row.last_pending_at as number) || undefined,

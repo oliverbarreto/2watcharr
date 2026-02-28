@@ -6,6 +6,7 @@ import { getDatabase } from '@/lib/db/database';
 import { MediaService } from '@/lib/services';
 import { TagRepository, UserRepository } from '@/lib/repositories';
 import { z } from 'zod';
+import { handleOptions, getCorsHeaders } from '@/lib/utils/cors';
 
 // Request validation schema
 const addEpisodeSchema = z.object({
@@ -14,10 +15,21 @@ const addEpisodeSchema = z.object({
 });
 
 /**
+ * OPTIONS /api/shortcuts/add-episode - Handle CORS preflight
+ */
+export const OPTIONS = handleOptions;
+
+/**
  * POST /api/shortcuts/add-episode - Add episode from iOS Shortcut
  */
 export async function POST(request: NextRequest) {
+    const origin = request.headers.get('origin');
+    const corsHeaders = getCorsHeaders(origin);
+
     try {
+        const startTime = Date.now();
+        const requestUrl = new URL(request.url);
+        
         const session = await getServerSession(authOptions);
         let userId: string;
 
@@ -34,10 +46,12 @@ export async function POST(request: NextRequest) {
                 if (user) {
                     userId = user.id;
                 } else {
-                    return NextResponse.json({ success: false, error: 'Invalid API Token' }, { status: 401 });
+                    console.log(`POST ${requestUrl.pathname} 401 in ${Date.now() - startTime}ms - Invalid API Token`);
+                    return NextResponse.json({ success: false, error: 'Invalid API Token' }, { status: 401, headers: corsHeaders });
                 }
             } else {
-                return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+                console.log(`POST ${requestUrl.pathname} 401 in ${Date.now() - startTime}ms - Unauthorized`);
+                return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
             }
         }
 
@@ -61,6 +75,9 @@ export async function POST(request: NextRequest) {
         // Add the episode
         const episode = await mediaService.addEpisodeFromUrl(url, userId, tagIds);
 
+        const duration = Date.now() - startTime;
+        console.log(`POST ${requestUrl.pathname} 200 in ${duration}ms - User: ${userId}, URL: ${url}`);
+
         return NextResponse.json({
             success: true,
             episode: {
@@ -69,7 +86,7 @@ export async function POST(request: NextRequest) {
                 type: episode.type,
                 channel: episode.channelId,
             },
-        });
+        }, { headers: corsHeaders });
     } catch (error) {
         console.error('Error adding episode from shortcut:', error);
 
@@ -80,7 +97,7 @@ export async function POST(request: NextRequest) {
                     error: 'Invalid request data',
                     details: error.issues,
                 },
-                { status: 400 }
+                { status: 400, headers: corsHeaders }
             );
         }
 
@@ -90,7 +107,7 @@ export async function POST(request: NextRequest) {
                     success: false,
                     error: error.message,
                 },
-                { status: 400 }
+                { status: 400, headers: corsHeaders }
             );
         }
 
@@ -99,7 +116,7 @@ export async function POST(request: NextRequest) {
                 success: false,
                 error: 'Failed to add episode',
             },
-            { status: 500 }
+            { status: 500, headers: corsHeaders }
         );
     }
 }

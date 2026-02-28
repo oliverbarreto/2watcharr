@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/tags - List all tags with episode counts
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user) {
@@ -71,10 +71,17 @@ export async function GET() {
         }
         const userId = (session.user as { id: string }).id;
 
+        const { searchParams } = new URL(request.url);
+        const sort = (searchParams.get('sort') || 'alphabetical') as 'alphabetical' | 'usage' | 'recent';
+
+        if (!['alphabetical', 'usage', 'recent'].includes(sort)) {
+            return NextResponse.json({ error: 'Invalid sort parameter' }, { status: 400 });
+        }
+
         const db = await getDatabase();
         const tagRepo = new TagRepository(db);
 
-        const tags = await tagRepo.getTagsWithEpisodeCount(userId);
+        const tags = await tagRepo.getTagsWithEpisodeCount(userId, sort);
 
         return NextResponse.json({ tags });
     } catch (error) {

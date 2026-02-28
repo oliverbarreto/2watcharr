@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { getDatabase } from '@/lib/db/database';
 import { MediaService } from '@/lib/services';
 import { z } from 'zod';
-import { MediaType, SortField } from '@/lib/domain/models';
+import { MediaEpisode, MediaType, SortField } from '@/lib/domain/models';
 
 // Request validation schema
 const addEpisodeSchema = z.object({
@@ -69,9 +69,13 @@ export async function GET(request: NextRequest) {
         const search = searchParams.get('search') || undefined;
         const watchedParam = searchParams.get('watched');
         const favoriteParam = searchParams.get('favorite');
+        const hasNotesParam = searchParams.get('hasNotes');
         const channelId = searchParams.get('channelId') || undefined;
+        const channelsParam = searchParams.get('channels');
+        const channelIds = channelsParam ? channelsParam.split(',').filter(Boolean) : undefined;
         const watchStatus = searchParams.get('watchStatus') as 'unwatched' | 'pending' | 'watched' | undefined || undefined;
         const type = searchParams.get('type') as MediaType | undefined;
+        const priority = searchParams.get('priority') as 'none' | 'low' | 'medium' | 'high' | undefined;
 
         const session = await getServerSession(authOptions);
         if (!session?.user) {
@@ -86,9 +90,15 @@ export async function GET(request: NextRequest) {
             watched: watchedParam ? watchedParam === 'true' : undefined,
             watchStatus,
             favorite: favoriteParam ? favoriteParam === 'true' : undefined,
+            hasNotes: hasNotesParam ? hasNotesParam === 'true' : undefined,
+            isShort: searchParams.get('isShort') === 'true' ? true : (searchParams.get('isShort') === 'false' ? false : undefined),
+            likeStatus: searchParams.get('likeStatus') as MediaEpisode['likeStatus'] || undefined,
             channelId,
+            channelIds,
             userId,
             isDeleted: searchParams.get('isDeleted') === 'true' ? true : undefined,
+            isArchived: searchParams.get('isArchived') === 'true' ? true : (searchParams.get('isArchived') === 'false' ? false : undefined),
+            priority,
         };
 
 
@@ -113,11 +123,12 @@ export async function GET(request: NextRequest) {
         const db = await getDatabase();
         const mediaService = new MediaService(db);
 
-        const { episodes, total } = await mediaService.listEpisodes(filters, sort, pagination);
+        const { episodes, total, totalDuration } = await mediaService.listEpisodes(filters, sort, pagination);
 
         return NextResponse.json({
             episodes,
             total,
+            totalDuration,
         });
     } catch (error) {
         console.error('Error listing episodes:', error);

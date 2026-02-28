@@ -3,8 +3,9 @@
 export type Priority = 'none' | 'low' | 'medium' | 'high';
 export type MediaType = 'video' | 'podcast';
 export type WatchStatus = 'unwatched' | 'pending' | 'watched';
+export type LikeStatus = 'none' | 'like' | 'dislike';
 
-export type MediaEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored' | 'tagged' | 'pending';
+export type MediaEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored' | 'tagged' | 'pending' | 'liked' | 'disliked' | 'like_reset' | 'priority_high' | 'priority_normal' | 'priority_low';
 
 export interface MediaEvent {
     id: string;
@@ -48,7 +49,13 @@ export interface MediaEpisode {
     isDeleted: boolean;
     priority: Priority;
     customOrder: number | null;
+    isShort: boolean;
+    likeStatus: LikeStatus;
+    notes: string | null;
+    isArchived: boolean;
+    archivedAt?: number;
     userId: string;
+
     tags?: Tag[];
     createdAt: number;
     updatedAt: number;
@@ -77,6 +84,7 @@ export interface Tag {
     name: string;
     color: string | null;
     userId: string;
+    lastUsedAt?: number;
     createdAt: number;
 }
 
@@ -100,6 +108,7 @@ export interface CreateEpisodeDto {
     publishedDate?: string;
     viewCount?: number;
     channelId: string;
+    isShort?: boolean;
     userId: string;
 }
 
@@ -114,7 +123,13 @@ export interface UpdateEpisodeDto {
     customOrder?: number;
     viewCount?: number;
     tagIds?: string[];
+    isShort?: boolean;
+    likeStatus?: LikeStatus;
+    notes?: string | null;
+    isArchived?: boolean;
+    archivedAt?: number | null;
 }
+
 
 export interface CreateChannelDto {
     id: string;
@@ -142,11 +157,18 @@ export interface EpisodeFilters {
     watchStatus?: WatchStatus;
     favorite?: boolean;
     channelId?: string;
+    channelIds?: string[];
     isDeleted?: boolean;
+    isShort?: boolean;
+    likeStatus?: LikeStatus;
+    hasNotes?: boolean;
+    priority?: Priority;
+    isArchived?: boolean;
     userId?: string;
 }
 
-export type SortField = 'created_at' | 'priority' | 'favorite' | 'duration' | 'title' | 'custom' | 'date_added' | 'date_watched' | 'date_favorited' | 'date_removed';
+
+export type SortField = 'created_at' | 'priority' | 'favorite' | 'duration' | 'title' | 'custom' | 'date_added' | 'date_watched' | 'date_favorited' | 'date_removed' | 'archived_at';
 export type SortOrder = 'asc' | 'desc';
 
 export interface SortOptions {

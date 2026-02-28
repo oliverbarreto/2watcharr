@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, Youtube, Mic, Tag as TagIcon, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Youtube, Mic, Tag as TagIcon, X, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,26 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilters?.tagIds || []);
     const [tags, setTags] = useState<Tag[]>([]);
     const [showTags, setShowTags] = useState(initialFilters?.tagIds && initialFilters.tagIds.length > 0);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        // Only auto-focus on desktop (screen width >= 1024px to be safe and avoid tablets/mobile)
+        if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+            inputRef.current?.focus();
+        }
+    }, []);
+
+    // Sync local state when initialFilters changes (URL changes)
+    useEffect(() => {
+        if (initialFilters) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSearch(initialFilters.search || '');
+             
+            setTypeFilter(initialFilters.type || 'all');
+             
+            setSelectedTagIds(initialFilters.tagIds || []);
+        }
+    }, [initialFilters]);
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -88,18 +108,43 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
         });
     };
 
+    const clearAllFilters = () => {
+        setSearch('');
+        setTypeFilter('all');
+        setSelectedTagIds([]);
+        
+        onFilterChange?.({
+            search: undefined,
+            type: undefined,
+            tagIds: undefined,
+        });
+    };
+
+    const hasAnyFilter = search !== '' || 
+                         typeFilter !== 'all' || 
+                         selectedTagIds.length > 0;
+
     return (
-        <div className="flex flex-col mb-6">
+        <div className="flex flex-col">
             <div className="flex flex-col lg:flex-row gap-4 mb-4">
                 {/* Search */}
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                        ref={inputRef}
                         placeholder="Search sources..."
                         value={search}
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        className="pl-10 h-10"
+                        className="pl-10 pr-10 h-10"
                     />
+                    {search && (
+                        <button
+                            onClick={() => handleSearchChange('')}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                            <XCircle className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Filters */}
@@ -167,6 +212,18 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                                 <TooltipContent>Filter by Episode Tags</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
+
+                        {hasAnyFilter && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={clearAllFilters}
+                                className="h-10 px-3 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 ml-2"
+                            >
+                                <X className="h-4 w-4" />
+                                Clear All
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

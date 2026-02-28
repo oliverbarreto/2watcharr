@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
-import { Plus, Settings, LogOut, User, BarChart3, Menu, Radio, Library } from 'lucide-react';
+import { Plus, Settings, LogOut, User, BarChart3, Radio, Library, Search, Gem, Archive, Trash2 } from 'lucide-react';
+
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ModeToggle } from '@/components/mode-toggle';
+
 import { AddEpisodeDialog } from '@/components/features/episodes/add-episode-dialog';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -27,39 +31,83 @@ interface NavLinksProps {
     onClick?: () => void;
 }
 
-const NavLinks = ({ className, onClick }: NavLinksProps) => (
-    <>
-        <Link href="/" onClick={onClick}>
-            <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
-                <Library className="mr-2 h-4 w-4 sm:hidden" />
-                Watch List
-            </Button>
-        </Link>
-        <Link href="/channels" onClick={onClick}>
-            <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
-                <Radio className="mr-2 h-4 w-4 sm:hidden" />
-                Channels
-            </Button>
-        </Link>
-        <Link href="/stats" onClick={onClick}>
-            <Button variant="ghost" className={cn("w-full justify-start sm:w-auto", className)}>
-                <BarChart3 className="mr-2 h-4 w-4 sm:hidden" />
-                Stats
-            </Button>
-        </Link>
-    </>
-);
+const NavLinks = ({ className, onClick }: NavLinksProps) => {
+    const pathname = usePathname();
+    
+    const getLinkClass = (path: string) => {
+        const isActive = pathname === path || (path === '/channels' && pathname.startsWith('/channels/'));
+        return cn(
+            "w-full justify-start sm:w-auto transition-all duration-200",
+            isActive
+                ? "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90" 
+                : "hover:bg-accent hover:text-accent-foreground",
+            className
+        );
+    };
+
+    return (
+        <>
+            <Link href="/" onClick={onClick}>
+                <Button variant="ghost" className={getLinkClass("/")}>
+                    <Library className="mr-2 h-4 w-4 sm:hidden" />
+                    Watch List
+                </Button>
+            </Link>
+            <Link href="/channels" onClick={onClick}>
+                <Button variant="ghost" className={getLinkClass("/channels")}>
+                    <Radio className="mr-2 h-4 w-4 sm:hidden" />
+                    Channels
+                </Button>
+            </Link>
+            <Link href="/watchnext" onClick={onClick}>
+                <Button variant="ghost" className={getLinkClass("/watchnext")}>
+                    <Gem className="mr-2 h-4 w-4 sm:hidden" />
+                    Watch Next
+                </Button>
+            </Link>
+            <Link href="/stats" onClick={onClick}>
+                <Button variant="ghost" className={getLinkClass("/stats")}>
+                    <BarChart3 className="mr-2 h-4 w-4 sm:hidden" />
+                    Stats
+                </Button>
+            </Link>
+        </>
+    );
+};
 
 export function Navbar() {
     const { data: session } = useSession();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    
+    // Check if any filters are active
+    const hasActiveFilters = Array.from(searchParams.keys()).some(key => 
+        ['search', 'status', 'watched', 'watchStatus', 'tags', 'channels', 'channelId', 'favorite', 'hasNotes', 'likeStatus', 'type', 'isShort', 'priority'].includes(key)
+    );
+
+    // Get dynamic title based on pathname
+    const getPageTitle = () => {
+        if (pathname === '/') return 'Watch List';
+        if (pathname === '/watchnext') return 'Watch Next';
+        if (pathname === '/channels') return 'Channels';
+        if (pathname === '/stats') return 'Stats';
+        if (pathname === '/archived') return 'Archived';
+        if (pathname === '/deleted') return 'Deleted';
+
+        if (pathname === '/settings') return 'Settings';
+        if (pathname.startsWith('/channels/')) return 'Channel';
+        return '';
+    };
+
     const user = session?.user as { id?: string; name?: string | null; email?: string | null; image?: string | null; emoji?: string | null; isAdmin?: boolean; color?: string | null } | undefined;
 
     const handleEpisodeAdded = () => {
         window.dispatchEvent(new CustomEvent('episode-added'));
     };
 
-    const handleSignOut = () => {
-        signOut({ callbackUrl: '/login' });
+    const handleSignOut = async () => {
+        await signOut({ redirect: false });
+        window.location.href = '/login';
     };
 
     return (
@@ -68,14 +116,15 @@ export function Navbar() {
                 <div className="flex items-center gap-4">
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="sm:hidden -ml-2">
-                                <Menu className="h-6 w-6" />
+                            <Button variant="ghost" className="sm:hidden -ml-2 p-0 hover:bg-transparent flex items-center gap-2 font-bold text-xl">
+                                <Image src="/2watcharr-icon-v1.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
+                                <span className="hidden">2watcharr</span>
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="w-[280px] sm:w-[350px]">
                             <SheetHeader>
                                 <SheetTitle className="flex items-center gap-2 font-bold text-xl pt-4">
-                                    <Image src="/icon.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
+                                    <Image src="/2watcharr-icon-v1.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
                                     <span>2watcharr</span>
                                 </SheetTitle>
                             </SheetHeader>
@@ -85,10 +134,19 @@ export function Navbar() {
                         </SheetContent>
                     </Sheet>
 
-                    <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-                        <Image src="/icon.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
+                    <Link href="/" className="hidden sm:flex items-center gap-2 font-bold text-xl">
+                        <Image src="/2watcharr-icon-v1.png" alt="2watcharr logo" width={32} height={32} className="rounded-lg" />
                         <span className="hidden xs:inline-block">2watcharr</span>
                     </Link>
+
+                    {getPageTitle() && (
+                        <div className="flex items-center gap-2">
+                            <div className="h-6 w-px bg-border mx-1 hidden xs:block" />
+                            <h1 className="text-sm font-medium text-muted-foreground uppercase tracking-wider hidden xs:block">
+                                {getPageTitle()}
+                            </h1>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -103,20 +161,51 @@ export function Navbar() {
                         trigger={
                             <Button
                                 size="icon"
-                                className="rounded-full bg-red-600 hover:bg-red-700 text-white h-9 w-9"
+                                variant="ghost"
+                                className="rounded-full h-9 w-9 bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary/90"
                             >
-                                <Plus className="h-5 w-5" />
+                                <Plus className="h-5 w-5 stroke-[2.5px]" />
                             </Button>
                         }
                     />
+
+                    {!['/stats', '/settings'].includes(pathname) && (
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className={cn("rounded-full h-9 w-9", hasActiveFilters && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary/80")}
+                            onClick={() => window.dispatchEvent(new CustomEvent('toggle-filters'))}
+                        >
+                            <Search className={cn("h-5 w-5", hasActiveFilters && "stroke-[2.5px]")} />
+                        </Button>
+                    )}
                     
+                    <Link href="/archived">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={cn(
+                                "rounded-full h-9 w-9",
+                                pathname === '/archived' && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90"
+                            )}
+                            title="Archived Episodes"
+                        >
+                            <Archive className="h-5 w-5" />
+                        </Button>
+                    </Link>
+
                     <Link href="/settings">
-                        <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={cn(
+                                "rounded-full h-9 w-9",
+                                pathname === '/settings' && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90"
+                            )}
+                        >
                             <Settings className="h-5 w-5" />
                         </Button>
                     </Link>
-                    
-                    <ModeToggle />
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -157,6 +246,20 @@ export function Navbar() {
                                     <span>Stats</span>
                                 </Link>
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                                <Link href="/archived" className="cursor-pointer">
+                                    <Archive className="mr-2 h-4 w-4" />
+                                    <span>Archived</span>
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/deleted" className="cursor-pointer">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Deleted</span>
+                                </Link>
+                            </DropdownMenuItem>
+
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                                 className="text-red-500 hover:text-red-600 cursor-pointer"

@@ -5,6 +5,154 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-02-25
+
+### Added
+- **Stats**: Added search textfield and "Top 5" reset button for both "Channels" and "Tags" tabs for better filtering and visualization.
+
+### Fixed
+- **Archive**: Improved "Archive Watched Episodes" logic to only target episodes that are both watched and marked with priority.
+- **Archive**: Resolved "Failed to unarchive episode" error on the Archived episodes page.
+- **Lint**: Fixed various linting errors to ensure a clean codebase.
+
+## [0.6.0] - 2026-02-25
+
+### Added
+- **Archive**: New "Archive" feature to hide episodes from the main watchlist without deleting them.
+- **UI**: New dedicated "Archived" page to manage archived episodes with filtering and bulk actions.
+- **UI**: Added "Archive" and "Unarchive" actions to episode cards, list rows, and multi-select menus.
+
+### Fixed
+- **API**: Resolved `SQLITE_ERROR: ambiguous column name: created_at` in metrics and channel stats queries.
+- **Lint**: Fixed all remaining linting errors across the codebase.
+
+## [0.5.13] - 2026-02-25
+
+### Added
+- **UI**: Cycling like/dislike/meh button implemented for episode cards in both list and grid views, with tooltips and mobile support.
+- **Watch Next**: Display total queue duration ("Queue time: Xh Ym") next to the episode count.
+
+### Fixed
+- **Logic**: Resolved critical bug where newly added or prioritized episodes were incorrectly placed at the end of the manual order instead of the beginning.
+- **UI**: Fixed context menu persistence issue where menus would remain visible after selecting an action or clicking outside.
+- **UI**: Improved search experience by auto-focusing the search field when opening the filter panel on desktop.
+- **Lint**: Resolved various linting errors and warnings in service tests.
+
+## [0.5.12] - 2026-02-22
+
+### Fixed
+- **UI**: Resolved issue where the navbar search icon did not reflect active status or channel filters.
+
+### Improved
+- **API**: Refactored async operations and centralized database transaction management for better performance and reliability.
+- **API**: Optimized bulk video addition with chunked processing and sequential writes.
+
+### Docs
+- **Readme**: Added comprehensive testing documentation.
+
+## [0.5.11] - 2026-02-22
+
+### Added
+- **Watch Next**: New dedicated page for manual video ordering with drag-and-drop support.
+- **API**: New `/api/shortcuts/add-videos` endpoint for batch adding multiple videos for a specific tag.
+- **Keyboard Shortcuts**: New navigation shortcuts ($g+w$ for Watch Later, $g+n$ for Watch Next, $g+c$ for Channels, $g+s$ for Stats, $g+p$ for Preferences) and search/filter shortcuts ($f$ to toggle, $ESC$ to close).
+
+### Improved
+- **UI**: Optimized Stats page layout to provide more horizontal space for Activity Summary and Viewing Time charts.
+- **UI**: Restructured Watch List to focus on date-based organization, moving manual ordering to the Watch Next page.
+
+## [0.5.10] - 2026-02-22
+
+### Added
+- **API**: Centralized CORS logic for shortcut endpoints to handle preflight requests and consistent header generation.
+- **Tech**: Console logging added to API endpoints for improved troubleshooting and observability.
+
+### Improved
+- **UI**: Spacing and layout refinements in the "Add Episode" modal form.
+
+### Fixed
+- **Logic**: Concurrency safety in `moveToBeginning` to ensure consistent ordering in multi-user or rapid update scenarios.
+
+## [0.5.9] - 2026-02-21
+
+### Added
+- **UI**: Silent refresh mechanism for episode updates to prevent full-page reloads and preserve scroll position.
+
+### Fixed
+- **Tags**: Case-insensitive and emoji-neutral alphabetical sorting in Preferences tab.
+- **Tests**: Fixed type mismatch in `date-grouping.test.ts` for `MediaEpisode` mock.
+- **Lint**: Resolved all remaining linting errors and ensured full type safety.
+
+## [0.5.8] - 2026-02-20
+
+### Added
+- **UI**: Floating blurred search panel at the top of the page for improved search experience.
+- **UI**: Page titles in the navbar for better navigation context.
+- **UI**: Copy link button for quick access to video URLs in episode cards and list rows.
+- **UI**: Priority status toggle (Favorite/Priority) in episode cards and list rows.
+- **Filters**: Priority filter to easily find favorited or prioritized content.
+- **Tags**: Context-aware tag sorting (Alphabetical in Preferences, Frequency in Filters, Last used in Add Tags modal).
+
+### Fixed
+- **Filters**: Resolved issue where the priority filter was not correctly updating the URL or filtering the list.
+- **UI**: Hidden search button on Stats page where it is not used.
+- **Lint**: Fixed all remaining linting warnings and errors.
+
+### Improved
+- **UI**: Enhanced active menu item visibility in navbar with a subtle red highlight.
+
+## [0.5.7] - 2026-02-19
+
+### Added
+- **Stats**: Major restructure of the statistics page using a tabbed interface (Activity, Tags, Events History).
+- **Stats**: New "Videos by Tags" interactive line chart in the Tags tab.
+- **Stats**: New metrics for "Viewing Time (Today)" and "Watched Today/This Week".
+- **Stats**: Added "Select All" and "Deselect All" buttons for tag visibility management.
+
+### Improved
+- **Stats**: Reorganized Activity Summary into a more efficient three-column layout.
+- **Stats**: Moved "Visible Tags" section below the chart for better horizontal space utilization.
+
+## [0.5.6] - 2026-02-19
++### Added
++- **UI**: Floating bubble on the watchlist page displaying the count of loaded episodes during infinite scroll.
++- **UI**: "Create Note" option directly in the episode card and list row dropdown menus.
++- **Filters**: Content type filters (Video, Shorts, Podcast) in the watchlist filter bar.
++- **Voting**: "Like" and "Don't Like" voting buttons for episodes.
++
++### Improved
++- **UI**: Channel list view with wider thumbnails and more compact layout for consistency.
++
++### Fixed
++- **Filters**: "Like/Don't Like" filter functionality to correctly filter episodes.
++
++## [0.5.5] - 2026-02-18
++
+### Added
+- **YouTube Shorts**: Automatically differentiate YouTube Shorts from regular videos with a "Shorts" indicator on cards.
+- **Episode Notes**: Added ability to add and view personal notes for each episode.
+- **Filters**: Introduced a new "With Notes" filter to easily find episodes with existing notes.
+
+### Improved
+- **UI**: Added "Clear all filters" button to the filter bar.
+- **UI**: Added "x" clear button to search textfields for faster resetting.
+- **Workflow**: Enhanced `/update-tag-release` workflow with automated step hints (`// turbo`).
+
+## [0.5.4] - 2026-02-18
+
+### Fixed
+- **Navigation**: Resolved error when navigating from watchlist episode to channel page.
+- **Navbar**: Fixed broken link to switch user profile.
+- **Lint**: Resolved various linting errors across multiple components.
+
+### Improved
+- **Watchlist**: Updated section titles to display day names (e.g., Monday, Tuesday) instead of just dates.
+- **Channel Details**: Enhanced UI and added ability to filter videos by tag.
+- **Assets**: Updated application icon for better mobile experience.
+
+### Docs
+- **Research**: Added analysis on handling YouTube Shorts with `yt-dlp`.
+
 ## [0.5.3] - 2026-02-15
 
 ### Added

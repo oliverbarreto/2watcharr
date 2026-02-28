@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS tags (
   name TEXT NOT NULL,
   color TEXT,                       -- Hex color for UI
   user_id TEXT NOT NULL,
+  last_used_at INTEGER,             -- Last time the tag was used
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE(name, user_id)
@@ -60,8 +61,14 @@ CREATE TABLE IF NOT EXISTS episodes (
   is_deleted BOOLEAN NOT NULL DEFAULT 0,
   priority TEXT CHECK(priority IN ('none', 'low', 'medium', 'high')) DEFAULT 'none',
   custom_order INTEGER,             -- For manual reordering
+  is_short BOOLEAN NOT NULL DEFAULT 0, -- Whether it's a YouTube Short
+  like_status TEXT CHECK(like_status IN ('none', 'like', 'dislike')) DEFAULT 'none',
+  notes TEXT,                       -- User personal notes
+  is_archived BOOLEAN NOT NULL DEFAULT 0,
+  archived_at INTEGER,              -- Archive timestamp
   
   -- Metadata
+
   user_id TEXT NOT NULL,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
@@ -96,13 +103,18 @@ CREATE TABLE IF NOT EXISTS media_events (
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_episodes_type ON episodes(type);
+CREATE INDEX IF NOT EXISTS idx_episodes_is_short ON episodes(is_short);
 CREATE INDEX IF NOT EXISTS idx_episodes_channel_id ON episodes(channel_id);
 CREATE INDEX IF NOT EXISTS idx_episodes_watched ON episodes(watched);
 CREATE INDEX IF NOT EXISTS idx_episodes_watch_status ON episodes(watch_status);
 CREATE INDEX IF NOT EXISTS idx_episodes_is_deleted ON episodes(is_deleted);
 CREATE INDEX IF NOT EXISTS idx_episodes_favorite ON episodes(favorite);
 CREATE INDEX IF NOT EXISTS idx_episodes_priority ON episodes(priority);
+CREATE INDEX IF NOT EXISTS idx_episodes_like_status ON episodes(like_status);
+CREATE INDEX IF NOT EXISTS idx_episodes_is_archived ON episodes(is_archived);
+CREATE INDEX IF NOT EXISTS idx_episodes_archived_at ON episodes(archived_at);
 CREATE INDEX IF NOT EXISTS idx_episodes_created_at ON episodes(created_at);
+
 CREATE INDEX IF NOT EXISTS idx_episode_tags_tag_id ON episode_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_tags_user_id ON tags(user_id);
 CREATE INDEX IF NOT EXISTS idx_media_events_episode_id ON media_events(episode_id);

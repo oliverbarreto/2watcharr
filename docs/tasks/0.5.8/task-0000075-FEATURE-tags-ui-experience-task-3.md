@@ -1,0 +1,26 @@
+# Task: Improve Tags UI Experience
+
+- [x] Research current tag implementation <!-- id: 0 -->
+    - [x] Analyze database schema for tags <!-- id: 1 -->
+    - [x] Search for "Recent tags" logic <!-- id: 2 -->
+    - [x] Identify tag ordering in Preferences, Filter, and Add Modal <!-- id: 3 -->
+- [x] Create Implementation Plan <!-- id: 4 -->
+- [x] Database updates <!-- id: 14 -->
+    - [x] Create migration for `last_used_at` column <!-- id: 15 -->
+    - [x] Update [schema.sql](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/db/schema.sql) <!-- id: 16 -->
+- [x] Backend updates <!-- id: 17 -->
+    - [x] Update [Tag](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/app/settings/page.tsx#36-42) model and [TagRepository](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/repositories/tag.repository.ts#5-161) <!-- id: 18 -->
+    - [x] Update [MediaService](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/services/media.service.ts#15-409) to track tag usage <!-- id: 19 -->
+    - [x] Update `/api/tags` to support sorting <!-- id: 20 -->
+- [x] Frontend updates <!-- id: 21 -->
+    - [x] Implement Alphabetical Ordering in Preferences <!-- id: 5 -->
+    - [x] Implement "Most Used First" Ordering in Tags Filter <!-- id: 6 -->
+    - [x] Implement "Last Used First" Ordering in Add Tags Modal <!-- id: 7 -->
+- [x] Verification <!-- id: 10 -->
+    - [x] Verify alphabetization in Preferences <!-- id: 11 -->
+    - [x] Verify "Most Used" ordering in Filters <!-- id: 12 -->
+    - [x] Verify "Last Used" ordering in Add Modal <!-- id: 13 -->
+- [x] Pivot: Revert Recent Tags ordering <!-- id: 22 -->
+    - [/] Update [episode-card.tsx](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/components/features/episodes/episode-card.tsx) to use alphabetical ordering <!-- id: 23 -->
+    - [x] Remove `last_used_at` tracking from [MediaService](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/src/lib/services/media.service.ts#15-409) <!-- id: 24 --> (Actually KEEPING it as per v3)
+    - [x] (Optional) Decide on database column removal <!-- id: 25 --> (KEEPING IT)

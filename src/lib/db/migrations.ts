@@ -1,6 +1,10 @@
 import { Database } from 'sqlite';
 import fs from 'fs/promises';
 import path from 'path';
+import { addLikeStatus } from './migrations/add_like_status';
+import { addTagLastUsedAt } from './migrations/add_tag_last_used_at';
+import { addArchiveFields } from './migrations/add_archive_fields';
+
 
 /**
  * Run database migrations
@@ -635,4 +639,75 @@ export async function runMigrations(db: Database): Promise<void> {
       await db.run('PRAGMA foreign_keys = ON');
     }
   }
+
+  // Check if add_is_short migration has been applied
+  const migration12 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_is_short'
+  );
+
+  if (!migration12) {
+    console.log('Running add_is_short migration...');
+    try {
+      await db.run('ALTER TABLE episodes ADD COLUMN is_short BOOLEAN NOT NULL DEFAULT 0');
+      await db.run('CREATE INDEX IF NOT EXISTS idx_episodes_is_short ON episodes(is_short)');
+
+      // Update existing data: mark episodes with /shorts/ in their URL as is_short = 1
+      await db.run("UPDATE episodes SET is_short = 1 WHERE url LIKE '%/shorts/%'");
+
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'add_is_short'
+      );
+      console.log('add_is_short migration completed.');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('duplicate column name')) {
+        await db.run(
+          'INSERT INTO migrations (name) VALUES (?)',
+          'add_is_short'
+        );
+        console.log('is_short column already existed, migration marked as completed.');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  // Check if add_episode_notes migration has been applied
+  const migration13 = await db.get(
+    'SELECT * FROM migrations WHERE name = ?',
+    'add_episode_notes'
+  );
+
+  if (!migration13) {
+    console.log('Running add_episode_notes migration...');
+    try {
+      await db.run('ALTER TABLE episodes ADD COLUMN notes TEXT');
+      await db.run(
+        'INSERT INTO migrations (name) VALUES (?)',
+        'add_episode_notes'
+      );
+      console.log('add_episode_notes migration completed.');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('duplicate column name')) {
+        await db.run(
+          'INSERT INTO migrations (name) VALUES (?)',
+          'add_episode_notes'
+        );
+        console.log('notes column already existed, migration marked as completed.');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  // Run like_status migration
+  await addLikeStatus(db);
+
+  // Run last_used_at migration for tags
+  await addTagLastUsedAt(db);
+
+  // Run archive fields migration
+  await addArchiveFields(db);
 }
+

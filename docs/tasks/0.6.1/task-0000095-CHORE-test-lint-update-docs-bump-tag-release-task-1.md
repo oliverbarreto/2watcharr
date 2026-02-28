@@ -1,0 +1,21 @@
+# Task Checklist - Update Tag Release 0.6.1
+
+- [x] 1. Verification: Run linting and tests [/]
+    - [x] Run `npm run lint`
+    - [x] Run `npm test`
+- [x] 2. Documentation Update [/]
+    - [x] Update [CHANGELOG.md](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/CHANGELOG.md)
+    - [x] Update [docs/specs/roadmap/roadmap.md](file:///Users/oliver/_HD_LOCAL/dev/2watcharr/docs/specs/roadmap/roadmap.md)
+- [x] 3. Commit Develop Branch [/]
+    - [x] `git add --all && git commit -m "Run tests, fixed linting errors and updated documentation before merge/tag/release into main"`
+- [x] 4. Merge to Main [/]
+    - [x] `git checkout main`
+    - [x] `git merge develop`
+- [x] 5. Version Bump [/]
+    - [x] `npm version 0.6.1`
+- [x] 6. Release [/]
+    - [x] `git push origin main --tags`
+    - [x] `gh release create v0.6.1 --notes-from-tag`
+- [/] 7. Post-release Cleanup [/]
+    - [/] `git checkout develop`
+    - [ ] `git merge main`

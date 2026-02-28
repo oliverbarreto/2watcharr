@@ -51,3 +51,8 @@ Videos (N) <--> (1) Channels
 Videos (N) <--> (N) Tags (via video_tags)
 Users (1)  <--> (N) Videos/Tags (Future proofing)
 ```
+## Async & Parallel Architecture
+
+The system uses a hybrid parallel-sequential model to handle high-latency external metadata extraction while maintaining SQLite data integrity.
+
+- **Detailed Documentation**: [Async Architecture](async-architecture.md)

@@ -6,8 +6,9 @@ import { Layout } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trash2, RefreshCw, Youtube, Mic, ChevronUp, ChevronDown } from 'lucide-react';
+import { Trash2, RefreshCw, Youtube, Mic, ChevronUp, ChevronDown, List, LayoutGrid } from 'lucide-react';
 import { ChannelFilterBar } from '@/components/features/channels/channel-filter-bar';
+import { ChannelListRow } from '@/components/features/channels/channel-list-row';
 import { toast } from 'sonner';
 import {
     Dialog,
@@ -17,7 +18,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
     DndContext,
@@ -33,6 +34,7 @@ import {
     SortableContext,
     sortableKeyboardCoordinates,
     rectSortingStrategy,
+    verticalListSortingStrategy,
     useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -228,12 +230,32 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
 
 function ChannelsPageContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const highlightId = searchParams.get('channelId');
     const [channels, setChannels] = useState<Channel[]>([]);
     const [loading, setLoading] = useState(true);
     const [syncingChannelId, setSyncingChannelId] = useState<string | null>(null);
     const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
-    const [filters, setFilters] = useState<Filters>({});
+    const [showFilters, setShowFilters] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+        if (typeof window !== 'undefined') {
+            return (localStorage.getItem('channelViewMode') as 'grid' | 'list') || 'grid';
+        }
+        return 'grid';
+    });
+
+    const toggleViewMode = () => {
+        const newMode = viewMode === 'grid' ? 'list' : 'grid';
+        setViewMode(newMode);
+        localStorage.setItem('channelViewMode', newMode);
+    };
+
+    // Derive filters from searchParams
+    const filters: Filters = {
+        search: searchParams.get('search') || undefined,
+        type: (searchParams.get('type') as Filters['type']) || undefined,
+        tagIds: searchParams.get('tagIds')?.split(',').filter(Boolean) || undefined,
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -246,12 +268,12 @@ function ChannelsPageContent() {
         })
     );
 
-    const fetchChannels = useCallback(async (currentFilters = filters) => {
+    const fetchChannels = useCallback(async () => {
         try {
             const params = new URLSearchParams();
-            if (currentFilters.search) params.set('search', currentFilters.search);
-            if (currentFilters.type) params.set('type', currentFilters.type);
-            if (currentFilters.tagIds) params.set('tagIds', currentFilters.tagIds.join(','));
+            if (filters.search) params.set('search', filters.search);
+            if (filters.type) params.set('type', filters.type);
+            if (filters.tagIds) params.set('tagIds', filters.tagIds.join(','));
 
             const response = await fetch(`/api/channels?${params.toString()}`);
             if (!response.ok) throw new Error('Failed to fetch channels');
@@ -264,15 +286,31 @@ function ChannelsPageContent() {
         } finally {
             setLoading(false);
         }
-    }, [filters]);
+    }, [filters.search, filters.type, filters.tagIds?.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         fetchChannels();
+
+        const handleToggleFilters = () => setShowFilters((prev) => !prev);
+        const handleCloseFilters = () => setShowFilters(false);
+        
+        window.addEventListener('toggle-filters', handleToggleFilters);
+        window.addEventListener('close-filters', handleCloseFilters);
+        
+        return () => {
+            window.removeEventListener('toggle-filters', handleToggleFilters);
+            window.removeEventListener('close-filters', handleCloseFilters);
+        };
     }, [fetchChannels]);
 
     const handleFilterChange = (newFilters: Filters) => {
-        setFilters(newFilters);
-        fetchChannels(newFilters);
+        const params = new URLSearchParams(searchParams.toString());
+        
+        if (newFilters.search) params.set('search', newFilters.search); else params.delete('search');
+        if (newFilters.type) params.set('type', newFilters.type); else params.delete('type');
+        if (newFilters.tagIds?.length) params.set('tagIds', newFilters.tagIds.join(',')); else params.delete('tagIds');
+
+        router.push(`/channels?${params.toString()}`);
     };
 
     const handleSyncChannel = async (channelId: string, channelUrl: string) => {
@@ -352,20 +390,44 @@ function ChannelsPageContent() {
                         <h1 className="text-3xl font-bold">Channels & Podcasts</h1>
                         <Skeleton className="h-10 w-32" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className={viewMode === 'grid' 
+                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                        : "flex flex-col gap-2"
+                    }>
                         {[...Array(8)].map((_, i) => (
-                            <Card key={i} className="aspect-square min-h-[280px] relative overflow-hidden">
-                                <div className="absolute inset-x-0 bottom-0 h-1/3 p-4 bg-muted/20 backdrop-blur-sm border-t border-white/5">
-                                    <div className="flex items-start gap-3 h-full items-center">
-                                        <Skeleton className="h-8 w-8 rounded-lg" />
-                                        <div className="flex-1 space-y-2">
-                                            <Skeleton className="h-5 w-3/4" />
-                                            <Skeleton className="h-4 w-1/2" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="absolute bottom-0 left-0 w-full h-1.5 bg-muted/30 z-30" />
-                            </Card>
+                            <div key={i} className={viewMode === 'grid' ? "" : "flex gap-3 py-2 border-b last:border-0"}>
+                                <Card className={viewMode === 'grid' 
+                                    ? "aspect-square min-h-[280px] relative overflow-hidden" 
+                                    : "h-20 w-full flex items-center gap-4 px-4 border-none bg-transparent"
+                                }>
+                                    {viewMode === 'grid' ? (
+                                        <>
+                                            <div className="absolute inset-x-0 bottom-0 h-1/3 p-4 bg-muted/20 backdrop-blur-sm border-t border-white/5">
+                                                <div className="flex items-start gap-3 h-full items-center">
+                                                    <Skeleton className="h-8 w-8 rounded-lg" />
+                                                    <div className="flex-1 space-y-2">
+                                                        <Skeleton className="h-5 w-3/4" />
+                                                        <Skeleton className="h-4 w-1/2" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-muted/30 z-30" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Skeleton className="h-14 w-14 rounded-md flex-shrink-0" />
+                                            <div className="flex-1 space-y-2">
+                                                <Skeleton className="h-4 w-1/4" />
+                                                <Skeleton className="h-3 w-1/2" />
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Skeleton className="h-8 w-8 rounded-md" />
+                                                <Skeleton className="h-8 w-8 rounded-md" />
+                                            </div>
+                                        </>
+                                    )}
+                                </Card>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -376,16 +438,38 @@ function ChannelsPageContent() {
     return (
         <Layout>
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold">Channels & Podcasts</h1>
-                        <p className="text-muted-foreground">
-                            All sources from your saved content
-                        </p>
-                    </div>
+                <div className="flex justify-end items-center mb-6">
+                    {/* Removed Page Title and Subtitle */}
+                    <Button variant="ghost" size="sm" onClick={toggleViewMode} className="gap-2 hidden md:flex">
+                        {viewMode === 'grid' ? (
+                            <>
+                                <List className="h-4 w-4" />
+                                List View
+                            </>
+                        ) : (
+                            <>
+                                <LayoutGrid className="h-4 w-4" />
+                                Grid View
+                            </>
+                        )}
+                    </Button>
                 </div>
 
-                <ChannelFilterBar onFilterChange={handleFilterChange} initialFilters={filters} />
+                {/* Floating Filters */}
+                {showFilters && (
+                    <div className="fixed inset-x-0 top-16 z-30 animate-in slide-in-from-top duration-300">
+                        <div className="container mx-auto px-4">
+                            <div className="bg-background/60 backdrop-blur-md border rounded-b-xl shadow-2xl pt-4 px-4 pb-0 relative">
+                                <ChannelFilterBar 
+                                    onFilterChange={(newFilters) => {
+                                        handleFilterChange(newFilters);
+                                    }} 
+                                    initialFilters={filters} 
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {channels.length === 0 ? (
                     <div className="text-center py-12">
@@ -402,18 +486,31 @@ function ChannelsPageContent() {
                     >
                         <SortableContext
                             items={channels.map(c => c.id)}
-                            strategy={rectSortingStrategy}
+                            strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
                         >
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className={viewMode === 'grid' 
+                                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                                : "flex flex-col border rounded-md overflow-hidden bg-card/50"
+                            }>
                                 {channels.map((channel) => (
-                                    <SortableChannelCard
-                                        key={channel.id}
-                                        channel={channel}
-                                        highlightId={highlightId}
-                                        isSyncing={syncingChannelId === channel.id}
-                                        onDelete={setChannelToDelete}
-                                        onSync={handleSyncChannel}
-                                    />
+                                    viewMode === 'grid' ? (
+                                        <SortableChannelCard
+                                            key={channel.id}
+                                            channel={channel}
+                                            highlightId={highlightId}
+                                            isSyncing={syncingChannelId === channel.id}
+                                            onDelete={setChannelToDelete}
+                                            onSync={handleSyncChannel}
+                                        />
+                                    ) : (
+                                        <ChannelListRow
+                                            key={channel.id}
+                                            channel={channel}
+                                            isSyncing={syncingChannelId === channel.id}
+                                            onDelete={setChannelToDelete}
+                                            onSync={handleSyncChannel}
+                                        />
+                                    )
                                 ))}
                             </div>
                         </SortableContext>

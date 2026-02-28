@@ -1,12 +1,15 @@
 import { ReactNode } from 'react';
 import { Navbar } from './navbar';
 import { Toaster } from '@/components/ui/sonner';
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 
 interface LayoutProps {
     children: ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
+    useKeyboardShortcuts();
+
     return (
         <div className="min-h-screen bg-background">
             <Navbar />

@@ -1,11 +1,13 @@
 import { Database } from 'sqlite';
 import { EpisodeRepository, ChannelRepository, TagRepository } from '../repositories';
 import { MetadataService } from './metadata.service';
+import { UnifiedMetadata } from './youtube-metadata.service';
 import {
     MediaEpisode,
     UpdateEpisodeDto,
     EpisodeFilters,
     SortOptions,
+    LikeStatus,
     Priority,
     MediaEventType,
     PaginationOptions,
@@ -34,7 +36,14 @@ export class MediaService {
     async addEpisodeFromUrl(url: string, userId: string, tagIds?: string[]): Promise<MediaEpisode> {
         // Extract metadata
         const metadata = await this.metadataService.extractMetadata(url);
+        return this.saveEpisodeFromMetadata(metadata, userId, tagIds);
+    }
 
+    /**
+     * Save an episode to the database from extracted metadata.
+     * This logic is shared between single additions and batch additions.
+     */
+    private async saveEpisodeFromMetadata(metadata: UnifiedMetadata, userId: string, tagIds?: string[]): Promise<MediaEpisode> {
         if (!metadata.episode.externalId) {
             throw new Error('Could not extract external ID from metadata');
         }
@@ -59,10 +68,16 @@ export class MediaService {
             if (tagIds && tagIds.length > 0) {
                 await this.episodeRepo.removeTags(existing.id);
                 await this.episodeRepo.addTags(existing.id, tagIds);
+
+                // Update last used for tags
+                const now = Math.floor(Date.now() / 1000);
+                for (const tagId of tagIds) {
+                    await this.tagRepo.updateLastUsed(tagId, now);
+                }
             }
 
             // Move to beginning of the list
-            await this.episodeRepo.moveToBeginning(existing.id);
+            await this.episodeRepo.moveToBeginning(existing.id, userId);
 
             return updated;
         }
@@ -97,11 +112,12 @@ export class MediaService {
             description: metadata.episode.description,
             duration: metadata.episode.duration,
             thumbnailUrl: metadata.episode.thumbnailUrl,
-            url: metadata.episode.url || url,
+            url: metadata.episode.url || metadata.episode.externalId,
             uploadDate: metadata.episode.uploadDate,
             publishedDate: metadata.episode.publishedDate,
             viewCount: metadata.episode.viewCount,
             channelId: channel.id,
+            isShort: metadata.episode.isShort,
             userId: userId,
         });
 
@@ -111,7 +127,16 @@ export class MediaService {
         // Associate tags if provided
         if (tagIds && tagIds.length > 0) {
             await this.episodeRepo.addTags(episode.id, tagIds);
+
+            // Update last used for tags
+            const now = Math.floor(Date.now() / 1000);
+            for (const tagId of tagIds) {
+                await this.tagRepo.updateLastUsed(tagId, now);
+            }
         }
+
+        // Move to beginning of the list for new episodes
+        await this.episodeRepo.moveToBeginning(episode.id, userId);
 
         return episode;
     }
@@ -123,10 +148,10 @@ export class MediaService {
         filters?: EpisodeFilters,
         sort?: SortOptions,
         pagination?: PaginationOptions
-    ): Promise<{ episodes: MediaEpisode[], total: number }> {
+    ): Promise<{ episodes: MediaEpisode[], total: number, totalDuration: number }> {
         const episodes = await this.episodeRepo.findAll(filters, sort, pagination);
-        const total = await this.episodeRepo.countAll(filters);
-        return { episodes, total };
+        const { count: total, totalDuration } = await this.episodeRepo.getFilterStats(filters);
+        return { episodes, total, totalDuration };
     }
 
     /**
@@ -156,6 +181,23 @@ export class MediaService {
              await this.episodeRepo.addEvent(id, 'removed', episode.title, episode.type);
         } else if (updates.isDeleted === false) {
              await this.episodeRepo.addEvent(id, 'restored', episode.title, episode.type);
+        }
+
+        if (updates.priority !== undefined) {
+             const priorityEvent = updates.priority === 'high' ? 'priority_high' : 
+                                  updates.priority === 'none' ? 'priority_normal' : 
+                                  `priority_${updates.priority}` as MediaEventType;
+             await this.episodeRepo.addEvent(id, priorityEvent, episode.title, episode.type);
+             
+             if (updates.priority === 'high') {
+                 await this.episodeRepo.moveToBeginning(id, episode.userId);
+             }
+        }
+
+        if (updates.likeStatus !== undefined) {
+             const likeEvent = updates.likeStatus === 'like' ? 'liked' : 
+                              updates.likeStatus === 'dislike' ? 'disliked' : 'like_reset';
+             await this.episodeRepo.addEvent(id, likeEvent, episode.title, episode.type);
         }
 
         return episode;
@@ -278,11 +320,109 @@ export class MediaService {
     }
 
     /**
+     * Toggle like status
+     */
+    async toggleLikeStatus(id: string, status: LikeStatus): Promise<MediaEpisode> {
+        const episode = await this.episodeRepo.findById(id);
+        if (!episode) {
+            throw new Error('Episode not found');
+        }
+        
+        // If clicking the same status, reset to 'none'
+        const newStatus = episode.likeStatus === status ? 'none' : status;
+        const updated = await this.episodeRepo.update(id, { likeStatus: newStatus });
+        
+        // Record event
+        const likeEvent = newStatus === 'like' ? 'liked' : 
+                         newStatus === 'dislike' ? 'disliked' : 'like_reset';
+        await this.episodeRepo.addEvent(id, likeEvent, updated.title, updated.type);
+        
+        return updated;
+    }
+
+    /**
      * Set episode priority
      */
     async setPriority(id: string, priority: Priority): Promise<MediaEpisode> {
-        return this.episodeRepo.update(id, { priority });
+        const episode = await this.episodeRepo.update(id, { priority });
+        
+        // Record event
+        const priorityEvent = priority === 'high' ? 'priority_high' : 
+                             priority === 'none' ? 'priority_normal' : 
+                             `priority_${priority}` as MediaEventType;
+        await this.episodeRepo.addEvent(id, priorityEvent, episode.title, episode.type);
+
+        if (priority === 'high') {
+            await this.episodeRepo.moveToBeginning(id, episode.userId);
+        }
+        return episode;
     }
+
+    
+    /**
+     * Archive an episode
+     */
+    async archiveEpisode(id: string): Promise<MediaEpisode> {
+        const now = Math.floor(Date.now() / 1000);
+        const episode = await this.episodeRepo.update(id, { 
+            isArchived: true, 
+            archivedAt: now 
+        });
+        return episode;
+    }
+
+    /**
+     * Unarchive an episode
+     */
+    async unarchiveEpisode(id: string): Promise<MediaEpisode> {
+        const episode = await this.episodeRepo.update(id, { 
+            isArchived: false,
+            archivedAt: undefined
+        });
+        return episode;
+    }
+
+    /**
+     * Archive all watched episodes for a user
+     */
+    async bulkArchiveWatched(userId: string): Promise<void> {
+        const episodes = await this.episodeRepo.findAll({ 
+            userId, 
+            watchStatus: 'watched',
+            isArchived: false,
+            isDeleted: false
+        });
+        
+        const now = Math.floor(Date.now() / 1000);
+        for (const episode of episodes) {
+            // Only archive if it has a priority (not 'none')
+            if (episode.priority && episode.priority !== 'none') {
+                await this.episodeRepo.update(episode.id, { 
+                    isArchived: true,
+                    archivedAt: now
+                });
+            }
+        }
+    }
+
+    /**
+     * Unarchive all archived episodes for a user
+     */
+    async bulkUnarchiveAll(userId: string): Promise<void> {
+        const episodes = await this.episodeRepo.findAll({ 
+            userId, 
+            isArchived: true,
+            isDeleted: false
+        });
+        
+        for (const episode of episodes) {
+            await this.episodeRepo.update(episode.id, { 
+                isArchived: false,
+                archivedAt: undefined
+            });
+        }
+    }
+
 
     /**
      * Reorder episodes
@@ -294,15 +434,15 @@ export class MediaService {
     /**
      * Move episode to the beginning
      */
-    async moveToBeginning(id: string): Promise<void> {
-        return this.episodeRepo.moveToBeginning(id);
+    async moveToBeginning(id: string, userId: string): Promise<void> {
+        return this.episodeRepo.moveToBeginning(id, userId);
     }
 
     /**
      * Move episode to the end
      */
-    async moveToEnd(id: string): Promise<void> {
-        return this.episodeRepo.moveToEnd(id);
+    async moveToEnd(id: string, userId: string): Promise<void> {
+        return this.episodeRepo.moveToEnd(id, userId);
     }
 
     /**
@@ -316,6 +456,12 @@ export class MediaService {
         if (tagIds.length > 0) {
             await this.episodeRepo.addTags(id, tagIds);
             
+            // Update last used for tags
+            const now = Math.floor(Date.now() / 1000);
+            for (const tagId of tagIds) {
+                await this.tagRepo.updateLastUsed(tagId, now);
+            }
+
             const episode = await this.episodeRepo.findById(id);
             if (episode) {
                 // Record 'tagged' event
@@ -368,5 +514,111 @@ export class MediaService {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Add multiple videos in batch
+     * @param videos List of videos (url and optional tag)
+     * @param userId User ID adding the videos
+     * @returns Promise resolving to list of results per URL
+     */
+    async addVideosBatch(
+        videos: { url: string; tag?: string }[],
+        userId: string
+    ): Promise<{ url: string; status: 'OK' | 'NOK'; reason?: string }[]> {
+        // Collect all unique tags and ensure they exist beforehand
+        const uniqueTags = Array.from(new Set(videos.map(v => v.tag).filter((tag): tag is string => !!tag)));
+        const tagMap = new Map<string, string>();
+
+        for (const tagName of uniqueTags) {
+            let tagEntity = await this.tagRepo.findByName(tagName, userId);
+            if (!tagEntity) {
+                tagEntity = await this.tagRepo.create({ name: tagName, userId });
+            }
+            tagMap.set(tagName, tagEntity.id);
+        }
+
+        const results: { url: string; status: 'OK' | 'NOK'; reason?: string }[] = [];
+        
+        // Process in chunks of 5 for metadata extraction to avoid overloading the system
+        const CHUNK_SIZE = 5;
+        for (let i = 0; i < videos.length; i += CHUNK_SIZE) {
+            const chunk = videos.slice(i, i + CHUNK_SIZE);
+            
+            // 1. Parallel metadata extraction for the chunk
+            const metadataPromises = chunk.map(async (v) => {
+                try {
+                    // Check if is a YouTube URL at all
+                    const isYouTube = v.url.includes('youtube.com') || v.url.includes('youtu.be');
+                    if (!isYouTube) {
+                        return { v, status: 'NOK' as const, reason: 'Only YouTube URLs are supported' };
+                    }
+
+                    // Basic check to reject channel URLs
+                    if (this.isYouTubeChannelUrl(v.url)) {
+                        return { v, status: 'NOK' as const, reason: 'Channel URLs are not supported on this endpoint' };
+                    }
+
+                    // Validate if it is specifically a video or short URL
+                    if (!this.isYouTubeVideoUrl(v.url)) {
+                        return { v, status: 'NOK' as const, reason: 'Only YouTube video/short URLs are supported' };
+                    }
+
+                    const metadata = await this.metadataService.extractMetadata(v.url);
+                    return { v, metadata, status: 'OK' as const };
+                } catch (error) {
+                    return { 
+                        v, 
+                        status: 'NOK' as const, 
+                        reason: error instanceof Error ? error.message : 'Unknown error' 
+                    };
+                }
+            });
+
+            const chunkMetadataResults = await Promise.all(metadataPromises);
+
+            // 2. Sequential persistence to avoid database transaction collisions
+            for (const res of chunkMetadataResults) {
+                if (res.status === 'OK' && res.metadata) {
+                    try {
+                        let tagIds: string[] | undefined;
+                        if (res.v.tag && tagMap.has(res.v.tag)) {
+                            tagIds = [tagMap.get(res.v.tag)!];
+                        }
+                        
+                        await this.saveEpisodeFromMetadata(res.metadata, userId, tagIds);
+                        results.push({ url: res.v.url, status: 'OK' });
+                    } catch (error) {
+                        console.error(`Error saving video ${res.v.url}:`, error);
+                        results.push({
+                            url: res.v.url,
+                            status: 'NOK',
+                            reason: error instanceof Error ? error.message : 'Failed to save to database',
+                        });
+                    }
+                } else {
+                    results.push({ url: res.v.url, status: 'NOK', reason: res.reason });
+                }
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Check if the URL is a YouTube video or short URL
+     */
+    private isYouTubeVideoUrl(url: string): boolean {
+        return (url.includes('youtube.com') || url.includes('youtu.be')) && 
+               (url.includes('/watch') || url.includes('/shorts/') || url.includes('youtu.be/'));
+    }
+
+    /**
+     * Check if the URL is a YouTube channel URL
+     */
+    private isYouTubeChannelUrl(url: string): boolean {
+        return url.includes('/channel/') || 
+               url.includes('/c/') || 
+               (url.includes('/@') && !url.includes('/watch') && !url.includes('/shorts/'));
     }
 }
