@@ -73,7 +73,7 @@ docker-compose logs -f
 docker-compose down
 
 # Launch Application in production
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ## Testing
