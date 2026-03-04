@@ -245,20 +245,6 @@ function WatchNextPageContent() {
                 Clear Channel Filter
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={toggleViewMode} className="gap-2 hidden md:flex">
-              {viewMode === 'grid' ? (
-                <>
-                  <List className="h-4 w-4" />
-                  List View
-                </>
-              ) : (
-                <>
-                  <LayoutGrid className="h-4 w-4" />
-                  Grid View
-                </>
-              )}
-            </Button>
-
             <Button
               variant="outline"
               size="sm"
@@ -278,6 +264,20 @@ function WatchNextPageContent() {
             >
               <Archive className="h-4 w-4" />
               <span className="hidden sm:inline">View Archived</span>
+            </Button>
+
+            <Button variant="ghost" size="sm" onClick={toggleViewMode} className="gap-2 hidden md:flex">
+              {viewMode === 'grid' ? (
+                <>
+                  <List className="h-4 w-4" />
+                  List View
+                </>
+              ) : (
+                <>
+                  <LayoutGrid className="h-4 w-4" />
+                  Grid View
+                </>
+              )}
             </Button>
           </div>
         </div>
