@@ -1,10 +1,29 @@
-# 2watcharr
+<div align="center">
+  <a href="https://oliverbarreto.com">
+    <img src="https://www.oliverbarreto.com/images/site-logo.png" />
+  </a>
+</div>
+</br>
+</br>
+<div align="center">
+  <h1>2watchARR | Your own playlists & "watch later" list for your Homelab</h1>
+  <strong>This app will let you create a your own playlists for Youtube and Podcasts in your Homelab to better manage what and when you watch or listen to media.</strong>
+  </br>
+  </br>
+  <p>Created with ❤️ by Oliver Barreto</p>
+</div>
 
-A YouTube "Watch Later" management application that allows you to save, organize, and manage videos you want to watch later with tags, priorities, and comprehensive metadata.
+</br>
+</br>
+
+## 2watcharr
+
+A Media "Watch Later" management application that allows you to save, organize, and manage videos you want to watch later with tags, priorities, and comprehensive metadata.
 
 ## Features
 
 - 📝 **Save YouTube Videos**: Add videos via URL with automatic metadata extraction
+- 📝 **Save Podcasts**: Add podcasts via URL with automatic metadata extraction
 - 🏷️ **Tag Organization**: Categorize videos with custom tags
 - ⭐ **Favorites & Priorities**: Mark videos as favorites and set priority levels
 - ✅ **Watch Status**: Track which videos you've watched
@@ -54,7 +73,7 @@ docker-compose logs -f
 docker-compose down
 
 # Launch Application in production
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ## Testing
