@@ -65,12 +65,6 @@ const NavLinks = ({ className, onClick }: NavLinksProps) => {
                     Watch Next
                 </Button>
             </Link>
-            <Link href="/stats" onClick={onClick}>
-                <Button variant="ghost" className={getLinkClass("/stats")}>
-                    <BarChart3 className="mr-2 h-4 w-4 sm:hidden" />
-                    Stats
-                </Button>
-            </Link>
         </>
     );
 };
@@ -180,19 +174,6 @@ export function Navbar() {
                         </Button>
                     )}
                     
-                    <Link href="/archived">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className={cn(
-                                "rounded-full h-9 w-9",
-                                pathname === '/archived' && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90"
-                            )}
-                            title="Archived Episodes"
-                        >
-                            <Archive className="h-5 w-5" />
-                        </Button>
-                    </Link>
 
                     <Link href="/settings">
                         <Button 

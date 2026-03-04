@@ -48,7 +48,7 @@ export function getTimestampForSort(episode: MediaEpisode, sortField: string): n
 
 /**
  * Format a Unix timestamp into a user-friendly date label
- * Returns "today (Day Month Day, Year)", "yesterday (Day Month Day, Year)",
+ * Returns "Today (Day Month Day, Year)", "Yesterday (Day Month Day, Year)",
  * "Day Month Day, Year" (if within current week), or just "Month Day, Year"
  */
 export function formatDateLabel(timestamp: number): string {
@@ -59,11 +59,11 @@ export function formatDateLabel(timestamp: number): string {
   const fullDate = format(date, 'MMMM d, yyyy');
   
   if (isToday(date)) {
-    return `today (${dayName} ${fullDate})`;
+    return `Today (${dayName} ${fullDate})`;
   }
   
   if (isYesterday(date)) {
-    return `yesterday (${dayName} ${fullDate})`;
+    return `Yesterday (${dayName} ${fullDate})`;
   }
   
   if (isSameWeek(date, now, { weekStartsOn: 1 })) {
