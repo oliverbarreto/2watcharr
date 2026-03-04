@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-03-04
+
+### Added
+- **UI**: Added `CMD + ESC` keyboard shortcut to clear filters and close the search panel simultaneously.
+
+### Changed
+- **UI**: Moved list/grid view toggle button in Watch Next page to the far right for better layout balance.
+- **UI**: Streamlined Navbar by removing direct links to Archive, Stats, and Settings (now accessible via User Profile or shortcuts).
+- **UI**: Consolidated "Today" and "Yesterday" sections into a unified "Today & Yesterday" view in the watchlist.
+- **UI**: Page titles in the navbar are now only displayed on mobile to save space on desktop.
+
+### Fixed
+- **System**: Resolved issue where the app would fail to launch on a fresh start if the database didn't exist.
+
 ## [0.6.1] - 2026-02-25
 
 ### Added
