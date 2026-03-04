@@ -173,18 +173,6 @@ export function Navbar() {
                     
 
 
-                    <Link href="/settings">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                                "rounded-full h-9 w-9",
-                                pathname === '/settings' && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90"
-                            )}
-                        >
-                            <Settings className="h-5 w-5" />
-                        </Button>
-                    </Link>
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
