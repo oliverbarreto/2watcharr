@@ -4,6 +4,7 @@ import path from 'path';
 import { addLikeStatus } from './migrations/add_like_status';
 import { addTagLastUsedAt } from './migrations/add_tag_last_used_at';
 import { addArchiveFields } from './migrations/add_archive_fields';
+import { addLabcastarrIntegrations } from './migrations/add_labcastarr_integrations';
 
 
 /**
@@ -37,7 +38,7 @@ export async function runMigrations(db: Database): Promise<void> {
       'INSERT INTO migrations (name) VALUES (?)',
       'initial_schema'
     );
-    
+
     // Mark legacy migrations as completed since they are built into schema.sql
     const legacyMigrations = [
       'allow_channel_deletion',
@@ -234,21 +235,21 @@ export async function runMigrations(db: Database): Promise<void> {
 
   if (!migration6) {
     console.log('Running add_podcast_support migration...');
-    
+
     // Check if the episodes table already exists (new installation with generic schema)
     const episodesTable = await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='episodes'");
     if (episodesTable) {
-        console.log('Episodes table already exists, marking add_podcast_support as completed.');
-        await db.run("INSERT OR IGNORE INTO migrations (name) VALUES ('add_podcast_support')");
+      console.log('Episodes table already exists, marking add_podcast_support as completed.');
+      await db.run("INSERT OR IGNORE INTO migrations (name) VALUES ('add_podcast_support')");
     } else {
-        await db.run('PRAGMA foreign_keys = OFF');
-        try {
-            // Check column names in old channels table for dynamic mapping
-            const tableInfo = await db.all('PRAGMA table_info(channels)');
-            const urlColumn = tableInfo.find(c => c.name === 'url' || c.name === 'channel_url')?.name || 'url';
-            const thumbColumn = tableInfo.find(c => c.name === 'thumbnail_url' || c.name === 'thumbnailUrl')?.name || 'thumbnail_url';
+      await db.run('PRAGMA foreign_keys = OFF');
+      try {
+        // Check column names in old channels table for dynamic mapping
+        const tableInfo = await db.all('PRAGMA table_info(channels)');
+        const urlColumn = tableInfo.find(c => c.name === 'url' || c.name === 'channel_url')?.name || 'url';
+        const thumbColumn = tableInfo.find(c => c.name === 'thumbnail_url' || c.name === 'thumbnailUrl')?.name || 'thumbnail_url';
 
-            await db.exec(`
+        await db.exec(`
         BEGIN TRANSACTION;
         
         -- 1. Migrate Channels to a generic structure
@@ -358,20 +359,20 @@ export async function runMigrations(db: Database): Promise<void> {
         
         COMMIT;
       `);
-            await db.run('PRAGMA foreign_keys = ON');
-            console.log('add_podcast_support migration completed.');
-        } catch (error) {
-            if (error instanceof Error && error.message.includes('already exists')) {
-                console.log('Some tables already existed, marking add_podcast_support as completed.');
-                await db.run("INSERT OR IGNORE INTO migrations (name) VALUES ('add_podcast_support')");
-                await db.run('PRAGMA foreign_keys = ON');
-            } else {
-                try { await db.run('ROLLBACK'); } catch { }
-                await db.run('PRAGMA foreign_keys = ON');
-                console.error('Error running add_podcast_support migration:', error);
-                throw error;
-            }
+        await db.run('PRAGMA foreign_keys = ON');
+        console.log('add_podcast_support migration completed.');
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('already exists')) {
+          console.log('Some tables already existed, marking add_podcast_support as completed.');
+          await db.run("INSERT OR IGNORE INTO migrations (name) VALUES ('add_podcast_support')");
+          await db.run('PRAGMA foreign_keys = ON');
+        } else {
+          try { await db.run('ROLLBACK'); } catch { }
+          await db.run('PRAGMA foreign_keys = ON');
+          console.error('Error running add_podcast_support migration:', error);
+          throw error;
         }
+      }
     }
   }
   // Check if add_user_management migration has been applied
@@ -489,7 +490,7 @@ export async function runMigrations(db: Database): Promise<void> {
       `);
       console.log('add_user_management migration completed.');
     } catch (error) {
-      try { await db.run('ROLLBACK'); } catch {}
+      try { await db.run('ROLLBACK'); } catch { }
       console.error('Error running add_user_management migration:', error);
       throw error;
     } finally {
@@ -632,7 +633,7 @@ export async function runMigrations(db: Database): Promise<void> {
       `);
       console.log('add_event_metadata migration completed.');
     } catch (error) {
-      try { await db.run('ROLLBACK'); } catch {}
+      try { await db.run('ROLLBACK'); } catch { }
       console.error('Error running add_event_metadata migration:', error);
       throw error;
     } finally {
@@ -709,5 +710,8 @@ export async function runMigrations(db: Database): Promise<void> {
 
   // Run archive fields migration
   await addArchiveFields(db);
+
+  // Run labcastarr integrations migration
+  await addLabcastarrIntegrations(db);
 }
 

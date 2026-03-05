@@ -1,6 +1,7 @@
 import { Database } from 'sqlite';
 import { EpisodeRepository, ChannelRepository, TagRepository } from '../repositories';
 import { MetadataService } from './metadata.service';
+import { IntegrationService } from './integration.service';
 import { UnifiedMetadata } from './youtube-metadata.service';
 import {
     MediaEpisode,
@@ -18,12 +19,14 @@ export class MediaService {
     private channelRepo: ChannelRepository;
     private tagRepo: TagRepository;
     private metadataService: MetadataService;
+    private integrationService: IntegrationService;
 
     constructor(db: Database, metadataService?: MetadataService) {
         this.episodeRepo = new EpisodeRepository(db);
         this.channelRepo = new ChannelRepository(db);
         this.tagRepo = new TagRepository(db);
         this.metadataService = metadataService || new MetadataService();
+        this.integrationService = new IntegrationService(db);
     }
 
     /**
@@ -138,6 +141,12 @@ export class MediaService {
         // Move to beginning of the list for new episodes
         await this.episodeRepo.moveToBeginning(episode.id, userId);
 
+        // Process LabcastARR automated tags
+        if (tagIds && tagIds.length > 0) {
+            this.integrationService.processEpisodeTags(episode.id, userId, tagIds, episode.url)
+                .catch(err => console.error('Background integration processing failed:', err));
+        }
+
         return episode;
     }
 
@@ -166,38 +175,38 @@ export class MediaService {
      */
     async updateEpisode(id: string, updates: UpdateEpisodeDto): Promise<MediaEpisode> {
         const episode = await this.episodeRepo.update(id, updates);
-        
+
         if (updates.watchStatus !== undefined) {
-             await this.episodeRepo.addEvent(id, updates.watchStatus as MediaEventType, episode.title, episode.type);
+            await this.episodeRepo.addEvent(id, updates.watchStatus as MediaEventType, episode.title, episode.type);
         } else if (updates.watched !== undefined) {
-             await this.episodeRepo.addEvent(id, updates.watched ? 'watched' : 'unwatched', episode.title, episode.type);
+            await this.episodeRepo.addEvent(id, updates.watched ? 'watched' : 'unwatched', episode.title, episode.type);
         }
 
         if (updates.favorite !== undefined) {
-             await this.episodeRepo.addEvent(id, updates.favorite ? 'favorited' : 'unfavorited', episode.title, episode.type);
+            await this.episodeRepo.addEvent(id, updates.favorite ? 'favorited' : 'unfavorited', episode.title, episode.type);
         }
 
         if (updates.isDeleted === true) {
-             await this.episodeRepo.addEvent(id, 'removed', episode.title, episode.type);
+            await this.episodeRepo.addEvent(id, 'removed', episode.title, episode.type);
         } else if (updates.isDeleted === false) {
-             await this.episodeRepo.addEvent(id, 'restored', episode.title, episode.type);
+            await this.episodeRepo.addEvent(id, 'restored', episode.title, episode.type);
         }
 
         if (updates.priority !== undefined) {
-             const priorityEvent = updates.priority === 'high' ? 'priority_high' : 
-                                  updates.priority === 'none' ? 'priority_normal' : 
-                                  `priority_${updates.priority}` as MediaEventType;
-             await this.episodeRepo.addEvent(id, priorityEvent, episode.title, episode.type);
-             
-             if (updates.priority === 'high') {
-                 await this.episodeRepo.moveToBeginning(id, episode.userId);
-             }
+            const priorityEvent = updates.priority === 'high' ? 'priority_high' :
+                updates.priority === 'none' ? 'priority_normal' :
+                    `priority_${updates.priority}` as MediaEventType;
+            await this.episodeRepo.addEvent(id, priorityEvent, episode.title, episode.type);
+
+            if (updates.priority === 'high') {
+                await this.episodeRepo.moveToBeginning(id, episode.userId);
+            }
         }
 
         if (updates.likeStatus !== undefined) {
-             const likeEvent = updates.likeStatus === 'like' ? 'liked' : 
-                              updates.likeStatus === 'dislike' ? 'disliked' : 'like_reset';
-             await this.episodeRepo.addEvent(id, likeEvent, episode.title, episode.type);
+            const likeEvent = updates.likeStatus === 'like' ? 'liked' :
+                updates.likeStatus === 'dislike' ? 'disliked' : 'like_reset';
+            await this.episodeRepo.addEvent(id, likeEvent, episode.title, episode.type);
         }
 
         return episode;
@@ -226,7 +235,7 @@ export class MediaService {
      */
     async softDeleteEpisodesByTag(tagId: string, userId: string): Promise<void> {
         const episodes = await this.episodeRepo.findAll({ tagIds: [tagId], userId, isDeleted: false });
-        
+
         for (const episode of episodes) {
             // Remove the specific tag
             const currentTagIds = await this.episodeRepo.getTags(episode.id);
@@ -238,7 +247,7 @@ export class MediaService {
 
             // Soft delete the episode
             await this.episodeRepo.delete(episode.id);
-            
+
             // Record event
             await this.episodeRepo.addEvent(episode.id, 'removed', episode.title, episode.type);
         }
@@ -250,7 +259,7 @@ export class MediaService {
     async restoreAllEpisodes(userId: string): Promise<void> {
         const episodes = await this.episodeRepo.findAll({ userId, isDeleted: true });
         await this.episodeRepo.bulkRestore(userId);
-        
+
         for (const episode of episodes) {
             await this.episodeRepo.addEvent(episode.id, 'restored', episode.title, episode.type);
         }
@@ -273,14 +282,14 @@ export class MediaService {
             throw new Error('Episode not found');
         }
         const newWatched = !episode.watched;
-        const updated = await this.episodeRepo.update(id, { 
+        const updated = await this.episodeRepo.update(id, {
             watched: newWatched,
             watchStatus: newWatched ? 'watched' : 'unwatched'
         });
-        
+
         // Record event
         await this.episodeRepo.addEvent(id, newWatched ? 'watched' : 'unwatched', updated.title, updated.type);
-        
+
         return updated;
     }
 
@@ -289,7 +298,7 @@ export class MediaService {
      */
     async setWatchStatus(id: string, status: 'unwatched' | 'pending' | 'watched'): Promise<MediaEpisode> {
         const updated = await this.episodeRepo.update(id, { watchStatus: status });
-        
+
         // Record event
         if (status === 'watched') {
             await this.episodeRepo.addEvent(id, 'watched', updated.title, updated.type);
@@ -298,7 +307,7 @@ export class MediaService {
         } else {
             await this.episodeRepo.addEvent(id, 'unwatched', updated.title, updated.type);
         }
-        
+
         return updated;
     }
 
@@ -312,10 +321,10 @@ export class MediaService {
         }
         const newFavorite = !episode.favorite;
         const updated = await this.episodeRepo.update(id, { favorite: newFavorite });
-        
+
         // Record event
         await this.episodeRepo.addEvent(id, newFavorite ? 'favorited' : 'unfavorited', updated.title, updated.type);
-        
+
         return updated;
     }
 
@@ -327,16 +336,16 @@ export class MediaService {
         if (!episode) {
             throw new Error('Episode not found');
         }
-        
+
         // If clicking the same status, reset to 'none'
         const newStatus = episode.likeStatus === status ? 'none' : status;
         const updated = await this.episodeRepo.update(id, { likeStatus: newStatus });
-        
+
         // Record event
-        const likeEvent = newStatus === 'like' ? 'liked' : 
-                         newStatus === 'dislike' ? 'disliked' : 'like_reset';
+        const likeEvent = newStatus === 'like' ? 'liked' :
+            newStatus === 'dislike' ? 'disliked' : 'like_reset';
         await this.episodeRepo.addEvent(id, likeEvent, updated.title, updated.type);
-        
+
         return updated;
     }
 
@@ -345,11 +354,11 @@ export class MediaService {
      */
     async setPriority(id: string, priority: Priority): Promise<MediaEpisode> {
         const episode = await this.episodeRepo.update(id, { priority });
-        
+
         // Record event
-        const priorityEvent = priority === 'high' ? 'priority_high' : 
-                             priority === 'none' ? 'priority_normal' : 
-                             `priority_${priority}` as MediaEventType;
+        const priorityEvent = priority === 'high' ? 'priority_high' :
+            priority === 'none' ? 'priority_normal' :
+                `priority_${priority}` as MediaEventType;
         await this.episodeRepo.addEvent(id, priorityEvent, episode.title, episode.type);
 
         if (priority === 'high') {
@@ -358,15 +367,15 @@ export class MediaService {
         return episode;
     }
 
-    
+
     /**
      * Archive an episode
      */
     async archiveEpisode(id: string): Promise<MediaEpisode> {
         const now = Math.floor(Date.now() / 1000);
-        const episode = await this.episodeRepo.update(id, { 
-            isArchived: true, 
-            archivedAt: now 
+        const episode = await this.episodeRepo.update(id, {
+            isArchived: true,
+            archivedAt: now
         });
         return episode;
     }
@@ -375,7 +384,7 @@ export class MediaService {
      * Unarchive an episode
      */
     async unarchiveEpisode(id: string): Promise<MediaEpisode> {
-        const episode = await this.episodeRepo.update(id, { 
+        const episode = await this.episodeRepo.update(id, {
             isArchived: false,
             archivedAt: undefined
         });
@@ -386,18 +395,18 @@ export class MediaService {
      * Archive all watched episodes for a user
      */
     async bulkArchiveWatched(userId: string): Promise<void> {
-        const episodes = await this.episodeRepo.findAll({ 
-            userId, 
+        const episodes = await this.episodeRepo.findAll({
+            userId,
             watchStatus: 'watched',
             isArchived: false,
             isDeleted: false
         });
-        
+
         const now = Math.floor(Date.now() / 1000);
         for (const episode of episodes) {
             // Only archive if it has a priority (not 'none')
             if (episode.priority && episode.priority !== 'none') {
-                await this.episodeRepo.update(episode.id, { 
+                await this.episodeRepo.update(episode.id, {
                     isArchived: true,
                     archivedAt: now
                 });
@@ -409,14 +418,14 @@ export class MediaService {
      * Unarchive all archived episodes for a user
      */
     async bulkUnarchiveAll(userId: string): Promise<void> {
-        const episodes = await this.episodeRepo.findAll({ 
-            userId, 
+        const episodes = await this.episodeRepo.findAll({
+            userId,
             isArchived: true,
             isDeleted: false
         });
-        
+
         for (const episode of episodes) {
-            await this.episodeRepo.update(episode.id, { 
+            await this.episodeRepo.update(episode.id, {
                 isArchived: false,
                 archivedAt: undefined
             });
@@ -455,7 +464,7 @@ export class MediaService {
         // Add new tags
         if (tagIds.length > 0) {
             await this.episodeRepo.addTags(id, tagIds);
-            
+
             // Update last used for tags
             const now = Math.floor(Date.now() / 1000);
             for (const tagId of tagIds) {
@@ -466,6 +475,10 @@ export class MediaService {
             if (episode) {
                 // Record 'tagged' event
                 await this.episodeRepo.addEvent(id, 'tagged', episode.title, episode.type);
+
+                // Process LabcastARR automated tags
+                this.integrationService.processEpisodeTags(id, episode.userId, tagIds, episode.url)
+                    .catch(err => console.error('Background integration processing failed:', err));
             }
         }
     }
@@ -539,12 +552,12 @@ export class MediaService {
         }
 
         const results: { url: string; status: 'OK' | 'NOK'; reason?: string }[] = [];
-        
+
         // Process in chunks of 5 for metadata extraction to avoid overloading the system
         const CHUNK_SIZE = 5;
         for (let i = 0; i < videos.length; i += CHUNK_SIZE) {
             const chunk = videos.slice(i, i + CHUNK_SIZE);
-            
+
             // 1. Parallel metadata extraction for the chunk
             const metadataPromises = chunk.map(async (v) => {
                 try {
@@ -567,10 +580,10 @@ export class MediaService {
                     const metadata = await this.metadataService.extractMetadata(v.url);
                     return { v, metadata, status: 'OK' as const };
                 } catch (error) {
-                    return { 
-                        v, 
-                        status: 'NOK' as const, 
-                        reason: error instanceof Error ? error.message : 'Unknown error' 
+                    return {
+                        v,
+                        status: 'NOK' as const,
+                        reason: error instanceof Error ? error.message : 'Unknown error'
                     };
                 }
             });
@@ -585,7 +598,7 @@ export class MediaService {
                         if (res.v.tag && tagMap.has(res.v.tag)) {
                             tagIds = [tagMap.get(res.v.tag)!];
                         }
-                        
+
                         await this.saveEpisodeFromMetadata(res.metadata, userId, tagIds);
                         results.push({ url: res.v.url, status: 'OK' });
                     } catch (error) {
@@ -609,16 +622,16 @@ export class MediaService {
      * Check if the URL is a YouTube video or short URL
      */
     private isYouTubeVideoUrl(url: string): boolean {
-        return (url.includes('youtube.com') || url.includes('youtu.be')) && 
-               (url.includes('/watch') || url.includes('/shorts/') || url.includes('youtu.be/'));
+        return (url.includes('youtube.com') || url.includes('youtu.be')) &&
+            (url.includes('/watch') || url.includes('/shorts/') || url.includes('youtu.be/'));
     }
 
     /**
      * Check if the URL is a YouTube channel URL
      */
     private isYouTubeChannelUrl(url: string): boolean {
-        return url.includes('/channel/') || 
-               url.includes('/c/') || 
-               (url.includes('/@') && !url.includes('/watch') && !url.includes('/shorts/'));
+        return url.includes('/channel/') ||
+            url.includes('/c/') ||
+            (url.includes('/@') && !url.includes('/watch') && !url.includes('/shorts/'));
     }
 }

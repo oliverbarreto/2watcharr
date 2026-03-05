@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Layout } from '@/components/layout';
 import {
@@ -26,12 +26,20 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { UserManagement } from '@/components/features/users/user-management';
+import { LabcastARRSettings } from '@/components/features/settings/labcastarr-settings';
 
 interface Tag {
     id: string;
@@ -43,7 +51,7 @@ interface Tag {
 export default function SettingsPage() {
     const { data: session } = useSession();
     const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin;
-    
+
     const [tags, setTags] = useState<Tag[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [newTagName, setNewTagName] = useState('');
@@ -56,6 +64,8 @@ export default function SettingsPage() {
     const [watchAction, setWatchAction] = useState<'none' | 'watched' | 'pending'>('pending');
     const [deletingTag, setDeletingTag] = useState<{ id: string, name: string } | null>(null);
     const [removingEpisodesTag, setRemovingEpisodesTag] = useState<{ id: string, name: string } | null>(null);
+    const [activeIntegrations, setActiveIntegrations] = useState<any[]>([]);
+    const [isBulkSending, setIsBulkSending] = useState<string | null>(null);
 
     useEffect(() => {
         fetchTags();
@@ -71,6 +81,14 @@ export default function SettingsPage() {
         if (savedWatchAction) {
             setWatchAction(savedWatchAction);
         }
+        fetch('/api/integrations/labcastarr')
+            .then(res => res.json())
+            .then(data => {
+                if (data.integrations) {
+                    setActiveIntegrations(data.integrations.filter((i: any) => i.enabled));
+                }
+            })
+            .catch(console.error);
     }, []);
 
     const fetchTags = async () => {
@@ -186,6 +204,29 @@ export default function SettingsPage() {
         }
     };
 
+    const handleBulkSend = async (tagId: string, integrationId: string) => {
+        setIsBulkSending(tagId);
+        try {
+            const response = await fetch(`/api/tags/${tagId}/send-to-labcastarr`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ integrationId }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                toast.success(`Successfully sent ${data.count} episodes to LabcastARR${data.failed > 0 ? ` (${data.failed} failed)` : ''}`);
+            } else {
+                toast.error(data.error || 'Failed to bulk send episodes');
+            }
+        } catch (error) {
+            console.error('Error bulk sending:', error);
+            toast.error('Failed to bulk send episodes');
+        } finally {
+            setIsBulkSending(null);
+        }
+    };
+
     const handleDefaultViewChange = (value: 'grid' | 'list') => {
         setDefaultView(value);
         localStorage.setItem('defaultView', value);
@@ -213,6 +254,7 @@ export default function SettingsPage() {
                     <TabsList className="mb-8">
                         <TabsTrigger value="general">General</TabsTrigger>
                         <TabsTrigger value="tags">Tags Management</TabsTrigger>
+                        <TabsTrigger value="integrations">Integrations</TabsTrigger>
                         {isAdmin && <TabsTrigger value="users">User Management</TabsTrigger>}
                     </TabsList>
 
@@ -230,8 +272,8 @@ export default function SettingsPage() {
                                     <p className="text-sm text-muted-foreground">
                                         Choose which view to use by default when loading the list.
                                     </p>
-                                    <Select 
-                                        value={defaultView} 
+                                    <Select
+                                        value={defaultView}
                                         onValueChange={(value) => handleDefaultViewChange(value as 'grid' | 'list')}
                                     >
                                         <SelectTrigger id="defaultView" className="w-[180px]">
@@ -249,8 +291,8 @@ export default function SettingsPage() {
                                     <p className="text-sm text-muted-foreground">
                                         Choose the default sorting option for the watchlist.
                                     </p>
-                                    <Select 
-                                        value={defaultSortField} 
+                                    <Select
+                                        value={defaultSortField}
                                         onValueChange={handleDefaultSortChange}
                                     >
                                         <SelectTrigger id="defaultSortField" className="w-[180px]">
@@ -271,8 +313,8 @@ export default function SettingsPage() {
                                     <p className="text-sm text-muted-foreground">
                                         Action to take when opening a video from the list.
                                     </p>
-                                    <Select 
-                                        value={watchAction} 
+                                    <Select
+                                        value={watchAction}
                                         onValueChange={(value) => handleWatchActionChange(value as 'none' | 'watched' | 'pending')}
                                     >
                                         <SelectTrigger id="watchAction" className="w-[180px]">
@@ -291,8 +333,8 @@ export default function SettingsPage() {
                                     <p className="text-sm text-muted-foreground">
                                         View and manage episodes that have been removed from your watch list.
                                     </p>
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         onClick={() => window.location.href = '/deleted'}
                                         className="w-full sm:w-auto"
                                     >
@@ -471,6 +513,36 @@ export default function SettingsPage() {
                                                                             <p>Soft remove episodes by tag</p>
                                                                         </TooltipContent>
                                                                     </Tooltip>
+
+                                                                    {activeIntegrations.length > 0 && (
+                                                                        <DropdownMenu>
+                                                                            <Tooltip>
+                                                                                <TooltipTrigger asChild>
+                                                                                    <DropdownMenuTrigger asChild>
+                                                                                        <Button
+                                                                                            size="icon"
+                                                                                            variant="ghost"
+                                                                                            className="h-8 w-8 text-blue-500"
+                                                                                            disabled={tag.episodeCount === 0 || isBulkSending === tag.id}
+                                                                                        >
+                                                                                            <Share2 className={`h-4 w-4 ${isBulkSending === tag.id ? 'animate-pulse' : ''}`} />
+                                                                                        </Button>
+                                                                                    </DropdownMenuTrigger>
+                                                                                </TooltipTrigger>
+                                                                                <TooltipContent>
+                                                                                    <p>Send all episodes to LabcastARR</p>
+                                                                                </TooltipContent>
+                                                                            </Tooltip>
+                                                                            <DropdownMenuContent align="end">
+                                                                                {activeIntegrations.map(integration => (
+                                                                                    <DropdownMenuItem key={integration.id} onSelect={() => handleBulkSend(tag.id, integration.id)}>
+                                                                                        <Share2 className="mr-2 h-4 w-4" />
+                                                                                        Send to {integration.name}
+                                                                                    </DropdownMenuItem>
+                                                                                ))}
+                                                                            </DropdownMenuContent>
+                                                                        </DropdownMenu>
+                                                                    )}
                                                                 </TooltipProvider>
                                                             </div>
                                                         </>
@@ -484,6 +556,9 @@ export default function SettingsPage() {
                         </div>
                     </TabsContent>
 
+                    <TabsContent value="integrations">
+                        <LabcastARRSettings />
+                    </TabsContent>
 
                     {isAdmin && (
                         <TabsContent value="users">
@@ -499,7 +574,7 @@ export default function SettingsPage() {
                     <DialogHeader>
                         <DialogTitle>Delete Tag</DialogTitle>
                         <DialogDescription className="text-zinc-400">
-                            Are you sure you want to delete the tag <strong>{deletingTag?.name}</strong>? 
+                            Are you sure you want to delete the tag <strong>{deletingTag?.name}</strong>?
                             This will remove it from all episodes.
                         </DialogDescription>
                     </DialogHeader>
@@ -520,7 +595,7 @@ export default function SettingsPage() {
                     <DialogHeader>
                         <DialogTitle>Soft Remove Episodes</DialogTitle>
                         <DialogDescription className="text-zinc-400">
-                            This will remove the tag <strong>{removingEpisodesTag?.name}</strong> from all episodes that have it and mark them as soft deleted. 
+                            This will remove the tag <strong>{removingEpisodesTag?.name}</strong> from all episodes that have it and mark them as soft deleted.
                             You can still restore them later from the Deleted Episodes page.
                         </DialogDescription>
                     </DialogHeader>

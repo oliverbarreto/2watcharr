@@ -44,6 +44,16 @@ export class TagRepository {
     }
 
     /**
+     * Find tags by multiple IDs
+     */
+    async findByIds(ids: string[]): Promise<Tag[]> {
+        if (!ids || ids.length === 0) return [];
+        const placeholders = ids.map(() => '?').join(',');
+        const rows = await this.db.all(`SELECT * FROM tags WHERE id IN (${placeholders})`, ids);
+        return rows.map(row => this.mapRowToTag(row));
+    }
+
+    /**
      * Find tag by name
      */
     async findByName(name: string, userId: string): Promise<Tag | null> {
@@ -135,7 +145,7 @@ export class TagRepository {
             query += ' WHERE t.user_id = ?';
             params.push(userId);
         }
-        
+
         query += ' GROUP BY t.id';
 
         if (sort === 'usage') {

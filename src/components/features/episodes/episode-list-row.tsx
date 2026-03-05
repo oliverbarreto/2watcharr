@@ -31,6 +31,7 @@ import {
     Gem,
     Archive,
     ArchiveRestore,
+    Share2,
 } from 'lucide-react';
 
 import {
@@ -81,12 +82,30 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
     const [isCopying, setIsCopying] = useState(false);
     const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
     const [isUnarchiveDialogOpen, setIsUnarchiveDialogOpen] = useState(false);
+    const [activeIntegrations, setActiveIntegrations] = useState<any[]>([]);
 
 
     // Sync state when episode prop changes
     useEffect(() => {
         setLikeStatus(episode.likeStatus);
     }, [episode]);
+
+    useEffect(() => {
+        fetch('/api/integrations/labcastarr')
+            .then(res => res.json())
+            .then(data => {
+                if (data.integrations) {
+                    setActiveIntegrations(data.integrations.filter((i: any) => i.enabled));
+                }
+            })
+            .catch(console.error);
+    }, []);
+
+    const isLabcastARRTag = (tag: Tag) => {
+        return activeIntegrations.some(i => i.autoTag === tag.name);
+    };
+
+    const hasLabcastARRIntegration = activeIntegrations.length > 0;
 
     const {
         attributes,
@@ -95,7 +114,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
         transform,
         transition,
         isDragging,
-    } = useSortable({ 
+    } = useSortable({
         id: episode.id,
         disabled: !isDraggable
     });
@@ -115,7 +134,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
             else if (likeStatus === 'dislike') nextStatus = 'none';
 
             setLikeStatus(nextStatus);
-            
+
             const response = await fetch(`/api/episodes/${episode.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -126,7 +145,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                 setLikeStatus(likeStatus); // Revert on failure
                 throw new Error('Failed to update like status');
             }
-            
+
             onUpdate?.();
         } catch (error) {
             console.error('Error updating like status:', error);
@@ -316,6 +335,28 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
         }
     };
 
+    const handleSendToLabcastARR = async (integrationId: string) => {
+        try {
+            const response = await fetch('/api/integrations/labcastarr/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    integrationId,
+                    videoUrl: episode.url
+                }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to send to LabcastARR');
+            }
+
+            toast.success('Successfully sent to LabcastARR');
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Error sending to LabcastARR');
+        }
+    };
+
     const fetchTags = async () => {
         try {
             const response = await fetch('/api/tags');
@@ -390,7 +431,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
 
     const handlePlay = async () => {
         window.open(episode.url, '_blank');
-        
+
         const watchAction = localStorage.getItem('watchAction') || 'pending';
         if (watchAction === 'watched' && episode.watchStatus === 'unwatched') {
             try {
@@ -476,7 +517,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
         if (episode.lastRemovedAt && episode.isDeleted) {
             return `Removed ${formatDistanceToNow(new Date(episode.lastRemovedAt * 1000), { addSuffix: true })}`;
         }
-        
+
         // Find the latest significant event
         const events = [
             { type: 'Watched', date: episode.lastWatchedAt },
@@ -487,7 +528,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
         if (events.length > 0 && events[0].date) {
             return `${events[0].type} ${formatDistanceToNow(new Date(events[0].date * 1000), { addSuffix: true })}`;
         }
-        
+
         return '';
     };
 
@@ -601,8 +642,9 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                                 color: tag.color || 'inherit',
                                                 borderColor: `${tag.color}40`,
                                             }}
-                                            className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-3.5 sm:h-4 font-medium"
+                                            className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-3.5 sm:h-4 font-medium flex items-center gap-1"
                                         >
+                                            {isLabcastARRTag(tag) && <Share2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" />}
                                             {tag.name}
                                         </Badge>
                                     ))}
@@ -737,13 +779,13 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                             <ArrowDown className="mr-2 h-4 w-4" />
                                             Move to end
                                         </DropdownMenuItem>
-                                        
+
                                         <DropdownMenuSeparator />
                                     </>
                                 )}
-                                
+
                                 <DropdownMenuItem onSelect={() => {
-                                    handleToggleWatched({ stopPropagation: () => {} } as unknown as React.MouseEvent);
+                                    handleToggleWatched({ stopPropagation: () => { } } as unknown as React.MouseEvent);
                                 }}>
                                     <Check className={`mr-2 h-4 w-4 ${episode.watched ? 'text-primary' : ''}`} />
                                     {episode.watched ? 'Mark unwatched' : 'Mark watched'}
@@ -756,14 +798,14 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                     Add tags
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => {
-                                    handleToggleFavorite({ stopPropagation: () => {} } as unknown as React.MouseEvent);
+                                    handleToggleFavorite({ stopPropagation: () => { } } as unknown as React.MouseEvent);
                                 }}>
                                     <Star className={`mr-2 h-4 w-4 ${episode.favorite ? 'fill-primary text-primary' : ''}`} />
                                     {episode.favorite ? 'Remove favorite' : 'Add favorite'}
                                 </DropdownMenuItem>
 
                                 <DropdownMenuItem onSelect={() => {
-                                    handleTogglePriority({ stopPropagation: () => {} } as unknown as React.MouseEvent);
+                                    handleTogglePriority({ stopPropagation: () => { } } as unknown as React.MouseEvent);
                                 }}>
                                     <Gem className={`mr-2 h-4 w-4 ${episode.priority === 'high' ? 'fill-primary text-primary' : ''}`} />
                                     {episode.priority === 'high' ? 'Remove priority' : 'Mark as priority'}
@@ -778,7 +820,7 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                 </DropdownMenuItem>
 
                                 <DropdownMenuItem onSelect={() => {
-                                    handleCopyLink({ stopPropagation: () => {} } as unknown as React.MouseEvent);
+                                    handleCopyLink({ stopPropagation: () => { } } as unknown as React.MouseEvent);
                                 }}>
                                     <LinkIcon className={`mr-2 h-4 w-4 ${isCopying ? 'animate-bounce text-primary' : ''}`} />
                                     {isCopying ? 'Copied!' : 'Copy Link'}
@@ -829,6 +871,19 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                             Archive
                                         </DropdownMenuItem>
                                     )
+                                )}
+
+                                {hasLabcastARRIntegration && !episode.isDeleted && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Send to LabcastARR</div>
+                                        {activeIntegrations.map(integration => (
+                                            <DropdownMenuItem key={integration.id} onSelect={() => handleSendToLabcastARR(integration.id)}>
+                                                <Share2 className="mr-2 h-4 w-4" />
+                                                {integration.name}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </>
                                 )}
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -965,14 +1020,14 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setIsNoteModalOpen(false)}
                             disabled={isSavingNote}
                         >
                             Cancel
                         </Button>
-                        <Button 
+                        <Button
                             onClick={handleSaveNote}
                             disabled={isSavingNote}
                         >
@@ -984,8 +1039,8 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
 
             <Dialog open={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
                 <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
-                    <CommandDialog 
-                        open={isTagPopoverOpen} 
+                    <CommandDialog
+                        open={isTagPopoverOpen}
                         onOpenChange={setIsTagPopoverOpen}
                         title="Manage Tags"
                         description="Search or create tags for this episode"

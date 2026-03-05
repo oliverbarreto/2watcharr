@@ -38,6 +38,7 @@ import {
     Gem,
     Archive,
     ArchiveRestore,
+    Share2,
 } from 'lucide-react';
 
 import {
@@ -67,6 +68,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
     const [isHardDeleteDialogOpen, setIsHardDeleteDialogOpen] = useState(false);
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+    const [activeIntegrations, setActiveIntegrations] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isUpdatingTags, setIsUpdatingTags] = useState(false);
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
@@ -83,13 +85,30 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
         setLikeStatus(episode.likeStatus);
     }, [episode]);
 
+    useEffect(() => {
+        fetch('/api/integrations/labcastarr')
+            .then(res => res.json())
+            .then(data => {
+                if (data.integrations) {
+                    setActiveIntegrations(data.integrations.filter((i: any) => i.enabled));
+                }
+            })
+            .catch(console.error);
+    }, []);
+
+    const isLabcastARRTag = (tag: Tag) => {
+        return activeIntegrations.some(i => i.autoTag === tag.name);
+    };
+
+    const hasLabcastARRIntegration = activeIntegrations.length > 0;
+
     const {
         attributes,
         listeners,
         setNodeRef,
         transform,
         transition,
-    } = useSortable({ 
+    } = useSortable({
         id: episode.id,
         disabled: !isDraggable
     });
@@ -103,7 +122,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
         try {
             const newStatus = likeStatus === status ? 'none' : status;
             setLikeStatus(newStatus);
-            
+
             const response = await fetch(`/api/episodes/${episode.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -114,7 +133,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                 setLikeStatus(likeStatus); // Revert on failure
                 throw new Error('Failed to update like status');
             }
-            
+
             onUpdate?.({ ...episode, likeStatus: newStatus });
         } catch (error) {
             console.error('Error updating like status:', error);
@@ -293,7 +312,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
 
     const handlePlay = async () => {
         window.open(episode.url, '_blank');
-        
+
         const watchAction = localStorage.getItem('watchAction') || 'pending';
         if (watchAction === 'watched' && episode.watchStatus === 'unwatched') {
             handleToggleWatched();
@@ -311,6 +330,28 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
             } catch (error) {
                 console.error('Failed to set pending status:', error);
             }
+        }
+    };
+
+    const handleSendToLabcastARR = async (integrationId: string) => {
+        try {
+            const response = await fetch('/api/integrations/labcastarr/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    integrationId,
+                    videoUrl: episode.url
+                }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to send to LabcastARR');
+            }
+
+            toast.success('Successfully sent to LabcastARR');
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Error sending to LabcastARR');
         }
     };
 
@@ -451,7 +492,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
         if (episode.lastRemovedAt && episode.isDeleted) {
             return `Removed ${formatDistanceToNow(new Date(episode.lastRemovedAt * 1000), { addSuffix: true })}`;
         }
-        
+
         // Find the latest significant event
         const events = [
             { type: 'Watched', date: episode.lastWatchedAt },
@@ -463,7 +504,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
         if (events.length > 0 && events[0].date) {
             return `${events[0].type} ${formatDistanceToNow(new Date(events[0].date * 1000), { addSuffix: true })}`;
         }
-        
+
         return '';
     };
 
@@ -593,8 +634,9 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                         color: tag.color || 'inherit',
                                         borderColor: `${tag.color}40`,
                                     }}
-                                    className="font-medium"
+                                    className="font-medium flex items-center gap-1"
                                 >
+                                    {isLabcastARRTag(tag) && <Share2 className="h-3 w-3" />}
                                     {tag.name}
                                 </Badge>
                             ))}
@@ -714,8 +756,8 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                 <TagIcon className="h-4 w-4" />
                             </Button>
 
-                            <CommandDialog 
-                                open={isTagPopoverOpen} 
+                            <CommandDialog
+                                open={isTagPopoverOpen}
                                 onOpenChange={setIsTagPopoverOpen}
                                 title="Manage Tags"
                                 description="Search or create tags for this episode"
@@ -787,7 +829,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                         <ThumbsDown className={`mr-2 h-4 w-4 ${likeStatus === 'dislike' ? 'fill-destructive text-destructive' : ''}`} />
                                         {likeStatus === 'dislike' ? "Remove don't like" : "Don't like"}
                                     </DropdownMenuItem>
-                                    
+
                                     {showReorderOptions && (
                                         <>
                                             <DropdownMenuSeparator />
@@ -805,9 +847,9 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                             </DropdownMenuItem>
                                         </>
                                     )}
-                                    
+
                                     <DropdownMenuSeparator />
-                                    
+
                                     <DropdownMenuItem onSelect={() => {
                                         handleToggleWatched();
                                     }}>
@@ -834,7 +876,7 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                         <Gem className={`mr-2 h-4 w-4 ${episode.priority === 'high' ? 'fill-primary text-primary' : ''}`} />
                                         {episode.priority === 'high' ? 'Remove priority' : 'Mark as priority'}
                                     </DropdownMenuItem>
-                                    
+
                                     <DropdownMenuItem onSelect={() => {
                                         setNoteText(episode.notes || '');
                                         setIsNoteModalOpen(true);
@@ -896,8 +938,21 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                             </DropdownMenuItem>
                                         )
                                     )}
+
+                                    {hasLabcastARRIntegration && !episode.isDeleted && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Send to LabcastARR</div>
+                                            {activeIntegrations.map(integration => (
+                                                <DropdownMenuItem key={integration.id} onSelect={() => handleSendToLabcastARR(integration.id)}>
+                                                    <Share2 className="mr-2 h-4 w-4" />
+                                                    {integration.name}
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </>
+                                    )}
+
                                     <DropdownMenuSeparator />
-                                    
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -992,14 +1047,14 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setIsNoteModalOpen(false)}
                             disabled={isSavingNote}
                         >
                             Cancel
                         </Button>
-                        <Button 
+                        <Button
                             onClick={handleSaveNote}
                             disabled={isSavingNote}
                         >

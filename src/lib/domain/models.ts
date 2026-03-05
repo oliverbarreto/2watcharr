@@ -195,3 +195,40 @@ export interface ChannelFilters {
     type?: MediaType;
     userId?: string;
 }
+
+export interface LabcastARRIntegration {
+    id: string;
+    userId: string;
+    enabled: boolean;
+    name: string;
+    apiUrl: string;
+    apiToken: string;
+    channelId: string;
+    autoTag: string;
+    audioQuality: string;
+    audioLanguage: string;
+    createdAt: number;
+    updatedAt: number;
+}
+
+export interface CreateLabcastARRIntegrationDto {
+    userId: string;
+    name: string;
+    apiUrl: string;
+    apiToken: string;
+    channelId: string;
+    autoTag?: string;
+    audioQuality?: string;
+    audioLanguage?: string;
+}
+
+export interface UpdateLabcastARRIntegrationDto {
+    enabled?: boolean;
+    name?: string;
+    apiUrl?: string;
+    apiToken?: string;
+    channelId?: string;
+    autoTag?: string;
+    audioQuality?: string;
+    audioLanguage?: string;
+}

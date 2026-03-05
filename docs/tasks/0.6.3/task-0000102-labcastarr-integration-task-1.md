@@ -1,0 +1,23 @@
+# LabcastARR Integration Tasks
+
+- [ ] Planning
+  - [/] Research codebase (settings, episodes, tags, api)
+  - [ ] Draft implementation plan
+  - [ ] Get user approval
+- [ ] Settings Page Updates
+  - [ ] Add "Integrations" tab
+  - [ ] Add LabcastARR settings form (toggle, url, token, channel, tag, audio settings)
+  - [ ] Add "Test connection" functionality
+- [ ] API Integration
+  - [ ] Implement LabcastARR API client (send episode, handle status)
+- [ ] Episode Details Updates
+  - [ ] Add "Send to LabcastARR" option
+  - [ ] Show LabcastARR status in episode details
+  - [ ] Handle API errors gracefully
+- [ ] Tags and Automation
+  - [ ] Add visual badge for the integration tag
+  - [ ] Automatically send episodes with the integration tag
+  - [ ] Add bulk "Send to LabcastARR" option in Tags tab
+- [ ] Verification
+  - [ ] Test all functionalities
+  - [ ] Create walkthrough

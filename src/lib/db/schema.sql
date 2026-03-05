@@ -121,3 +121,23 @@ CREATE INDEX IF NOT EXISTS idx_media_events_episode_id ON media_events(episode_i
 CREATE INDEX IF NOT EXISTS idx_media_events_type ON media_events(type);
 CREATE INDEX IF NOT EXISTS idx_media_events_created_at ON media_events(created_at);
 CREATE INDEX IF NOT EXISTS idx_channels_type ON channels(type);
+ 
+ -- LabcastARR Integrations
+ CREATE TABLE IF NOT EXISTS labcastarr_integrations (
+   id TEXT PRIMARY KEY,
+   user_id TEXT NOT NULL,
+   enabled BOOLEAN NOT NULL DEFAULT 0,
+   name TEXT NOT NULL,
+   api_url TEXT NOT NULL,
+   api_token TEXT NOT NULL,
+   channel_id TEXT NOT NULL,
+   auto_tag TEXT NOT NULL DEFAULT '2WatchARR',
+   audio_quality TEXT NOT NULL DEFAULT 'default',
+   audio_language TEXT NOT NULL DEFAULT 'default',
+   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+ );
+ 
+ CREATE INDEX IF NOT EXISTS idx_labcastarr_integrations_user_id ON labcastarr_integrations(user_id);
+ CREATE INDEX IF NOT EXISTS idx_labcastarr_integrations_enabled ON labcastarr_integrations(enabled);
