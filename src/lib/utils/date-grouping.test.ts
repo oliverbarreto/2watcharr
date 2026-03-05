@@ -104,14 +104,14 @@ describe('date-grouping utilities', () => {
   });
 
   describe('formatDateLabel', () => {
-    it('should return "today (...)" for today\'s date', () => {
+    it('should return "Today (...)" for today\'s date', () => {
       const now = Math.floor(fixedDate.getTime() / 1000);
-      expect(formatDateLabel(now)).toBe('today (Tuesday February 17, 2026)');
+      expect(formatDateLabel(now)).toBe('Today (Tuesday February 17, 2026)');
     });
 
-    it('should return "yesterday (...)" for yesterday\'s date', () => {
+    it('should return "Yesterday (...)" for yesterday\'s date', () => {
       const yesterday = Math.floor((fixedDate.getTime() - 24 * 60 * 60 * 1000) / 1000);
-      expect(formatDateLabel(yesterday)).toBe('yesterday (Monday February 16, 2026)');
+      expect(formatDateLabel(yesterday)).toBe('Yesterday (Monday February 16, 2026)');
     });
 
     it('should return day name and date for current week (Wednesday)', () => {
@@ -173,9 +173,9 @@ describe('date-grouping utilities', () => {
       const groups = groupEpisodesByDate(episodes, 'date_added');
       
       expect(groups).toHaveLength(3);
-      expect(groups[0].label).toBe('today (Tuesday February 17, 2026)');
+      expect(groups[0].label).toBe('Today (Tuesday February 17, 2026)');
       expect(groups[0].episodes).toHaveLength(2);
-      expect(groups[1].label).toBe('yesterday (Monday February 16, 2026)');
+      expect(groups[1].label).toBe('Yesterday (Monday February 16, 2026)');
       expect(groups[1].episodes).toHaveLength(1);
       expect(groups[2].episodes).toHaveLength(1);
     });
@@ -192,7 +192,7 @@ describe('date-grouping utilities', () => {
       const groups = groupEpisodesByDate(episodes, 'date_watched');
       
       expect(groups).toHaveLength(2);
-      expect(groups[0].label).toBe('today (Tuesday February 17, 2026)');
+      expect(groups[0].label).toBe('Today (Tuesday February 17, 2026)');
       expect(groups[0].episodes).toHaveLength(1);
       expect(groups[1].label).toBe('Not Yet Watched');
       expect(groups[1].episodes).toHaveLength(2);

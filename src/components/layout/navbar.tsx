@@ -65,18 +65,6 @@ const NavLinks = ({ className, onClick }: NavLinksProps) => {
                     Watch Next
                 </Button>
             </Link>
-            <Link href="/archived" onClick={onClick}>
-                <Button variant="ghost" className={getLinkClass("/archived")}>
-                    <Archive className="mr-2 h-4 w-4 sm:hidden" />
-                    Archive
-                </Button>
-            </Link>
-            <Link href="/stats" onClick={onClick}>
-                <Button variant="ghost" className={getLinkClass("/stats")}>
-                    <BarChart3 className="mr-2 h-4 w-4 sm:hidden" />
-                    Stats
-                </Button>
-            </Link>
         </>
     );
 };
@@ -182,20 +170,9 @@ export function Navbar() {
                             <Search className={cn("h-5 w-5", hasActiveFilters && "stroke-[2.5px]")} />
                         </Button>
                     )}
+                    
 
 
-                    <Link href="/settings">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                                "rounded-full h-9 w-9",
-                                pathname === '/settings' && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary/90"
-                            )}
-                        >
-                            <Settings className="h-5 w-5" />
-                        </Button>
-                    </Link>
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

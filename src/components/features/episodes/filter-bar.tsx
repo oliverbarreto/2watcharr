@@ -282,6 +282,22 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         });
     };
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const modifier = isMac ? e.metaKey : e.ctrlKey;
+            
+            if (modifier && e.key === 'Escape') {
+                e.preventDefault();
+                clearAllFilters();
+                window.dispatchEvent(new CustomEvent('close-filters'));
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [clearAllFilters]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const hasAnyFilter = search !== '' || 
                          watchedFilter !== 'all' || 
                          selectedTagIds.length > 0 || 

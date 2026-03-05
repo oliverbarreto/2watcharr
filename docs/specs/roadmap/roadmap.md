@@ -46,6 +46,13 @@ Things & Ideas to investigate:
 
 ## Implemented Features
  
+20260304 - Release 0.6.2:
+- [x] Streamlined Navbar by removing redundant links (Archive, Stats, Settings).
+- [x] Consolidated "Today & Yesterday" watchlist sections.
+- [x] Added `CMD + ESC` shortcut for clearing filters/closing search.
+- [x] Fixed fresh-start database creation bug.
+- [x] Improved "Watch Next" page layout (toggle button placement).
+
 20260225 - Release 0.6.1:
 - [x] Improved "Archive Watched Episodes" to target only watched episodes with priority.
 - [x] Fixed unarchive error on the Archived episodes page.
