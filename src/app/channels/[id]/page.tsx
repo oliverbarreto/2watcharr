@@ -7,16 +7,17 @@ import { EpisodeList } from '@/components/features/episodes';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-    Trash2, 
-    RefreshCw, 
-    Youtube, 
-    Mic, 
-    MoreVertical, 
-    CheckCircle2, 
+import {
+    Trash2,
+    RefreshCw,
+    Youtube,
+    Mic,
+    MoreVertical,
+    CheckCircle2,
     Circle,
     ArrowLeft,
-    ExternalLink
+    ExternalLink,
+    Star
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -48,6 +49,7 @@ interface Channel {
     description: string | null;
     thumbnailUrl: string | null;
     url: string;
+    favorite: boolean;
     episodeCount: number;
     tags?: Tag[];
 }
@@ -136,18 +138,43 @@ function ChannelDetailsContent({ id }: { id: string }) {
         }
     };
 
+    const handleToggleFavorite = async () => {
+        if (!channel) return;
+        const newFavorite = !channel.favorite;
+
+        // Optimistic update
+        setChannel(prev => prev ? { ...prev, favorite: newFavorite } : null);
+
+        try {
+            const response = await fetch(`/api/channels/${channel.id}/favorite`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ favorite: newFavorite })
+            });
+
+            if (!response.ok) throw new Error('Failed to toggle favorite');
+
+            toast.success(newFavorite ? 'Added to favorites' : 'Removed from favorites');
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            toast.error('Failed to update favorite status');
+            // Rollback optimistic update
+            setChannel(prev => prev ? { ...prev, favorite: !newFavorite } : null);
+        }
+    };
+
     const toggleTag = (tagId: string) => {
         const params = new URLSearchParams(searchParams.toString());
         const newSelected = selectedTagIds.includes(tagId)
             ? selectedTagIds.filter(id => id !== tagId)
             : [...selectedTagIds, tagId];
-        
+
         if (newSelected.length > 0) {
             params.set('tags', newSelected.join(','));
         } else {
             params.delete('tags');
         }
-        
+
         router.push(`/channels/${id}?${params.toString()}`);
     };
 
@@ -184,9 +211,9 @@ function ChannelDetailsContent({ id }: { id: string }) {
         <Layout>
             <div className="space-y-8">
                 {/* Back Button */}
-                <Button 
-                    variant="ghost" 
-                    size="sm" 
+                <Button
+                    variant="ghost"
+                    size="sm"
                     className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
                     onClick={() => router.push('/channels')}
                 >
@@ -210,7 +237,7 @@ function ChannelDetailsContent({ id }: { id: string }) {
                             <div className="w-full h-full bg-accent/20" />
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-                        
+
                         {/* Profile Info Overlay */}
                         <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 flex flex-col md:flex-row items-end md:items-center gap-6">
                             {/* Large Thumbnail */}
@@ -234,9 +261,9 @@ function ChannelDetailsContent({ id }: { id: string }) {
                             <div className="flex-1 space-y-2 text-left">
                                 <div className="flex items-center gap-3">
                                     <h1 className="text-3xl md:text-4xl font-black tracking-tight">{channel.name}</h1>
-                                    <a 
-                                        href={channel.url} 
-                                        target="_blank" 
+                                    <a
+                                        href={channel.url}
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="p-2 bg-primary/10 hover:bg-primary/20 rounded-full transition-colors text-primary"
                                         title="Open on Platform"
@@ -244,7 +271,7 @@ function ChannelDetailsContent({ id }: { id: string }) {
                                         <ExternalLink className="h-5 w-5" />
                                     </a>
                                 </div>
-                                
+
                                 <div className="flex flex-wrap items-center gap-4 text-sm font-medium">
                                     <div className="flex items-center gap-2 px-3 py-1 bg-background/50 backdrop-blur-md rounded-full border">
                                         {channel.type === 'podcast' ? (
@@ -263,8 +290,18 @@ function ChannelDetailsContent({ id }: { id: string }) {
                                 </div>
                             </div>
 
-                            {/* Actions Dropdown */}
+                            {/* Favorite Button & Actions Dropdown */}
                             <div className="flex items-center gap-2">
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    onClick={handleToggleFavorite}
+                                    className={`h-12 w-12 rounded-full shadow-lg transition-colors ${channel.favorite ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`}
+                                    title={channel.favorite ? "Unfavorite" : "Favorite"}
+                                >
+                                    <Star className={`h-6 w-6 ${channel.favorite ? 'fill-current' : ''}`} />
+                                </Button>
+
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg">
@@ -284,7 +321,7 @@ function ChannelDetailsContent({ id }: { id: string }) {
                                             <Circle className="mr-2 h-4 w-4 text-muted-foreground" />
                                             Mark all as unwatched
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem 
+                                        <DropdownMenuItem
                                             onClick={() => setShowDeleteDialog(true)}
                                             className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
                                         >
@@ -338,10 +375,10 @@ function ChannelDetailsContent({ id }: { id: string }) {
                     <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-bold tracking-tight">Episodes</h2>
                     </div>
-                    <EpisodeList 
+                    <EpisodeList
                         key={`${refreshEpisodesKey}-${id}`}
-                        filters={{ channelId: id, tagIds: selectedTagIds }} 
-                        viewMode="grid" 
+                        filters={{ channelId: id, tagIds: selectedTagIds }}
+                        viewMode="grid"
                     />
                 </div>
             </div>

@@ -1,0 +1,26 @@
+- [x] Research existing channel implementation
+- [x] Design Implementation Plan
+- [x] Backend Implementation
+    - [x] Update Database Schema (add `favorite` to `channels`)
+    - [x] Add Database Migration
+    - [x] Update Domain Models ([Channel](file:///Users/oliver/local/dev/2watcharr/src/components/features/channels/channel-list-row.tsx#16-28), [ChannelFilters](file:///Users/oliver/local/dev/2watcharr/src/lib/domain/models.ts#231-239))
+    - [x] Update [ChannelRepository](file:///Users/oliver/local/dev/2watcharr/src/lib/repositories/channel.repository.ts#4-229) (filtering & update logic)
+    - [x] Create API Endpoint (`POST /api/channels/[id]/favorite`)
+    - [x] Fix API Endpoint (`GET /api/channels`) to support `favorite` and `types`
+- [x] Frontend Implementation
+    - [x] Update [ChannelListRow](file:///Users/oliver/local/dev/2watcharr/src/components/features/channels/channel-list-row.tsx#38-209) (star icon & toggle logic)
+    - [x] Update [ChannelFilterBar](file:///Users/oliver/local/dev/2watcharr/src/components/features/channels/channel-filter-bar.tsx#32-370) (favorite filter, independent toggles)
+    - [x] Update Channels Page (state management & filtering)
+    - [x] Update Channel Detail Page (star icon & toggle logic)
+- [x] Verification
+    - [x] Run automated tests
+    - [x] Run lint and typecheck
+    - [x] Manual verification plan
+- [ ] Fix ChannelFilterBar Behavior
+    - [ ] Change media type filters to mutually exclusive (radio behavior)
+    - [ ] Set "All" as default
+    - [ ] Ensure Favorite and Tags stack correctly
+    - [ ] Clean up selection state UI
+- [x] Final Polish
+    - [x] Cleanup lint warnings
+    - [x] Update walkthrough.md

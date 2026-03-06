@@ -6,6 +6,7 @@ import { addTagLastUsedAt } from './migrations/add_tag_last_used_at';
 import { addArchiveFields } from './migrations/add_archive_fields';
 import { addLabcastarrIntegrations } from './migrations/add_labcastarr_integrations';
 import { addNotifications } from './migrations/add_notifications';
+import { addChannelFavorite } from './migrations/add_channel_favorite';
 
 
 
@@ -718,6 +719,9 @@ export async function runMigrations(db: Database): Promise<void> {
 
   // Run notifications migration
   await addNotifications(db);
+
+  // Run channel favorite migration
+  await addChannelFavorite(db);
 }
 
 

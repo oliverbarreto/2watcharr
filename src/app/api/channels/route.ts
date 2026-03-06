@@ -18,16 +18,18 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url);
         const search = searchParams.get('search') || undefined;
-        const type = (searchParams.get('type') as 'video' | 'podcast') || undefined;
+        const types = (searchParams.get('types')?.split(',') as ('video' | 'podcast')[]) || undefined;
         const tagIds = searchParams.get('tagIds')?.split(',') || undefined;
+        const favorite = searchParams.get('favorite') === 'true' || undefined;
 
         const db = await getDatabase();
         const channelRepo = new ChannelRepository(db);
 
         const channels = await channelRepo.getChannelsWithEpisodeCount({
             search,
-            type,
+            types,
             tagIds,
+            favorite,
             userId,
         });
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-import { Search, Youtube, Mic, Tag as TagIcon, X, XCircle } from 'lucide-react';
+import { Search, Youtube, Mic, Tag as TagIcon, X, XCircle, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,20 +17,30 @@ import { Tag } from '@/lib/domain/models';
 interface ChannelFilterBarProps {
     onFilterChange?: (filters: {
         search?: string;
-        type?: 'video' | 'podcast';
+        types?: ('video' | 'podcast')[];
         tagIds?: string[];
+        favorite?: boolean;
     }) => void;
     initialFilters?: {
         search?: string;
-        type?: 'all' | 'video' | 'podcast';
+        types?: ('video' | 'podcast')[];
         tagIds?: string[];
+        favorite?: boolean;
     };
 }
 
 export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilterBarProps) {
     const [search, setSearch] = useState(initialFilters?.search || '');
-    const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'podcast'>(initialFilters?.type || 'all');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'podcast'>(() => {
+        if (!initialFilters?.types || (initialFilters.types.includes('video') && initialFilters.types.includes('podcast'))) {
+            return 'all';
+        }
+        if (initialFilters.types.includes('video')) return 'video';
+        if (initialFilters.types.includes('podcast')) return 'podcast';
+        return 'all';
+    });
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilters?.tagIds || []);
+    const [favoriteFilter, setFavoriteFilter] = useState<boolean>(initialFilters?.favorite || false);
     const [tags, setTags] = useState<Tag[]>([]);
     const [showTags, setShowTags] = useState(initialFilters?.tagIds && initialFilters.tagIds.length > 0);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -48,9 +58,18 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setSearch(initialFilters.search || '');
 
-            setTypeFilter(initialFilters.type || 'all');
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setTypeFilter(() => {
+                if (!initialFilters.types || (initialFilters.types.includes('video') && initialFilters.types.includes('podcast'))) {
+                    return 'all';
+                }
+                if (initialFilters.types.includes('video')) return 'video';
+                if (initialFilters.types.includes('podcast')) return 'podcast';
+                return 'all';
+            });
 
             setSelectedTagIds(initialFilters.tagIds || []);
+            setFavoriteFilter(initialFilters.favorite || false);
         }
     }, [initialFilters]);
 
@@ -69,21 +88,28 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
         fetchTags();
     }, []);
 
+    const getTypesForApi = (type: 'all' | 'video' | 'podcast') => {
+        if (type === 'all') return undefined; // Show both
+        return [type] as ('video' | 'podcast')[];
+    };
+
     const handleSearchChange = (value: string) => {
         setSearch(value);
         onFilterChange?.({
             search: value || undefined,
-            type: typeFilter === 'all' ? undefined : typeFilter,
+            types: getTypesForApi(typeFilter),
             tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
+            favorite: favoriteFilter || undefined,
         });
     };
 
-    const handleTypeFilterChange = (value: 'all' | 'video' | 'podcast') => {
-        setTypeFilter(value);
+    const handleTypeChange = (newType: 'all' | 'video' | 'podcast') => {
+        setTypeFilter(newType);
         onFilterChange?.({
             search: search || undefined,
-            type: value === 'all' ? undefined : value,
+            types: getTypesForApi(newType),
             tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
+            favorite: favoriteFilter || undefined,
         });
     };
 
@@ -95,8 +121,9 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
         setSelectedTagIds(newSelected);
         onFilterChange?.({
             search: search || undefined,
-            type: typeFilter === 'all' ? undefined : typeFilter,
+            types: getTypesForApi(typeFilter),
             tagIds: newSelected.length > 0 ? newSelected : undefined,
+            favorite: favoriteFilter || undefined,
         });
     };
 
@@ -104,8 +131,9 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
         setSelectedTagIds([]);
         onFilterChange?.({
             search: search || undefined,
-            type: typeFilter === 'all' ? undefined : typeFilter,
+            types: getTypesForApi(typeFilter),
             tagIds: undefined,
+            favorite: favoriteFilter || undefined,
         });
     };
 
@@ -113,11 +141,13 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
         setSearch('');
         setTypeFilter('all');
         setSelectedTagIds([]);
+        setFavoriteFilter(false);
 
         onFilterChange?.({
             search: undefined,
-            type: undefined,
+            types: undefined,
             tagIds: undefined,
+            favorite: undefined,
         });
     }, [onFilterChange]);
 
@@ -141,7 +171,8 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
 
     const hasAnyFilter = search !== '' ||
         typeFilter !== 'all' ||
-        selectedTagIds.length > 0;
+        selectedTagIds.length > 0 ||
+        favoriteFilter;
 
     return (
         <div className="flex flex-col">
@@ -172,7 +203,7 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                         <Button
                             variant={typeFilter === 'all' ? 'default' : 'outline'}
                             size="sm"
-                            onClick={() => handleTypeFilterChange('all')}
+                            onClick={() => handleTypeChange('all')}
                             className="h-10 px-4"
                         >
                             All
@@ -184,7 +215,7 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                                     <Button
                                         variant={typeFilter === 'video' ? 'default' : 'outline'}
                                         size="icon"
-                                        onClick={() => handleTypeFilterChange('video')}
+                                        onClick={() => handleTypeChange('video')}
                                         className="h-10 w-10 flex-shrink-0"
                                     >
                                         <Youtube className={`h-4 w-4 ${typeFilter === 'video' ? 'text-white' : 'text-red-600'}`} />
@@ -198,13 +229,38 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                                     <Button
                                         variant={typeFilter === 'podcast' ? 'default' : 'outline'}
                                         size="icon"
-                                        onClick={() => handleTypeFilterChange('podcast')}
+                                        onClick={() => handleTypeChange('podcast')}
                                         className="h-10 w-10 flex-shrink-0"
                                     >
                                         <Mic className={`h-4 w-4 ${typeFilter === 'podcast' ? 'text-white' : 'text-purple-600'}`} />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Podcasts</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={favoriteFilter ? 'default' : 'outline'}
+                                        size="icon"
+                                        onClick={() => {
+                                            const newVal = !favoriteFilter;
+                                            setFavoriteFilter(newVal);
+                                            onFilterChange?.({
+                                                search: search || undefined,
+                                                types: getTypesForApi(typeFilter),
+                                                tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
+                                                favorite: newVal || undefined,
+                                            });
+                                        }}
+                                        className="h-10 w-10 flex-shrink-0"
+                                    >
+                                        <Star className={`h-4 w-4 ${favoriteFilter ? 'text-yellow-500 fill-current' : 'text-yellow-500'}`} />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Favorite Channels</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
 
@@ -232,59 +288,63 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                             </Tooltip>
                         </TooltipProvider>
 
-                        {hasAnyFilter && (
+                        {
+                            hasAnyFilter && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={clearAllFilters}
+                                    className="h-10 px-3 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 ml-2"
+                                >
+                                    <X className="h-4 w-4" />
+                                    Clear All
+                                </Button>
+                            )
+                        }
+                    </div >
+                </div >
+            </div >
+
+            {/* Tags list - Dedicated Row */}
+            {
+                (showTags || selectedTagIds.length > 0) && tags.length > 0 && (
+                    <div className="w-full flex items-center gap-2 py-2 border-t animate-in fade-in slide-in-from-top-1 duration-200">
+                        <div className="flex flex-wrap gap-2 flex-1">
+                            {tags.map((tag) => {
+                                const isSelected = selectedTagIds.includes(tag.id);
+                                return (
+                                    <Badge
+                                        key={tag.id}
+                                        variant={isSelected ? "default" : "outline"}
+                                        className={`cursor-pointer transition-all hover:scale-105 whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium`}
+                                        style={{
+                                            backgroundColor: isSelected ? tag.color || undefined : `${tag.color}15`,
+                                            color: isSelected ? '#fff' : tag.color || 'inherit',
+                                            borderColor: isSelected ? tag.color || undefined : `${tag.color}40`,
+                                            boxShadow: isSelected ? `0 2px 8px ${tag.color}40` : 'none',
+                                        }}
+                                        onClick={() => toggleTag(tag.id)}
+                                    >
+                                        {tag.name}
+                                    </Badge>
+                                );
+                            })}
+                        </div>
+                        {selectedTagIds.length > 0 && (
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={clearAllFilters}
-                                className="h-10 px-3 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 ml-2"
+                                onClick={clearTags}
+                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 flex items-center gap-1.5"
+                                title="Clear tag filters"
                             >
-                                <X className="h-4 w-4" />
-                                Clear All
+                                <X className="h-3 w-3" />
+                                Clear
                             </Button>
                         )}
                     </div>
-                </div>
-            </div>
-
-            {/* Tags list - Dedicated Row */}
-            {(showTags || selectedTagIds.length > 0) && tags.length > 0 && (
-                <div className="w-full flex items-center gap-2 py-2 border-t animate-in fade-in slide-in-from-top-1 duration-200">
-                    <div className="flex flex-wrap gap-2 flex-1">
-                        {tags.map((tag) => {
-                            const isSelected = selectedTagIds.includes(tag.id);
-                            return (
-                                <Badge
-                                    key={tag.id}
-                                    variant={isSelected ? "default" : "outline"}
-                                    className={`cursor-pointer transition-all hover:scale-105 whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium`}
-                                    style={{
-                                        backgroundColor: isSelected ? tag.color || undefined : `${tag.color}15`,
-                                        color: isSelected ? '#fff' : tag.color || 'inherit',
-                                        borderColor: isSelected ? tag.color || undefined : `${tag.color}40`,
-                                        boxShadow: isSelected ? `0 2px 8px ${tag.color}40` : 'none',
-                                    }}
-                                    onClick={() => toggleTag(tag.id)}
-                                >
-                                    {tag.name}
-                                </Badge>
-                            );
-                        })}
-                    </div>
-                    {selectedTagIds.length > 0 && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={clearTags}
-                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 flex items-center gap-1.5"
-                            title="Clear tag filters"
-                        >
-                            <X className="h-3 w-3" />
-                            Clear
-                        </Button>
-                    )}
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

@@ -1,5 +1,5 @@
 import { Database } from 'sqlite';
-import { Channel, CreateChannelDto, Tag, ChannelFilters, MediaType } from '../domain/models';
+import { Channel, CreateChannelDto, UpdateChannelDto, Tag, ChannelFilters, MediaType } from '../domain/models';
 
 export class ChannelRepository {
     constructor(private db: Database) { }
@@ -52,13 +52,17 @@ export class ChannelRepository {
     /**
      * Update channel
      */
-    async update(id: string, dto: Partial<CreateChannelDto>): Promise<Channel> {
+    async update(id: string, dto: UpdateChannelDto): Promise<Channel> {
         const updates: string[] = [];
         const params: (string | number | null)[] = [];
 
         if (dto.name !== undefined) {
             updates.push('name = ?');
             params.push(dto.name);
+        }
+        if (dto.favorite !== undefined) {
+            updates.push('favorite = ?');
+            params.push(dto.favorite ? 1 : 0);
         }
         if (dto.description !== undefined) {
             updates.push('description = ?');
@@ -121,9 +125,15 @@ export class ChannelRepository {
             params.push(searchTerm, searchTerm);
         }
 
-        if (filters?.type) {
-            conditions.push('c.type = ?');
-            params.push(filters.type);
+        if (filters?.types && filters.types.length > 0) {
+            const placeholders = filters.types.map(() => '?').join(',');
+            conditions.push(`c.type IN (${placeholders})`);
+            params.push(...filters.types);
+        }
+
+        if (filters?.favorite !== undefined) {
+            conditions.push('c.favorite = ?');
+            params.push(filters.favorite ? 1 : 0);
         }
 
         if (filters?.tagIds && filters.tagIds.length > 0) {
@@ -209,6 +219,7 @@ export class ChannelRepository {
             description: row.description as string | null,
             thumbnailUrl: (row.thumbnail_url || row.thumbnailUrl) as string | null,
             url: (row.url || row.channel_url) as string,
+            favorite: Boolean(row.favorite),
             customOrder: row.custom_order as number | null,
             createdAt: row.created_at as number,
             updatedAt: row.updated_at as number,

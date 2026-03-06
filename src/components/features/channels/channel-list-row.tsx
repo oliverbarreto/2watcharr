@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash2, RefreshCw, Youtube, Mic, GripVertical } from 'lucide-react';
+import { Trash2, RefreshCw, Youtube, Mic, GripVertical, Star } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -20,6 +20,7 @@ interface Channel {
     description: string | null;
     thumbnailUrl: string | null;
     url: string;
+    favorite: boolean;
     episodeCount: number;
     tags?: Tag[];
     customOrder: number | null;
@@ -30,10 +31,11 @@ interface ChannelListRowProps {
     isSyncing: boolean;
     onDelete: (channel: Channel) => void;
     onSync: (channelId: string, channelUrl: string) => void;
+    onToggleFavorite: (channelId: string, favorite: boolean) => void;
     isDraggable?: boolean;
 }
 
-export function ChannelListRow({ channel, isSyncing, onDelete, onSync, isDraggable = true }: ChannelListRowProps) {
+export function ChannelListRow({ channel, isSyncing, onDelete, onSync, onToggleFavorite, isDraggable = true }: ChannelListRowProps) {
     const {
         attributes,
         listeners,
@@ -41,7 +43,7 @@ export function ChannelListRow({ channel, isSyncing, onDelete, onSync, isDraggab
         transform,
         transition,
         isDragging,
-    } = useSortable({ 
+    } = useSortable({
         id: channel.id,
         disabled: !isDraggable
     });
@@ -146,7 +148,7 @@ export function ChannelListRow({ channel, isSyncing, onDelete, onSync, isDraggab
                                 </div>
                             )}
                         </div>
-                        
+
                         {/* Description Column (Visible on all, but split on lg) */}
                         {channel.description && channel.description !== "No description available. Sync metadata to refresh." && (
                             <div className="flex-1 min-w-0">
@@ -160,6 +162,19 @@ export function ChannelListRow({ channel, isSyncing, onDelete, onSync, isDraggab
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 pr-1">
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className={`h-9 w-9 ${channel.favorite ? 'text-yellow-500 hover:text-yellow-600' : 'text-muted-foreground hover:text-yellow-500'} hover:bg-accent/50`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFavorite(channel.id, !channel.favorite);
+                        }}
+                        title={channel.favorite ? "Unfavorite" : "Favorite"}
+                    >
+                        <Star className={`h-4 w-4 ${channel.favorite ? 'fill-current' : ''}`} />
+                    </Button>
+
                     <Button
                         size="icon"
                         variant="ghost"

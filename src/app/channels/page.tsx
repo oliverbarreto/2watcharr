@@ -6,7 +6,7 @@ import { Layout } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trash2, RefreshCw, Youtube, Mic, ChevronUp, ChevronDown, List, LayoutGrid } from 'lucide-react';
+import { Trash2, RefreshCw, Youtube, Mic, ChevronUp, ChevronDown, List, LayoutGrid, Star } from 'lucide-react';
 import { ChannelFilterBar } from '@/components/features/channels/channel-filter-bar';
 import { ChannelListRow } from '@/components/features/channels/channel-list-row';
 import { toast } from 'sonner';
@@ -52,6 +52,7 @@ interface Channel {
     description: string | null;
     thumbnailUrl: string | null;
     url: string;
+    favorite: boolean;
     episodeCount: number;
     tags?: Tag[];
     customOrder: number | null;
@@ -59,8 +60,9 @@ interface Channel {
 
 interface Filters {
     search?: string;
-    type?: 'video' | 'podcast';
+    types?: ('video' | 'podcast')[];
     tagIds?: string[];
+    favorite?: boolean;
 }
 
 interface ChannelCardProps {
@@ -69,9 +71,10 @@ interface ChannelCardProps {
     isSyncing: boolean;
     onDelete: (channel: Channel) => void;
     onSync: (channelId: string, channelUrl: string) => void;
+    onToggleFavorite: (channelId: string, favorite: boolean) => void;
 }
 
-function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync }: ChannelCardProps) {
+function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync, onToggleFavorite }: ChannelCardProps) {
     const {
         attributes,
         listeners,
@@ -94,7 +97,7 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
             ref={setNodeRef}
             style={style}
             className={`group relative hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border-muted-foreground/10 aspect-square min-h-[280px] ${highlightId === channel.id ? 'ring-2 ring-primary ring-offset-2' : ''} ${isDragging ? 'opacity-50' : ''}`}
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent) => {
                 // If the click was on the channel link or a button, don't navigate
                 if ((e.target as HTMLElement).closest('a') || (e.target as HTMLElement).closest('button')) {
                     return;
@@ -104,25 +107,27 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
         >
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
-                {channel.thumbnailUrl ? (
-                    <Image
-                        src={channel.thumbnailUrl}
-                        alt={channel.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        unoptimized
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-4xl font-bold bg-accent/20">
-                        {channel.name[0]}
-                    </div>
-                )}
+                {
+                    channel.thumbnailUrl ? (
+                        <Image
+                            src={channel.thumbnailUrl}
+                            alt={channel.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            unoptimized
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-4xl font-bold bg-accent/20">
+                            {channel.name[0]}
+                        </div>
+                    )
+                }
                 {/* Subtle vignette */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
-            </div>
+            </div >
 
             {/* Top Buttons (Delete & Sync) */}
-            <div className="absolute top-2 right-2 left-2 z-30 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+            < div className="absolute top-2 right-2 left-2 z-30 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity" >
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -144,6 +149,21 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
                     title="Delete Source"
                 >
                     <Trash2 className="h-4 w-4" />
+                </button>
+            </div >
+
+            {/* Favorite Star (Top Left) */}
+            < div className={`absolute top-2 left-2 z-30 transition-opacity ${channel.favorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`
+            }>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite(channel.id, !channel.favorite);
+                    }}
+                    className={`p-2 bg-black/60 rounded-full backdrop-blur-md transition-colors border border-white/10 shadow-lg ${channel.favorite ? 'text-yellow-500 hover:text-yellow-400' : 'text-white/90 hover:text-yellow-500'}`}
+                    title={channel.favorite ? "Unfavorite" : "Favorite"}
+                >
+                    <Star className={`h-4 w-4 ${channel.favorite ? 'fill-current' : ''}`} />
                 </button>
             </div>
 
@@ -224,7 +244,7 @@ function SortableChannelCard({ channel, highlightId, isSyncing, onDelete, onSync
                 {...listeners}
                 className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600 opacity-0 group-hover:opacity-100 transition-all duration-300 z-40 cursor-grab active:cursor-grabbing"
             />
-        </Card>
+        </Card >
     );
 }
 
@@ -253,8 +273,9 @@ function ChannelsPageContent() {
     // Derive filters from searchParams
     const filters: Filters = {
         search: searchParams.get('search') || undefined,
-        type: (searchParams.get('type') as Filters['type']) || undefined,
+        types: (searchParams.get('types')?.split(',').filter(Boolean) as ('video' | 'podcast')[]) || undefined,
         tagIds: searchParams.get('tagIds')?.split(',').filter(Boolean) || undefined,
+        favorite: searchParams.get('favorite') === 'true' || undefined,
     };
 
     const sensors = useSensors(
@@ -272,8 +293,9 @@ function ChannelsPageContent() {
         try {
             const params = new URLSearchParams();
             if (filters.search) params.set('search', filters.search);
-            if (filters.type) params.set('type', filters.type);
+            if (filters.types?.length) params.set('types', filters.types.join(','));
             if (filters.tagIds) params.set('tagIds', filters.tagIds.join(','));
+            if (filters.favorite) params.set('favorite', 'true');
 
             const response = await fetch(`/api/channels?${params.toString()}`);
             if (!response.ok) throw new Error('Failed to fetch channels');
@@ -286,17 +308,17 @@ function ChannelsPageContent() {
         } finally {
             setLoading(false);
         }
-    }, [filters.search, filters.type, filters.tagIds?.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [filters.search, filters.types?.join(','), filters.tagIds?.join(','), filters.favorite]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         fetchChannels();
 
         const handleToggleFilters = () => setShowFilters((prev) => !prev);
         const handleCloseFilters = () => setShowFilters(false);
-        
+
         window.addEventListener('toggle-filters', handleToggleFilters);
         window.addEventListener('close-filters', handleCloseFilters);
-        
+
         return () => {
             window.removeEventListener('toggle-filters', handleToggleFilters);
             window.removeEventListener('close-filters', handleCloseFilters);
@@ -305,10 +327,11 @@ function ChannelsPageContent() {
 
     const handleFilterChange = (newFilters: Filters) => {
         const params = new URLSearchParams(searchParams.toString());
-        
+
         if (newFilters.search) params.set('search', newFilters.search); else params.delete('search');
-        if (newFilters.type) params.set('type', newFilters.type); else params.delete('type');
+        if (newFilters.types?.length) params.set('types', newFilters.types.join(',')); else params.delete('types');
         if (newFilters.tagIds?.length) params.set('tagIds', newFilters.tagIds.join(',')); else params.delete('tagIds');
+        if (newFilters.favorite) params.set('favorite', 'true'); else params.delete('favorite');
 
         router.push(`/channels?${params.toString()}`);
     };
@@ -334,6 +357,28 @@ function ChannelsPageContent() {
             toast.error(error instanceof Error ? error.message : 'Failed to sync channel metadata');
         } finally {
             setSyncingChannelId(null);
+        }
+    };
+
+    const handleToggleFavorite = async (channelId: string, favorite: boolean) => {
+        // Optimistic update
+        setChannels(prev => prev.map(c => c.id === channelId ? { ...c, favorite } : c));
+
+        try {
+            const response = await fetch(`/api/channels/${channelId}/favorite`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ favorite })
+            });
+
+            if (!response.ok) throw new Error('Failed to toggle favorite');
+
+            toast.success(favorite ? 'Added to favorites' : 'Removed from favorites');
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            toast.error('Failed to update favorite status');
+            // Rollback optimistic update
+            setChannels(prev => prev.map(c => c.id === channelId ? { ...c, favorite: !favorite } : c));
         }
     };
 
@@ -390,14 +435,14 @@ function ChannelsPageContent() {
                         <h1 className="text-3xl font-bold">Channels & Podcasts</h1>
                         <Skeleton className="h-10 w-32" />
                     </div>
-                    <div className={viewMode === 'grid' 
+                    <div className={viewMode === 'grid'
                         ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
                         : "flex flex-col gap-2"
                     }>
                         {[...Array(8)].map((_, i) => (
                             <div key={i} className={viewMode === 'grid' ? "" : "flex gap-3 py-2 border-b last:border-0"}>
-                                <Card className={viewMode === 'grid' 
-                                    ? "aspect-square min-h-[280px] relative overflow-hidden" 
+                                <Card className={viewMode === 'grid'
+                                    ? "aspect-square min-h-[280px] relative overflow-hidden"
                                     : "h-20 w-full flex items-center gap-4 px-4 border-none bg-transparent"
                                 }>
                                     {viewMode === 'grid' ? (
@@ -460,11 +505,11 @@ function ChannelsPageContent() {
                     <div className="fixed inset-x-0 top-16 z-30 animate-in slide-in-from-top duration-300">
                         <div className="container mx-auto px-4">
                             <div className="bg-background/60 backdrop-blur-md border rounded-b-xl shadow-2xl pt-4 px-4 pb-0 relative">
-                                <ChannelFilterBar 
+                                <ChannelFilterBar
                                     onFilterChange={(newFilters) => {
                                         handleFilterChange(newFilters);
-                                    }} 
-                                    initialFilters={filters} 
+                                    }}
+                                    initialFilters={filters}
                                 />
                             </div>
                         </div>
@@ -488,7 +533,7 @@ function ChannelsPageContent() {
                             items={channels.map(c => c.id)}
                             strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
                         >
-                            <div className={viewMode === 'grid' 
+                            <div className={viewMode === 'grid'
                                 ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                                 : "flex flex-col border rounded-md overflow-hidden bg-card/50"
                             }>
@@ -501,6 +546,7 @@ function ChannelsPageContent() {
                                             isSyncing={syncingChannelId === channel.id}
                                             onDelete={setChannelToDelete}
                                             onSync={handleSyncChannel}
+                                            onToggleFavorite={handleToggleFavorite}
                                         />
                                     ) : (
                                         <ChannelListRow
@@ -509,6 +555,7 @@ function ChannelsPageContent() {
                                             isSyncing={syncingChannelId === channel.id}
                                             onDelete={setChannelToDelete}
                                             onSync={handleSyncChannel}
+                                            onToggleFavorite={handleToggleFavorite}
                                         />
                                     )
                                 ))}

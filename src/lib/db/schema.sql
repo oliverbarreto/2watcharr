@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS channels (
   description TEXT,
   thumbnail_url TEXT,
   url TEXT NOT NULL,
+  favorite BOOLEAN NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );

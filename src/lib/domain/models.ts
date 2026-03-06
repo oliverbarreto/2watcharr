@@ -104,6 +104,7 @@ export interface Channel {
     description: string | null;
     thumbnailUrl: string | null;
     url: string;
+    favorite: boolean;
     customOrder: number | null;
     createdAt: number;
     updatedAt: number;
@@ -171,6 +172,15 @@ export interface CreateChannelDto {
     url: string;
 }
 
+export interface UpdateChannelDto {
+    name?: string;
+    description?: string;
+    thumbnailUrl?: string;
+    thumbnail_url?: string;
+    url?: string;
+    favorite?: boolean;
+}
+
 export interface CreateTagDto {
     name: string;
     color?: string;
@@ -222,7 +232,8 @@ export interface ChannelFilters {
     id?: string;
     search?: string;
     tagIds?: string[];
-    type?: MediaType;
+    types?: MediaType[];
+    favorite?: boolean;
     userId?: string;
 }
 
