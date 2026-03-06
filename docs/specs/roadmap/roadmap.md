@@ -45,7 +45,13 @@ Things & Ideas to investigate:
 
 
 ## Implemented Features
- 
+
+2026-03-06 - Release 0.6.4:
+- [x] Added ability to favorite channels with star icon.
+- [x] Implemented favorite filter for channels.
+- [x] Fixed mutually exclusive media type filters on channels page.
+- [x] Improved filter bar default state and interaction logic.
+
 20260304 - Release 0.6.2:
 - [x] Streamlined Navbar by removing redundant links (Archive, Stats, Settings).
 - [x] Consolidated "Today & Yesterday" watchlist sections.
