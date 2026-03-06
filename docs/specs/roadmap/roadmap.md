@@ -52,6 +52,12 @@ Things & Ideas to investigate:
 - [x] Fixed mutually exclusive media type filters on channels page.
 - [x] Improved filter bar default state and interaction logic.
 
+2026-03-06 - Release 0.6.3:
+- [x] Asynchronous Episode Addition with immediate modal dismissal and background processing.
+- [x] Notification bell in navbar for real-time status updates/toasts.
+- [x] LabcastARR Integration (manual and auto-tagging).
+- [x] Optimized metadata extraction to prevent hanging on large channels.
+
 20260304 - Release 0.6.2:
 - [x] Streamlined Navbar by removing redundant links (Archive, Stats, Settings).
 - [x] Consolidated "Today & Yesterday" watchlist sections.

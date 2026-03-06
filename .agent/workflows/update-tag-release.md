@@ -18,9 +18,10 @@ After finishing a feature, we want to ensure that all tests pass and no linting 
    - `npm test`
    - Note: run `npm run lint` if necessary after passing all tests if any changes were made due to correct code of failing tests
 
-2. **Documentation**: Update the following files with recent changes (bugfixes, features, etc.) taking into account the version bump {{1}}:
+2. **Documentation**: Update **BOTH** of the following files with recent changes (bugfixes, features, etc.) taking into account the version bump {{1}}:
    - `CHANGELOG.md`: Use [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
-   - `docs/specs/roadmap/roadmap.md`: Update implementation status.
+   - `docs/specs/roadmap/roadmap.md`: Update implementation status under "Implemented Features".
+   - **CRITICAL**: Do not proceed until both files accurately reflect the changes included in the release.
 
 // turbo
 3. **Commit**: Commit `develop` branch before moving to `main`.

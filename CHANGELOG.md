@@ -5,11 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [20260306 - Release 0.6.3:
-- [x] Asynchronous Episode Addition with immediate modal dismissal and background processing.
-- [x] Notification bell in navbar for real-time status updates/toasts.
-- [x] LabcastARR Integration (manual and auto-tagging).
-- [x] Optimized metadata extraction to prevent hanging on large channels.
+## [0.6.4] - 2026-03-06
+
+### Added
+- **Channels**: Added ability to favorite channels with a star icon.
+- **Channels**: Implemented a "Favorites" filter to easily view only starred channels.
+- **Filters**: Fixed mutually exclusive behavior for media type filters (All, YouTube, Podcast) to ensure correct filtering.
+
+### Improved
+- **UI**: Refined filter bar default state and interaction logic for a smoother experience.
+
+## [0.6.3] - 2026-03-06
 
 ### Added
 - **Asynchronous Episode Addition**: Immediate modal dismissal and background processing for adding episodes with real-time feedback via toasts and notifications.
