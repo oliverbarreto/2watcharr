@@ -32,9 +32,11 @@ function createMockEpisode(overrides: Partial<MediaEpisode> = {}): MediaEpisode 
     isShort: false,
     likeStatus: 'none',
     notes: null,
+    isArchived: false,
     userId: 'user-1',
     createdAt: Date.now() / 1000,
     updatedAt: Date.now() / 1000,
+
     ...overrides,
   };
 }
@@ -152,7 +154,7 @@ describe('date-grouping utilities', () => {
       ];
 
       const groups = groupEpisodesByDate(episodes, 'priority');
-      
+
       expect(groups).toHaveLength(1);
       expect(groups[0].label).toBe('All Episodes');
       expect(groups[0].episodes).toHaveLength(2);
@@ -171,7 +173,7 @@ describe('date-grouping utilities', () => {
       ];
 
       const groups = groupEpisodesByDate(episodes, 'date_added');
-      
+
       expect(groups).toHaveLength(3);
       expect(groups[0].label).toBe('Today (Tuesday February 17, 2026)');
       expect(groups[0].episodes).toHaveLength(2);
@@ -182,7 +184,7 @@ describe('date-grouping utilities', () => {
 
     it('should handle episodes without timestamps', () => {
       const today = Math.floor(fixedDate.getTime() / 1000);
-      
+
       const episodes = [
         createMockEpisode({ id: '1', lastWatchedAt: today }),
         createMockEpisode({ id: '2', lastWatchedAt: undefined }),
@@ -190,7 +192,7 @@ describe('date-grouping utilities', () => {
       ];
 
       const groups = groupEpisodesByDate(episodes, 'date_watched');
-      
+
       expect(groups).toHaveLength(2);
       expect(groups[0].label).toBe('Today (Tuesday February 17, 2026)');
       expect(groups[0].episodes).toHaveLength(1);
@@ -210,7 +212,7 @@ describe('date-grouping utilities', () => {
       ];
 
       const groups = groupEpisodesByDate(episodes, 'date_watched');
-      
+
       expect(groups).toHaveLength(1);
       expect(groups[0].label).toBe('Not Yet Watched');
       expect(groups[0].episodes).toHaveLength(2);
@@ -228,7 +230,7 @@ describe('date-grouping utilities', () => {
       ];
 
       const groups = groupEpisodesByDate(episodes, 'date_added');
-      
+
       expect(groups).toHaveLength(1);
       expect(groups[0].episodes).toHaveLength(3);
     });

@@ -5,6 +5,8 @@ import { addLikeStatus } from './migrations/add_like_status';
 import { addTagLastUsedAt } from './migrations/add_tag_last_used_at';
 import { addArchiveFields } from './migrations/add_archive_fields';
 import { addLabcastarrIntegrations } from './migrations/add_labcastarr_integrations';
+import { addNotifications } from './migrations/add_notifications';
+
 
 
 /**
@@ -713,5 +715,9 @@ export async function runMigrations(db: Database): Promise<void> {
 
   // Run labcastarr integrations migration
   await addLabcastarrIntegrations(db);
+
+  // Run notifications migration
+  await addNotifications(db);
 }
+
 

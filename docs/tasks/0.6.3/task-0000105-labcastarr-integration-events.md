@@ -243,3 +243,52 @@ export function getNotificationTypeOptions(): Array<{
   ]
 }
 ```
+
+---
+
+## V2
+
+Right now we have the following flow when we correctly add a new video or podcast:
+Episode Requested (User) -> Episode Initiated (System) 
+
+When we add a new video and we use the tag to auto-send to Labcastarr API we have:
+Episode Requested (User) -> Episode Initiated (System) -> Episode Creation Finalized (System)
+
+As you can understand, the event "Episode Initiated (System)" is not the best description to tell the user that the episode was correctly created and added to the watchlist by the app. We should have another event of the type "Episode Creation Finalized" to denote the end of the creation of the episode if everything went ok. And then we should have different notifications events in the case we send it to Labcastarr, eg:
+Episode Requested (User) -> Episode Initiated (System) -> Episode Creation Finalized (System) -> Episode Sent to Labcastarr Initiated (System) -> Episode Sent to Labcastarr Completed (System)
+
+
+Currently we literally replicated all the notification events from labcastar, but we can see that there are a few of them that are specific to Labcastarr
+- Episode Requested
+- Episode Initiated
+- Download Initiated (Labcastarr specific)
+- Download Completed (Labcastarr specific)
+- Download Failed (Labcastarr specific)
+- Post-Processing Started (Labcastarr specific)
+- Post-Processing Completed (Labcastarr specific)
+- Post-Processing Failed (Labcastarr specific)
+- Episode Creation Finalized
+- Episode Creation Failed
+
+Moreover, we should have specific events for 2WatchARR:
+- Episode Sent to Labcastarr Initiated (if we use the tag to auto-send or manually send to Labcastarr API) 
+- Episode Sent to Labcastarr Completed (if we use the tag to auto-send or manually send to Labcastarr API) 
+- Episode Sent to Labcastarr Failed (if we use the tag to auto-send or manually send to Labcastarr API) 
+
+
+---
+
+# v3
+
+As you can see in the image, we have the state "Added to Watchlist", it shoudl be "Episode Creation Finalized" 
+
+and then right after it, we have another notification events named "Episode Creation Finalized"?
+
+After the changes i tested adding a new episode and got the following flow of events as you can see in the image:
+Episode Requested (User) -> Added to Watchlist (System) -> Episode Initiated (System)
+
+It should have been:
+Episode Requested (User) -> Episode Initiated (System) -> Episode Creation Finalized (System) 
+
+In case we send it to Labcastarr as well using the tag for auto-sending it, it should:
+Episode Requested (User) -> Episode Initiated (System) -> Episode Creation Finalized (System) -> Episode Sent to Labcastarr Initiated (System) -> Episode Sent to Labcastarr Completed (System)

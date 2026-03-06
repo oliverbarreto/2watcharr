@@ -7,7 +7,37 @@ export type LikeStatus = 'none' | 'like' | 'dislike';
 
 export type MediaEventType = 'added' | 'watched' | 'unwatched' | 'favorited' | 'unfavorited' | 'removed' | 'restored' | 'tagged' | 'pending' | 'liked' | 'disliked' | 'like_reset' | 'priority_high' | 'priority_normal' | 'priority_low';
 
+export enum NotificationType {
+    EPISODE_REQUESTED = 'EPISODE_REQUESTED',
+    EPISODE_INITIATED = 'EPISODE_INITIATED',
+    EPISODE_DOWNLOAD_INITIATED = 'EPISODE_DOWNLOAD_INITIATED',
+    EPISODE_DOWNLOAD_COMPLETED = 'EPISODE_DOWNLOAD_COMPLETED',
+    EPISODE_DOWNLOAD_FAILED = 'EPISODE_DOWNLOAD_FAILED',
+    EPISODE_POST_PROCESSING_STARTED = 'EPISODE_POST_PROCESSING_STARTED',
+    EPISODE_POST_PROCESSING_COMPLETED = 'EPISODE_POST_PROCESSING_COMPLETED',
+    EPISODE_POST_PROCESSING_FAILED = 'EPISODE_POST_PROCESSING_FAILED',
+    EPISODE_CREATION_FINALIZED = 'EPISODE_CREATION_FINALIZED',
+    EPISODE_CREATION_FAILED = 'EPISODE_CREATION_FAILED',
+    EPISODE_SENT_TO_LABCASTARR_INITIATED = 'EPISODE_SENT_TO_LABCASTARR_INITIATED',
+    EPISODE_SENT_TO_LABCASTARR_COMPLETED = 'EPISODE_SENT_TO_LABCASTARR_COMPLETED',
+    EPISODE_SENT_TO_LABCASTARR_FAILED = 'EPISODE_SENT_TO_LABCASTARR_FAILED',
+}
+
+
+export interface Notification {
+    id: string;
+    userId: string;
+    type: NotificationType;
+    channelName: string | null;
+    executedBy: string | null;
+    description: string | null;
+    episodeId: string | null;
+    isRead: boolean;
+    createdAt: number;
+}
+
 export interface MediaEvent {
+
     id: string;
     episodeId: string;
     type: MediaEventType;

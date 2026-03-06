@@ -41,10 +41,11 @@ export class LabcastARRClient {
     private apiUrl: string;
     private apiToken: string;
 
-    constructor(integration: LabcastARRIntegration) {
+    constructor(integration: Pick<LabcastARRIntegration, 'apiUrl' | 'apiToken'>) {
         this.apiUrl = integration.apiUrl.replace(/\/$/, '');
         this.apiToken = integration.apiToken;
     }
+
 
     /**
      * Test connection to LabcastARR

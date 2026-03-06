@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+
 import { Search, Play, Tag as TagIcon, X, Clock, Star, Gem, Tv, Check, StickyNote, XCircle, Video, Youtube, Mic, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -68,8 +69,8 @@ interface FilterBarProps {
 export function FilterBar({ onFilterChange, onSortChange, initialFilters, initialSort, availableChannels, showManualSort = true }: FilterBarProps) {
     const [search, setSearch] = useState(initialFilters?.search || '');
     const [watchedFilter, setWatchedFilter] = useState<string>(
-        initialFilters?.watchStatus === 'pending' ? 'pending' : 
-        (initialFilters?.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched'))
+        initialFilters?.watchStatus === 'pending' ? 'pending' :
+            (initialFilters?.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched'))
     );
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilters?.tagIds || []);
     const [selectedChannelIds, setSelectedChannelIds] = useState<string[]>(initialFilters?.channelIds || []);
@@ -82,9 +83,9 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
     const [hasNotesFilter, setHasNotesFilter] = useState(initialFilters?.hasNotes || false);
     const [likeFilter, setLikeFilter] = useState<'all' | 'like' | 'dislike'>(initialFilters?.likeStatus === 'like' ? 'like' : (initialFilters?.likeStatus === 'dislike' ? 'dislike' : 'all'));
     const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'shorts' | 'podcast'>(
-        initialFilters?.isShort ? 'shorts' : 
-        (initialFilters?.type === 'podcast' ? 'podcast' : 
-        (initialFilters?.type === 'video' && initialFilters?.isShort === false ? 'video' : 'all'))
+        initialFilters?.isShort ? 'shorts' :
+            (initialFilters?.type === 'podcast' ? 'podcast' :
+                (initialFilters?.type === 'video' && initialFilters?.isShort === false ? 'video' : 'all'))
     );
     const [isChannelMenuOpen, setIsChannelMenuOpen] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -106,35 +107,35 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         if (initialFilters) {
             const newSearch = initialFilters.search || '';
             if (search !== newSearch) setSearch(newSearch);
-            
-            const status = initialFilters.watchStatus || 
-                         (initialFilters.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched'));
+
+            const status = initialFilters.watchStatus ||
+                (initialFilters.watched === undefined ? 'all' : (initialFilters.watched ? 'watched' : 'unwatched'));
             if (watchedFilter !== status) setWatchedFilter(status);
-            
+
             if (JSON.stringify(initialFilters.tagIds) !== JSON.stringify(selectedTagIds)) {
                 setSelectedTagIds(initialFilters.tagIds || []);
             }
             if (JSON.stringify(initialFilters.channelIds) !== JSON.stringify(selectedChannelIds)) {
                 setSelectedChannelIds(initialFilters.channelIds || []);
             }
-            
+
             if (favoriteFilter !== (initialFilters.favorite || false)) {
                 setFavoriteFilter(initialFilters.favorite || false);
             }
             if (hasNotesFilter !== (initialFilters.hasNotes || false)) {
                 setHasNotesFilter(initialFilters.hasNotes || false);
             }
-            
+
             if (priorityFilter !== (initialFilters.priority === 'high')) {
                 setPriorityFilter(initialFilters.priority === 'high');
             }
-            
+
             const newLike = initialFilters.likeStatus === 'like' ? 'like' : (initialFilters.likeStatus === 'dislike' ? 'dislike' : 'all');
             if (likeFilter !== newLike) setLikeFilter(newLike);
-            
-            const newType = initialFilters.isShort ? 'shorts' : 
-                           (initialFilters.type === 'podcast' ? 'podcast' : 
-                           (initialFilters.type === 'video' && initialFilters.isShort === false ? 'video' : 'all'));
+
+            const newType = initialFilters.isShort ? 'shorts' :
+                (initialFilters.type === 'podcast' ? 'podcast' :
+                    (initialFilters.type === 'video' && initialFilters.isShort === false ? 'video' : 'all'));
             if (typeFilter !== newType) setTypeFilter(newType);
         }
     }
@@ -219,7 +220,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         const newSelected = selectedTagIds.includes(tagId)
             ? selectedTagIds.filter(id => id !== tagId)
             : [...selectedTagIds, tagId];
-        
+
         setSelectedTagIds(newSelected);
         triggerFilterChange({ tagIds: newSelected });
     };
@@ -228,7 +229,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         const newSelected = selectedChannelIds.includes(channelId)
             ? selectedChannelIds.filter(id => id !== channelId)
             : [...selectedChannelIds, channelId];
-        
+
         setSelectedChannelIds(newSelected);
         triggerFilterChange({ channelIds: newSelected });
     };
@@ -255,7 +256,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         onSortChange?.({ field: sortField, order: newOrder });
     };
 
-    const clearAllFilters = () => {
+    const clearAllFilters = useCallback(() => {
         setSearch('');
         setWatchedFilter('all');
         setSelectedTagIds([]);
@@ -266,7 +267,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
         setLikeFilter('all');
         setTypeFilter('all');
         setShowTags(false);
-        
+
         onFilterChange?.({
             search: undefined,
             watched: undefined,
@@ -280,13 +281,14 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
             isShort: undefined,
             priority: undefined,
         });
-    };
+    }, [onFilterChange]);
+
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
             const modifier = isMac ? e.metaKey : e.ctrlKey;
-            
+
             if (modifier && e.key === 'Escape') {
                 e.preventDefault();
                 clearAllFilters();
@@ -296,17 +298,18 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [clearAllFilters]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [clearAllFilters]);
 
-    const hasAnyFilter = search !== '' || 
-                         watchedFilter !== 'all' || 
-                         selectedTagIds.length > 0 || 
-                         selectedChannelIds.length > 0 || 
-                         favoriteFilter || 
-                         hasNotesFilter || 
-                         priorityFilter ||
-                         likeFilter !== 'all' ||
-                         typeFilter !== 'all';
+
+    const hasAnyFilter = search !== '' ||
+        watchedFilter !== 'all' ||
+        selectedTagIds.length > 0 ||
+        selectedChannelIds.length > 0 ||
+        favoriteFilter ||
+        hasNotesFilter ||
+        priorityFilter ||
+        likeFilter !== 'all' ||
+        typeFilter !== 'all';
 
     return (
         <div className="flex flex-col">
@@ -342,7 +345,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                         >
                             All
                         </Button>
-                        
+
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -517,7 +520,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                     >
                                         <Tv className="h-4 w-4" />
                                         {selectedChannelIds.length > 0 && (
-                                            <Badge 
+                                            <Badge
                                                 className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
                                                 variant="destructive"
                                             >
@@ -541,7 +544,7 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                                     >
                                         <TagIcon className="h-4 w-4" />
                                         {selectedTagIds.length > 0 && (
-                                            <Badge 
+                                            <Badge
                                                 className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
                                                 variant="destructive"
                                             >
@@ -615,8 +618,8 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                 </div>
             </div>
 
-            <CommandDialog 
-                open={isChannelMenuOpen} 
+            <CommandDialog
+                open={isChannelMenuOpen}
                 onOpenChange={setIsChannelMenuOpen}
                 title="Filter by Channel"
                 description="Search and select channels to filter your library."
@@ -645,9 +648,9 @@ export function FilterBar({ onFilterChange, onSortChange, initialFilters, initia
                 </CommandList>
                 {selectedChannelIds.length > 0 && (
                     <div className="p-2 border-t flex justify-end">
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => {
                                 setSelectedChannelIds([]);
                                 triggerFilterChange({ channelIds: [] });

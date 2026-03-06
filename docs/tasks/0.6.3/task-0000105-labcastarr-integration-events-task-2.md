@@ -1,0 +1,32 @@
+# Task: LabcastARR Integration - Events
+
+- [x] Initial Research and Planning
+    - [x] Read task description
+    - [x] Explore existing LabcastARR integration implementation
+    - [x] Explore existing logging/event system (if any)
+    - [x] Design database schema for events/notifications
+- [x] Implement Database Schema
+    - [x] Create migration for `notifications` table
+    - [x] Update [src/lib/db/schema.sql](file:///Users/oliver/local/dev/2watcharr/src/lib/db/schema.sql)
+- [x] Implement Backend Logic
+    - [x] Create [Notification](file:///Users/oliver/local/dev/2watcharr/src/lib/domain/models.ts#23-34) type and model
+    - [x] Create [NotificationRepository](file:///Users/oliver/local/dev/2watcharr/src/lib/repositories/notification.repository.ts#16-170)
+    - [x] Create [NotificationService](file:///Users/oliver/local/dev/2watcharr/src/lib/services/notification.service.ts#5-120)
+    - [x] Integrate notification logging into [media.service.ts](file:///Users/oliver/local/dev/2watcharr/src/lib/services/media.service.ts) or [integration.service.ts](file:///Users/oliver/local/dev/2watcharr/src/lib/services/integration.service.ts)
+    - [x] Integrate notification logging into LabcastARR send flow
+    - [x] Create API routes for notifications (GET, POST, PATCH, DELETE)
+
+- [x] Implement Frontend UI
+    - [x] Create Activity Page (`/activity`)
+    - [x] Create Notification Table component with filters
+    - [x] Implement Pagination for notifications
+    - [x] Implement Mark as Read/Unread logic
+    - [x] Implement Delete Read/All events logic
+    - [x] Update episode details page to show errors
+    - [x] Add second toaster message when sending to LabcastARR
+
+- [x] Verification and Testing
+    - [x] Verify toaster messages
+    - [x] Verify activity log page and filters
+    - [x] Verify error display on episode card
+    - [x] Verify notification persistence and cleanup

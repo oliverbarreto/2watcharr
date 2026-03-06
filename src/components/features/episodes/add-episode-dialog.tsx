@@ -97,10 +97,21 @@ export function AddEpisodeDialog({ onEpisodeAdded, trigger }: AddEpisodeDialogPr
 
             const episode = await response.json();
             toast.success(`Added: ${episode.title}`);
+
+            if (episode.labcastarrTriggeredCount > 0) {
+                // Short delay for the second toast to be readable
+                setTimeout(() => {
+                    toast.success('Episode sent to LabcastARR', {
+                        description: 'Integration triggered successfully',
+                    });
+                }, 1000);
+            }
+
             setUrl('');
             setSelectedTagIds([]);
             setOpen(false);
             onEpisodeAdded?.();
+
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to add episode');
         } finally {

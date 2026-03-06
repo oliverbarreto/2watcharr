@@ -4,3 +4,6 @@ export { ChannelRepository } from './channel.repository';
 export { TagRepository } from './tag.repository';
 export { UserRepository } from './user.repository';
 export { LabcastARRIntegrationRepository } from './labcastarr-integration.repository';
+export { NotificationRepository } from './notification.repository';
+export * from './notification.repository';
+

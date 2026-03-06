@@ -8,15 +8,20 @@ import {
     Tag,
 } from '../domain/models';
 import { LabcastARRClient } from '../integrations/labcastarr.client';
+import { NotificationService } from './notification.service';
+
 
 export class IntegrationService {
     private integrationRepo: LabcastARRIntegrationRepository;
     private tagRepo: TagRepository;
+    private notificationService: NotificationService;
 
     constructor(private db: Database) {
         this.integrationRepo = new LabcastARRIntegrationRepository(db);
         this.tagRepo = new TagRepository(db);
+        this.notificationService = new NotificationService(db);
     }
+
 
     /**
      * Get user integrations
@@ -49,38 +54,72 @@ export class IntegrationService {
     /**
      * Test a connection (without needing to save it first)
      */
-    async testConnection(config: LabcastARRIntegration): Promise<boolean> {
+    async testConnection(config: Pick<LabcastARRIntegration, 'apiUrl' | 'apiToken'>): Promise<boolean> {
+
         const client = new LabcastARRClient(config);
         return await client.testConnection();
     }
 
     /**
      * Handle automated episode sending based on tags
+     * @returns The number of integrations triggered
      */
-    async processEpisodeTags(episodeId: string, userId: string, tagIds: string[], videoUrl: string): Promise<void> {
+    async processEpisodeTags(episodeId: string, userId: string, tagIds: string[], videoUrl: string, channelName: string): Promise<number> {
+
+
         // Validation: only YouTube URLs for now
         if (!videoUrl || !(videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))) {
-            return;
+            return 0;
         }
+
+        // Get all active integrations for this user
+        const integrations = await this.integrationRepo.findActiveByUserId(userId);
+        if (integrations.length === 0) return 0;
 
         // Get all tags for their names
         const tags = await this.tagRepo.findByIds(tagIds);
         const tagNames = tags.map((t: Tag) => t.name);
-
-        // Get all active integrations for this user
-        const integrations = await this.integrationRepo.findActiveByUserId(userId);
+        let triggeredCount = 0;
 
         for (const integration of integrations) {
             if (tagNames.includes(integration.autoTag)) {
+                triggeredCount++;
                 try {
+                    // Log initiation
+                    await this.notificationService.logLabcastARRInitiated(
+                        userId,
+                        channelName,
+                        `Sending episode to LabcastARR: ${videoUrl}`,
+                        episodeId
+                    );
+
                     await this.sendToLabcastARR(integration, videoUrl);
                     console.log(`Auto-sent episode ${episodeId} to LabcastARR channel ${integration.channelId}`);
+
+                    // Log success (completed)
+                    await this.notificationService.logLabcastARRSuccess(
+                        userId,
+                        channelName,
+                        `Episode successfully sent to LabcastARR: ${videoUrl}`,
+                        episodeId
+                    );
                 } catch (error) {
                     console.error(`Error auto-sending episode ${episodeId} to LabcastARR:`, error);
+                    // Log failure
+                    await this.notificationService.logLabcastARRFailed(
+                        userId,
+                        channelName,
+                        `Error sending to LabcastARR: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                        episodeId
+                    );
                 }
+
             }
         }
+
+        return triggeredCount;
     }
+
 
     /**
      * Send a video to LabcastARR

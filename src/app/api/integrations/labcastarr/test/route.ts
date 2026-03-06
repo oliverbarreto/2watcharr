@@ -30,11 +30,12 @@ export async function POST(request: NextRequest) {
         const success = await integrationService.testConnection({
             apiUrl: data.apiUrl,
             apiToken: data.apiToken,
-        } as any);
+        });
 
         return NextResponse.json({ success });
-    } catch (error) {
-        console.error('Error testing LabcastARR connection:', error);
+    } catch (_error) {
+        console.error('Error testing LabcastARR connection:', _error);
         return NextResponse.json({ error: 'Failed to test connection', success: false }, { status: 500 });
     }
+
 }

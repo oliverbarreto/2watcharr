@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { MediaEpisode, Tag } from '@/lib/domain/models';
+import { MediaEpisode, Tag, Notification, LabcastARRIntegration } from '@/lib/domain/models';
+
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+
 import {
     Check,
     Star,
@@ -39,7 +48,9 @@ import {
     Archive,
     ArchiveRestore,
     Share2,
+    AlertCircle,
 } from 'lucide-react';
+
 
 import {
     CommandDialog,
@@ -67,8 +78,11 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isHardDeleteDialogOpen, setIsHardDeleteDialogOpen] = useState(false);
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
+    const [latestError, setLatestError] = useState<Notification | null>(null);
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-    const [activeIntegrations, setActiveIntegrations] = useState<any[]>([]);
+
+    const [activeIntegrations, setActiveIntegrations] = useState<LabcastARRIntegration[]>([]);
+
     const [searchQuery, setSearchQuery] = useState('');
     const [isUpdatingTags, setIsUpdatingTags] = useState(false);
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
@@ -90,11 +104,23 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
             .then(res => res.json())
             .then(data => {
                 if (data.integrations) {
-                    setActiveIntegrations(data.integrations.filter((i: any) => i.enabled));
+                    setActiveIntegrations(data.integrations.filter((i: LabcastARRIntegration) => i.enabled));
                 }
             })
             .catch(console.error);
-    }, []);
+
+
+        // Fetch latest error notification for this episode
+        fetch(`/api/notifications?episodeId=${episode.id}&type=episode_creation_failed&limit=1`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.items && data.items.length > 0) {
+                    setLatestError(data.items[0]);
+                }
+            })
+            .catch(console.error);
+    }, [episode.id]);
+
 
     const isLabcastARRTag = (tag: Tag) => {
         return activeIntegrations.some(i => i.autoTag === tag.name);
@@ -571,8 +597,23 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                                     <StickyNote className="h-4 w-4" />
                                 </Badge>
                             )}
+                            {latestError && (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Badge className="bg-red-500 hover:bg-red-600 text-white border-none p-1 h-6 w-6 flex items-center justify-center">
+                                            <AlertCircle className="h-4 w-4" />
+                                        </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="bg-red-600 text-white border-none">
+                                        <p className="font-bold">Integration Error</p>
+                                        <p className="text-xs">{latestError.description || 'Unknown error'}</p>
+                                    </TooltipContent>
+
+                                </Tooltip>
+                            )}
                         </div>
                     </div>
+
 
                     <CardContent className="p-4 flex-1 flex flex-col">
                         {/* Drag Handle */}

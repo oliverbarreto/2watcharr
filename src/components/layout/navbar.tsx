@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Plus, Settings, LogOut, User, BarChart3, Radio, Library, Search, Gem, Archive, Trash2 } from 'lucide-react';
+import { Plus, Settings, LogOut, User, BarChart3, Radio, Library, Search, Gem, Archive, Trash2, Bell } from 'lucide-react';
+
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -65,7 +66,14 @@ const NavLinks = ({ className, onClick }: NavLinksProps) => {
                     Watch Next
                 </Button>
             </Link>
+            <Link href="/activity" onClick={onClick}>
+                <Button variant="ghost" className={getLinkClass("/activity")}>
+                    <Bell className="mr-2 h-4 w-4 sm:hidden" />
+                    Activity
+                </Button>
+            </Link>
         </>
+
     );
 };
 
@@ -87,8 +95,10 @@ export function Navbar() {
         if (pathname === '/stats') return 'Stats';
         if (pathname === '/archived') return 'Archived';
         if (pathname === '/deleted') return 'Deleted';
+        if (pathname === '/activity') return 'Activity';
 
         if (pathname === '/settings') return 'Settings';
+
         if (pathname.startsWith('/channels/')) return 'Channel';
         return '';
     };
@@ -160,7 +170,8 @@ export function Navbar() {
                         }
                     />
 
-                    {!['/stats', '/settings'].includes(pathname) && (
+                    {!['/stats', '/settings', '/activity'].includes(pathname) && (
+
                         <Button
                             size="icon"
                             variant="ghost"
@@ -170,7 +181,7 @@ export function Navbar() {
                             <Search className={cn("h-5 w-5", hasActiveFilters && "stroke-[2.5px]")} />
                         </Button>
                     )}
-                    
+
 
 
 

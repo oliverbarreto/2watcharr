@@ -141,3 +141,23 @@ CREATE INDEX IF NOT EXISTS idx_channels_type ON channels(type);
  
  CREATE INDEX IF NOT EXISTS idx_labcastarr_integrations_user_id ON labcastarr_integrations(user_id);
  CREATE INDEX IF NOT EXISTS idx_labcastarr_integrations_enabled ON labcastarr_integrations(enabled);
+
+-- Notifications/Activity Table
+CREATE TABLE IF NOT EXISTS notifications (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  channel_name TEXT,
+  executed_by TEXT,
+  description TEXT,
+  episode_id TEXT,
+  is_read BOOLEAN NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);

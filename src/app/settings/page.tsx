@@ -30,8 +30,8 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-    DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+
 import {
     Tooltip,
     TooltipContent,
@@ -40,6 +40,8 @@ import {
 } from "@/components/ui/tooltip";
 import { UserManagement } from '@/components/features/users/user-management';
 import { LabcastARRSettings } from '@/components/features/settings/labcastarr-settings';
+import { LabcastARRIntegration } from '@/lib/domain/models';
+
 
 interface Tag {
     id: string;
@@ -64,8 +66,9 @@ export default function SettingsPage() {
     const [watchAction, setWatchAction] = useState<'none' | 'watched' | 'pending'>('pending');
     const [deletingTag, setDeletingTag] = useState<{ id: string, name: string } | null>(null);
     const [removingEpisodesTag, setRemovingEpisodesTag] = useState<{ id: string, name: string } | null>(null);
-    const [activeIntegrations, setActiveIntegrations] = useState<any[]>([]);
+    const [activeIntegrations, setActiveIntegrations] = useState<LabcastARRIntegration[]>([]);
     const [isBulkSending, setIsBulkSending] = useState<string | null>(null);
+
 
     useEffect(() => {
         fetchTags();
@@ -85,11 +88,12 @@ export default function SettingsPage() {
             .then(res => res.json())
             .then(data => {
                 if (data.integrations) {
-                    setActiveIntegrations(data.integrations.filter((i: any) => i.enabled));
+                    setActiveIntegrations(data.integrations.filter((i: LabcastARRIntegration) => i.enabled));
                 }
             })
             .catch(console.error);
     }, []);
+
 
     const fetchTags = async () => {
         setIsLoading(true);

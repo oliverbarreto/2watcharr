@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+
 import { Search, Youtube, Mic, Tag as TagIcon, X, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -46,9 +47,9 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
         if (initialFilters) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setSearch(initialFilters.search || '');
-             
+
             setTypeFilter(initialFilters.type || 'all');
-             
+
             setSelectedTagIds(initialFilters.tagIds || []);
         }
     }, [initialFilters]);
@@ -90,7 +91,7 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
         const newSelected = selectedTagIds.includes(tagId)
             ? selectedTagIds.filter(id => id !== tagId)
             : [...selectedTagIds, tagId];
-        
+
         setSelectedTagIds(newSelected);
         onFilterChange?.({
             search: search || undefined,
@@ -108,23 +109,24 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
         });
     };
 
-    const clearAllFilters = () => {
+    const clearAllFilters = useCallback(() => {
         setSearch('');
         setTypeFilter('all');
         setSelectedTagIds([]);
-        
+
         onFilterChange?.({
             search: undefined,
             type: undefined,
             tagIds: undefined,
         });
-    };
+    }, [onFilterChange]);
+
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
             const modifier = isMac ? e.metaKey : e.ctrlKey;
-            
+
             if (modifier && e.key === 'Escape') {
                 e.preventDefault();
                 clearAllFilters();
@@ -134,11 +136,12 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [clearAllFilters]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [clearAllFilters]);
 
-    const hasAnyFilter = search !== '' || 
-                         typeFilter !== 'all' || 
-                         selectedTagIds.length > 0;
+
+    const hasAnyFilter = search !== '' ||
+        typeFilter !== 'all' ||
+        selectedTagIds.length > 0;
 
     return (
         <div className="flex flex-col">
@@ -174,7 +177,7 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                         >
                             All
                         </Button>
-                        
+
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -216,7 +219,7 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
                                     >
                                         <TagIcon className="h-4 w-4" />
                                         {selectedTagIds.length > 0 && (
-                                            <Badge 
+                                            <Badge
                                                 className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
                                                 variant="destructive"
                                             >

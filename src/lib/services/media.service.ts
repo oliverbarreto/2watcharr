@@ -2,7 +2,9 @@ import { Database } from 'sqlite';
 import { EpisodeRepository, ChannelRepository, TagRepository } from '../repositories';
 import { MetadataService } from './metadata.service';
 import { IntegrationService } from './integration.service';
+import { NotificationService } from './notification.service';
 import { UnifiedMetadata } from './youtube-metadata.service';
+
 import {
     MediaEpisode,
     UpdateEpisodeDto,
@@ -20,6 +22,8 @@ export class MediaService {
     private tagRepo: TagRepository;
     private metadataService: MetadataService;
     private integrationService: IntegrationService;
+    private notificationService: NotificationService;
+
 
     constructor(db: Database, metadataService?: MetadataService) {
         this.episodeRepo = new EpisodeRepository(db);
@@ -27,7 +31,9 @@ export class MediaService {
         this.tagRepo = new TagRepository(db);
         this.metadataService = metadataService || new MetadataService();
         this.integrationService = new IntegrationService(db);
+        this.notificationService = new NotificationService(db);
     }
+
 
     /**
      * Add a media episode from a URL (YouTube or Podcast)
@@ -36,17 +42,23 @@ export class MediaService {
      * @param tagIds Optional array of tag IDs to associate with the episode
      * @returns Promise resolving to the created episode
      */
-    async addEpisodeFromUrl(url: string, userId: string, tagIds?: string[]): Promise<MediaEpisode> {
+    async addEpisodeFromUrl(url: string, userId: string, tagIds?: string[]): Promise<MediaEpisode & { labcastarrTriggeredCount?: number }> {
+        // Log episode requested
+        await this.notificationService.logEpisodeRequested(userId, 'Unknown', `Requesting: ${url}`);
+
         // Extract metadata
         const metadata = await this.metadataService.extractMetadata(url);
         return this.saveEpisodeFromMetadata(metadata, userId, tagIds);
     }
 
+
+
     /**
      * Save an episode to the database from extracted metadata.
      * This logic is shared between single additions and batch additions.
      */
-    private async saveEpisodeFromMetadata(metadata: UnifiedMetadata, userId: string, tagIds?: string[]): Promise<MediaEpisode> {
+    private async saveEpisodeFromMetadata(metadata: UnifiedMetadata, userId: string, tagIds?: string[]): Promise<MediaEpisode & { labcastarrTriggeredCount?: number }> {
+
         if (!metadata.episode.externalId) {
             throw new Error('Could not extract external ID from metadata');
         }
@@ -127,6 +139,15 @@ export class MediaService {
         // Record 'added' event
         await this.episodeRepo.addEvent(episode.id, 'added', episode.title, episode.type);
 
+        // Record 'initiated' notification at the start of the process
+        await this.notificationService.logEpisodeInitiated(
+            userId,
+            channel.name,
+            episode.title,
+            episode.id
+        );
+
+
         // Associate tags if provided
         if (tagIds && tagIds.length > 0) {
             await this.episodeRepo.addTags(episode.id, tagIds);
@@ -141,14 +162,40 @@ export class MediaService {
         // Move to beginning of the list for new episodes
         await this.episodeRepo.moveToBeginning(episode.id, userId);
 
+
         // Process LabcastARR automated tags
-        if (tagIds && tagIds.length > 0) {
-            this.integrationService.processEpisodeTags(episode.id, userId, tagIds, episode.url)
-                .catch(err => console.error('Background integration processing failed:', err));
+        let labcastarrTriggeredCount = 0;
+        try {
+            // Record 'creation finalized' for local 2WatchARR process
+            await this.notificationService.logEpisodeCreationFinalized(
+                userId,
+                channel.name,
+                episode.title,
+                episode.id
+            );
+
+            if (tagIds && tagIds.length > 0) {
+                labcastarrTriggeredCount = await this.integrationService.processEpisodeTags(episode.id, userId, tagIds, episode.url, channel.name)
+                    .catch(err => {
+                        console.error('Background integration processing failed:', err);
+                        return 0;
+                    });
+            }
+        } catch (err) {
+            console.error('Error finalizing episode addition:', err);
+            await this.notificationService.logEpisodeCreationFailed(
+                userId,
+                channel.name,
+                episode.title,
+                episode.id
+            );
         }
 
-        return episode;
+        return { ...episode, labcastarrTriggeredCount };
     }
+
+
+
 
     /**
      * List episodes with optional filters, sorting and pagination
@@ -477,8 +524,9 @@ export class MediaService {
                 await this.episodeRepo.addEvent(id, 'tagged', episode.title, episode.type);
 
                 // Process LabcastARR automated tags
-                this.integrationService.processEpisodeTags(id, episode.userId, tagIds, episode.url)
+                this.integrationService.processEpisodeTags(id, episode.userId, tagIds, episode.url, episode.channelName || 'Unknown')
                     .catch(err => console.error('Background integration processing failed:', err));
+
             }
         }
     }

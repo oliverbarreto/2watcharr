@@ -1,0 +1,30 @@
+# Task: LabcastARR Integration - Events
+
+- [x] Initial Research and Planning
+    - [x] Read task description
+    - [x] Explore existing LabcastARR integration implementation
+    - [x] Explore existing logging/event system (if any)
+    - [x] Design database schema for events/notifications
+- [/] Implement Database Schema
+    - [/] Create migration for `notifications` table
+    - [ ] Update [src/lib/db/schema.sql](file:///Users/oliver/local/dev/2watcharr/src/lib/db/schema.sql)
+- [ ] Implement Backend Logic [/]
+    - [ ] Create `Notification` type and model
+    - [ ] Create `NotificationRepository`
+    - [ ] Create `NotificationService`
+    - [ ] Integrate notification logging into [media.service.ts](file:///Users/oliver/local/dev/2watcharr/src/lib/services/media.service.ts) or [integration.service.ts](file:///Users/oliver/local/dev/2watcharr/src/lib/services/integration.service.ts)
+    - [ ] Integrate notification logging into LabcastARR send flow
+    - [ ] Create API routes for notifications (GET, POST, PATCH, DELETE)
+- [ ] Implement Frontend UI [/]
+    - [ ] Create Activity Page (`/activity`)
+    - [ ] Create Notification Table component with filters
+    - [ ] Implement Pagination for notifications
+    - [ ] Implement Mark as Read/Unread logic
+    - [ ] Implement Delete Read/All events logic
+    - [ ] Update episode details page to show errors
+    - [ ] Add second toaster message when sending to LabcastARR
+- [ ] Verification and Testing [/]
+    - [ ] Verify toaster messages
+    - [ ] Verify activity log page and filters
+    - [ ] Verify mark read/unread and delete actions
+    - [ ] Verify errors in episode details

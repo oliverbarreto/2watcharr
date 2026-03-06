@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { MediaEpisode, Tag } from '@/lib/domain/models';
+import { MediaEpisode, Tag, LabcastARRIntegration } from '@/lib/domain/models';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -82,7 +83,8 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
     const [isCopying, setIsCopying] = useState(false);
     const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
     const [isUnarchiveDialogOpen, setIsUnarchiveDialogOpen] = useState(false);
-    const [activeIntegrations, setActiveIntegrations] = useState<any[]>([]);
+    const [activeIntegrations, setActiveIntegrations] = useState<LabcastARRIntegration[]>([]);
+
 
 
     // Sync state when episode prop changes
@@ -95,11 +97,13 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
             .then(res => res.json())
             .then(data => {
                 if (data.integrations) {
-                    setActiveIntegrations(data.integrations.filter((i: any) => i.enabled));
+                    setActiveIntegrations(data.integrations.filter((i: LabcastARRIntegration) => i.enabled));
                 }
             })
             .catch(console.error);
     }, []);
+
+
 
     const isLabcastARRTag = (tag: Tag) => {
         return activeIntegrations.some(i => i.autoTag === tag.name);

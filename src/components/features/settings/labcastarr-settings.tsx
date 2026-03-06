@@ -13,14 +13,15 @@ import {
     SelectTrigger,
     SelectValue
 } from '@/components/ui/select';
-import { Plus, Trash2, Edit2, Check, X, ExternalLink, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Edit2, ExternalLink, RefreshCw } from 'lucide-react';
+
 import { toast } from 'sonner';
 import { LabcastARRIntegration } from '@/lib/domain/models';
 
 export function LabcastARRSettings() {
     const [integrations, setIntegrations] = useState<LabcastARRIntegration[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+
     const [isTesting, setIsTesting] = useState(false);
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -42,20 +43,18 @@ export function LabcastARRSettings() {
     }, []);
 
     const fetchIntegrations = async () => {
-        setIsLoading(true);
         try {
+
             const response = await fetch('/api/integrations/labcastarr');
             const data = await response.json();
             if (data.integrations) {
                 setIntegrations(data.integrations);
             }
-        } catch (error) {
-            console.error('Error fetching integrations:', error);
+        } catch {
             toast.error('Failed to load LabcastARR integrations');
-        } finally {
-            setIsLoading(false);
         }
     };
+
 
     const handleTest = async () => {
         if (!formData.apiUrl || !formData.apiToken) {
@@ -79,9 +78,11 @@ export function LabcastARRSettings() {
             } else {
                 toast.error('Connection failed. Please check your credentials.');
             }
-        } catch (error) {
+        } catch {
             toast.error('Testing failed. Check console for details.');
         } finally {
+
+
             setIsTesting(true); // Wait, should be false
             setIsTesting(false);
         }
@@ -116,9 +117,11 @@ export function LabcastARRSettings() {
                 const data = await response.json();
                 toast.error(data.error || 'Failed to save integration');
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to save integration');
         } finally {
+
+
             setIsSaving(false);
         }
     };
@@ -137,10 +140,12 @@ export function LabcastARRSettings() {
             } else {
                 toast.error('Failed to delete');
             }
-        } catch (error) {
+        } catch {
             toast.error('Error deleting');
         }
     };
+
+
 
     const handleToggleEnabled = async (integration: LabcastARRIntegration) => {
         try {
@@ -153,10 +158,12 @@ export function LabcastARRSettings() {
             if (response.ok) {
                 fetchIntegrations();
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to toggle status');
         }
     };
+
+
 
     const startEdit = (integration: LabcastARRIntegration) => {
         setEditingId(integration.id);
