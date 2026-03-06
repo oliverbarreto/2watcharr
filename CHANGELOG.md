@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [20260306 - Release 0.6.3:
+- [x] Asynchronous Episode Addition with immediate modal dismissal and background processing.
+- [x] Notification bell in navbar for real-time status updates/toasts.
+- [x] LabcastARR Integration (manual and auto-tagging).
+- [x] Optimized metadata extraction to prevent hanging on large channels.
+
+### Added
+- **Asynchronous Episode Addition**: Immediate modal dismissal and background processing for adding episodes with real-time feedback via toasts and notifications.
+- **Notification System**: Added a notification bell component to the navbar to display unread status updates for background processes.
+- **LabcastARR Integration**: New ability to send episodes to LabcastARR manually or automatically via tags.
+
+### Fixed
+- **Performance**: Optimized metadata extraction logic to prevent application hanging when adding episodes from channels with large amounts of content.
+
 ## [0.6.2] - 2026-03-04
 
 ### Added
