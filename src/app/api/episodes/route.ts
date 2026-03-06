@@ -29,10 +29,9 @@ export async function POST(request: NextRequest) {
 
         const db = await getDatabase();
         const mediaService = new MediaService(db);
+        await mediaService.addEpisodeAsync(url, userId, tagIds);
 
-        const episode = await mediaService.addEpisodeFromUrl(url, userId, tagIds);
-
-        return NextResponse.json(episode, { status: 201 });
+        return NextResponse.json({ message: 'Episode addition requested' }, { status: 202 });
     } catch (error) {
         console.error('Error adding episode:', error);
 
@@ -133,9 +132,9 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error('Error listing episodes:', error);
         return NextResponse.json(
-            { 
-                error: 'Failed to list episodes', 
-                message: error instanceof Error ? error.message : String(error) 
+            {
+                error: 'Failed to list episodes',
+                message: error instanceof Error ? error.message : String(error)
             },
             { status: 500 }
         );

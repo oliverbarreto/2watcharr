@@ -51,6 +51,43 @@ export class MediaService {
         return this.saveEpisodeFromMetadata(metadata, userId, tagIds);
     }
 
+    /**
+     * Start the process of adding an episode in the background.
+     * Returns immediately after logging the request.
+     */
+    async addEpisodeAsync(url: string, userId: string, tagIds?: string[]): Promise<void> {
+        // Log episode requested immediately
+        await this.notificationService.logEpisodeRequested(userId, 'Unknown', `Requesting: ${url}`);
+
+        // Start background process without awaiting it
+        this.processBackgroundAddition(url, userId, tagIds).catch(err => {
+            console.error('Fatal background addition error:', err);
+        });
+    }
+
+    /**
+     * Helper to process the background addition task.
+     * Extracts metadata and saves the episode, handling notifications.
+     */
+    private async processBackgroundAddition(url: string, userId: string, tagIds?: string[]): Promise<void> {
+        try {
+            // Extract metadata (this is the slow part)
+            const metadata = await this.metadataService.extractMetadata(url);
+
+            // Save episode (this logs Initiated and Finalized internally)
+            await this.saveEpisodeFromMetadata(metadata, userId, tagIds);
+        } catch (error) {
+            console.error('Error in background episode addition:', error);
+            // Log failure
+            await this.notificationService.logEpisodeCreationFailed(
+                userId,
+                'Unknown',
+                `Failed to process URL: ${url}. ${error instanceof Error ? error.message : 'Unknown error'}`
+            );
+        }
+    }
+
+
 
 
     /**

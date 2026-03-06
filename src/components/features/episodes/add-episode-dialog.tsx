@@ -91,26 +91,34 @@ export function AddEpisodeDialog({ onEpisodeAdded, trigger }: AddEpisodeDialogPr
             });
 
             if (!response.ok) {
-                const error = await response.json();
+                const error = await response.json().catch(() => ({}));
                 throw new Error(error.error || 'Failed to add episode');
             }
 
-            const episode = await response.json();
-            toast.success(`Added: ${episode.title}`);
+            if (response.status === 202) {
+                toast.success('Episode requested', {
+                    description: 'Processing will continue in the background. You will be notified when complete.'
+                });
+            } else {
+                const episode = await response.json();
+                toast.success(`Added: ${episode.title}`);
 
-            if (episode.labcastarrTriggeredCount > 0) {
-                // Short delay for the second toast to be readable
-                setTimeout(() => {
-                    toast.success('Episode sent to LabcastARR', {
-                        description: 'Integration triggered successfully',
-                    });
-                }, 1000);
+                if (episode.labcastarrTriggeredCount > 0) {
+                    // Short delay for the second toast to be readable
+                    setTimeout(() => {
+                        toast.success('Episode sent to LabcastARR', {
+                            description: 'Integration triggered successfully',
+                        });
+                    }, 1000);
+                }
             }
+
 
             setUrl('');
             setSelectedTagIds([]);
             setOpen(false);
             onEpisodeAdded?.();
+
 
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to add episode');

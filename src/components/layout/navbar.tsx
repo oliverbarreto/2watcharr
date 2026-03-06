@@ -9,7 +9,9 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 import { AddEpisodeDialog } from '@/components/features/episodes/add-episode-dialog';
+import { NotificationBell } from '@/components/features/notifications/notification-bell';
 import { useSession, signOut } from 'next-auth/react';
+
 import { cn } from '@/lib/utils';
 import {
     DropdownMenu,
@@ -157,8 +159,11 @@ export function Navbar() {
 
                     <div className="h-8 w-px bg-border mx-1 hidden sm:block" />
 
+                    <NotificationBell />
+
                     <AddEpisodeDialog
                         onEpisodeAdded={handleEpisodeAdded}
+
                         trigger={
                             <Button
                                 size="icon"
