@@ -68,13 +68,8 @@ const NavLinks = ({ className, onClick }: NavLinksProps) => {
                     Watch Next
                 </Button>
             </Link>
-            <Link href="/activity" onClick={onClick}>
-                <Button variant="ghost" className={getLinkClass("/activity")}>
-                    <Bell className="mr-2 h-4 w-4 sm:hidden" />
-                    Activity
-                </Button>
-            </Link>
         </>
+
 
     );
 };
@@ -221,6 +216,12 @@ export function Navbar() {
                                 <Link href="/settings" className="cursor-pointer">
                                     <Settings className="mr-2 h-4 w-4" />
                                     <span>Settings</span>
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/activity" className="cursor-pointer">
+                                    <Bell className="mr-2 h-4 w-4" />
+                                    <span>Activity</span>
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
