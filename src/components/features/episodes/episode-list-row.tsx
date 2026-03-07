@@ -642,6 +642,15 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                                         <span className="text-primary/80 font-medium">{formatEventDate()}</span>
                                     </>
                                 )}
+                                {episode.sentToLabcastarrAt && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="text-purple-600 font-medium flex items-center gap-1">
+                                            <Mic className="h-3 w-3" />
+                                            Sent to LabcastARR
+                                        </span>
+                                    </>
+                                )}
                             </div>
 
                             {/* Tags Badges (Only on desktop, mobile has them in the info row or we can keep them here) */}

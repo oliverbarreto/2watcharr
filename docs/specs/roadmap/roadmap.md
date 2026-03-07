@@ -8,6 +8,12 @@
 
 These are some features we want to add to the app but are not specidifed yet:
 
+- [ ] FEATURE: 
+    - add an icon to identify the episodes that have been sent to LabcastARR
+    - add information of episodes that have been sent to the podcast manager (LabcastARR) in stats page
+    - add a page /integration/integration_name to list all episodes that have been sent to that integrated app, eg: LabcastARR
+    - add option to the UI of pages (e.g. Watchlist, Watch Next and Archived, etc.) to select various episodes and perform actions on them (e.g. delete, add to playlist, etc.)
+
 - [ ] FEATURE: 2watcharr BROWSER EXTENSION (CODEX): (docs/specs/roadmap/todo/FEATURE-2watcharr-browser-extension.md)
     - we need to create a way to allow the user to not add a episode via iOS Share Sheet or copya paste in the app, but instead the app or a browser extension could just intercept the url, see that it is a vido or podcast, and add it to a "watch list". 
     - we need to create a way to allow the user to download/import current playlist from youtube and youtube history ... also for other platforms

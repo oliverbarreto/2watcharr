@@ -18,6 +18,7 @@ export interface DashboardStats {
         pending: number;
         watchedToday: number;
         watchedThisWeek: number;
+        sentToLabcastarr: number;
     };
     playTime: {
         totalSeconds: number;
@@ -43,12 +44,12 @@ export interface DashboardStats {
         tags?: { name: string; color: string }[];
     }[];
     channelsTimeSeries: {
-        added: { date: string; [channel: string]: number | string }[];
-        watched: { date: string; [channel: string]: number | string }[];
-        favorited: { date: string; [channel: string]: number | string }[];
-        priority: { date: string; [channel: string]: number | string }[];
-        liked: { date: string; [channel: string]: number | string }[];
-        disliked: { date: string; [channel: string]: number | string }[];
+        added: { date: string;[channel: string]: number | string }[];
+        watched: { date: string;[channel: string]: number | string }[];
+        favorited: { date: string;[channel: string]: number | string }[];
+        priority: { date: string;[channel: string]: number | string }[];
+        liked: { date: string;[channel: string]: number | string }[];
+        disliked: { date: string;[channel: string]: number | string }[];
     };
 }
 
@@ -119,6 +120,12 @@ export class StatsService {
             GROUP BY event_type
         `, [userId, threshold]);
 
+        const labcastEvents = await this.db.get(`
+            SELECT COUNT(*) as count 
+            FROM notifications 
+            WHERE user_id = ? AND type = 'EPISODE_SENT_TO_LABCASTARR_COMPLETED' AND created_at >= ?
+        `, [userId, threshold]);
+
         return {
             added: events.find(e => e.type === 'added')?.count || 0,
             watched: events.find(e => e.type === 'watched')?.count || 0,
@@ -129,6 +136,7 @@ export class StatsService {
             pending: events.find(e => e.type === 'pending')?.count || 0,
             watchedToday: await this.getWatchedCount(userId, Math.floor(new Date().setHours(0, 0, 0, 0) / 1000)),
             watchedThisWeek: await this.getWatchedCount(userId, Math.floor((Date.now() - (new Date().getDay() * 86400000)) / 1000)),
+            sentToLabcastarr: labcastEvents?.count || 0,
         };
     }
 
@@ -225,7 +233,7 @@ export class StatsService {
                 const startOfYear = new Date(new Date().getFullYear(), 0, 1);
                 threshold = Math.floor(startOfYear.getTime() / 1000);
             }
-            
+
             query = `
                 SELECT 
                     strftime('%Y-%m', me.created_at, 'unixepoch') as time_bucket,
@@ -252,7 +260,7 @@ export class StatsService {
     async getDetailedStats(userId: string, period: string) {
         let threshold = 0;
         const now = Math.floor(Date.now() / 1000);
-        
+
         if (period === 'day') threshold = now - 86400;
         else if (period === 'week') threshold = now - 604800;
         else if (period === 'month') threshold = now - 2592000;
@@ -312,7 +320,7 @@ export class StatsService {
 
         let threshold = 0;
         const now = Math.floor(Date.now() / 1000);
-        
+
         let timeFormat = '';
         if (period === 'day') {
             threshold = now - 86400;
@@ -384,7 +392,7 @@ export class StatsService {
     private async getChannelMetricTimeSeries(userId: string, period: string, metric: string) {
         let threshold = 0;
         const now = Math.floor(Date.now() / 1000);
-        
+
         let timeFormat = '';
         if (period === 'day') {
             threshold = now - 86400;
@@ -419,7 +427,7 @@ export class StatsService {
         // If no events for some metrics (like priority/likes which were just added), 
         // fallback to current state for 'total' or 'year' if applicable?
         // Actually, historical data for these won't have events, so maybe we query the episodes table directly for some metrics if events are missing.
-        
+
         // Fallback for priority/likes if no events found and period is large
         if (rows.length === 0 && (period === 'total' || period === 'year' || period === 'month')) {
             if (metric === 'priority_high') {

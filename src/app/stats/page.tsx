@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout';
-import { 
-    Video, 
-    Mic, 
-    Hash, 
-    Users, 
-    TrendingUp, 
-    BarChart3, 
-    Clock, 
+import {
+    Video,
+    Mic,
+    Hash,
+    Users,
+    TrendingUp,
+    BarChart3,
+    Clock,
     Play,
     Plus,
     Star,
@@ -27,12 +27,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-    Table, 
-    TableHeader, 
-    TableBody, 
-    TableHead, 
-    TableRow, 
+import {
+    Table,
+    TableHeader,
+    TableBody,
+    TableHead,
+    TableRow,
     TableCell,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,16 +40,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { 
-    ChartContainer, 
-    ChartTooltip, 
-    ChartTooltipContent 
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent
 } from '@/components/ui/chart';
-import { 
-    AreaChart, 
-    Area, 
-    XAxis, 
-    YAxis, 
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
     CartesianGrid,
     LineChart,
     Line,
@@ -77,6 +77,7 @@ interface DashboardStats {
         pending: number;
         watchedToday: number;
         watchedThisWeek: number;
+        sentToLabcastarr: number;
     };
     playTime: {
         totalSeconds: number;
@@ -95,12 +96,12 @@ interface DashboardStats {
         [tag: string]: number | string;
     }[];
     channelsTimeSeries: {
-        added: { date: string; [channel: string]: number | string }[];
-        watched: { date: string; [channel: string]: number | string }[];
-        favorited: { date: string; [channel: string]: number | string }[];
-        priority: { date: string; [channel: string]: number | string }[];
-        liked: { date: string; [channel: string]: number | string }[];
-        disliked: { date: string; [channel: string]: number | string }[];
+        added: { date: string;[channel: string]: number | string }[];
+        watched: { date: string;[channel: string]: number | string }[];
+        favorited: { date: string;[channel: string]: number | string }[];
+        priority: { date: string;[channel: string]: number | string }[];
+        liked: { date: string;[channel: string]: number | string }[];
+        disliked: { date: string;[channel: string]: number | string }[];
     };
     detailedStats: {
         title: string;
@@ -142,7 +143,7 @@ export default function StatsPage() {
             if (!response.ok) throw new Error('Failed to fetch stats');
             const data: DashboardStats = await response.json();
             setStats(data);
-            
+
             // Set initial visible tags once stats are loaded
             if (data.tagsTimeSeries.length > 0) {
                 // Show top 5 tags by default if many
@@ -154,11 +155,11 @@ export default function StatsPage() {
                         }
                     });
                 });
-                
+
                 const sortedTags = Object.entries(tagCounts)
                     .sort(([, a], [, b]) => b - a)
                     .map(([name]) => name);
-                
+
                 setVisibleTags(sortedTags.slice(0, 5));
             }
 
@@ -172,11 +173,11 @@ export default function StatsPage() {
                         }
                     });
                 });
-                
+
                 const sortedChannels = Object.entries(channelCounts)
                     .sort(([, a], [, b]) => b - a)
                     .map(([name]) => name);
-                
+
                 setVisibleChannels(sortedChannels.slice(0, 5));
             }
         } catch (error) {
@@ -194,7 +195,7 @@ export default function StatsPage() {
     const formatDuration = (seconds: number) => {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
-        
+
         if (hours > 0) {
             return `${hours}h ${minutes}m`;
         }
@@ -225,14 +226,14 @@ export default function StatsPage() {
 
     const getSortIcon = (key: keyof DashboardStats['detailedStats'][0]) => {
         if (sortConfig?.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
-        return sortConfig.direction === 'asc' 
-            ? <ArrowUp className="ml-2 h-4 w-4 text-primary" /> 
+        return sortConfig.direction === 'asc'
+            ? <ArrowUp className="ml-2 h-4 w-4 text-primary" />
             : <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
     };
 
     const resetToDefaults = useCallback(() => {
         if (!stats) return;
-        
+
         // Reset to top 5 channels by current metric
         if (stats.channelsTimeSeries[channelMetric].length > 0) {
             const channelCounts: Record<string, number> = {};
@@ -243,11 +244,11 @@ export default function StatsPage() {
                     }
                 });
             });
-            
+
             const sortedChannels = Object.entries(channelCounts)
                 .sort(([, a], [, b]) => b - a)
                 .map(([name]) => name);
-            
+
             setVisibleChannels(sortedChannels.slice(0, 5));
             toast.success(`Reset to top 5 channels for ${channelMetric}`);
         }
@@ -255,7 +256,7 @@ export default function StatsPage() {
 
     const resetTagsToDefaults = useCallback(() => {
         if (!stats) return;
-        
+
         // Reset to top 5 tags by usage
         if (stats.tagsTimeSeries.length > 0) {
             const tagCounts: Record<string, number> = {};
@@ -266,11 +267,11 @@ export default function StatsPage() {
                     }
                 });
             });
-            
+
             const sortedTags = Object.entries(tagCounts)
                 .sort(([, a], [, b]) => b - a)
                 .map(([name]) => name);
-            
+
             setVisibleTags(sortedTags.slice(0, 5));
             toast.success('Reset to top 5 most used tags');
         }
@@ -286,7 +287,7 @@ export default function StatsPage() {
     const sortedDetailedStats = [...filteredStats].sort((a, b) => {
         if (!sortConfig) return 0;
         const { key, direction } = sortConfig;
-        
+
         // Special handling for tags sorting
         if (key === 'tags') {
             const tagsA = (a.tags || []).map(t => t.name).join(', ');
@@ -365,30 +366,30 @@ export default function StatsPage() {
 
     // Get all unique tags from time series
     const allAvailableTags = stats ? sortStringsAlphabetically(Array.from(new Set(
-        stats.tagsTimeSeries.flatMap(point => 
+        stats.tagsTimeSeries.flatMap(point =>
             Object.keys(point).filter(key => key !== 'date')
         )
     ))) : [];
 
     const toggleTagVisibility = (tagName: string) => {
-        setVisibleTags(prev => 
-            prev.includes(tagName) 
+        setVisibleTags(prev =>
+            prev.includes(tagName)
                 ? prev.filter(t => t !== tagName)
                 : [...prev, tagName]
         );
     };
 
     const allAvailableChannels = stats ? sortStringsAlphabetically(Array.from(new Set(
-        Object.values(stats.channelsTimeSeries).flatMap(points => 
-            points.flatMap(point => 
+        Object.values(stats.channelsTimeSeries).flatMap(points =>
+            points.flatMap(point =>
                 Object.keys(point).filter(key => key !== 'date')
             )
         )
     ))) : [];
 
     const toggleChannelVisibility = (channelName: string) => {
-        setVisibleChannels(prev => 
-            prev.includes(channelName) 
+        setVisibleChannels(prev =>
+            prev.includes(channelName)
                 ? prev.filter(t => t !== channelName)
                 : [...prev, channelName]
         );
@@ -402,33 +403,33 @@ export default function StatsPage() {
 
                 {/* Summary Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <StatCard 
-                        title="Total Videos" 
-                        value={stats.counts.totalVideos} 
+                    <StatCard
+                        title="Total Videos"
+                        value={stats.counts.totalVideos}
                         icon={<Video className="h-7 w-7" />}
                         description="Videos in your watch list"
                         color="text-red-500"
                         bg="bg-red-500/10"
                     />
-                    <StatCard 
-                        title="Total Podcasts" 
-                        value={stats.counts.totalPodcasts} 
+                    <StatCard
+                        title="Total Podcasts"
+                        value={stats.counts.totalPodcasts}
                         icon={<Mic className="h-7 w-7" />}
                         description="Podcasts in your watch list"
                         color="text-purple-500"
                         bg="bg-purple-500/10"
                     />
-                    <StatCard 
-                        title="Channels" 
-                        value={stats.counts.totalChannels} 
+                    <StatCard
+                        title="Channels"
+                        value={stats.counts.totalChannels}
                         icon={<Users className="h-7 w-7" />}
                         description="Followed sources"
                         color="text-blue-500"
                         bg="bg-blue-500/10"
                     />
-                    <StatCard 
-                        title="Tags" 
-                        value={stats.counts.totalTags} 
+                    <StatCard
+                        title="Tags"
+                        value={stats.counts.totalTags}
                         icon={<Hash className="h-7 w-7" />}
                         description="Unique categories"
                         color="text-emerald-500"
@@ -484,65 +485,72 @@ export default function StatsPage() {
                                 <CardContent>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-12 gap-y-4">
                                         <div className="space-y-4">
-                                            <UsageItem 
-                                                label="Watched Today" 
-                                                value={stats.usage.watchedToday} 
-                                                icon={<Play className="h-4 w-4" />} 
+                                            <UsageItem
+                                                label="Watched Today"
+                                                value={stats.usage.watchedToday}
+                                                icon={<Play className="h-4 w-4" />}
                                                 color="text-emerald-500"
                                                 bg="bg-emerald-500/10"
                                             />
-                                            <UsageItem 
-                                                label="Watched This Week" 
-                                                value={stats.usage.watchedThisWeek} 
-                                                icon={<TrendingUp className="h-4 w-4" />} 
+                                            <UsageItem
+                                                label="Watched This Week"
+                                                value={stats.usage.watchedThisWeek}
+                                                icon={<TrendingUp className="h-4 w-4" />}
                                                 color="text-indigo-500"
                                                 bg="bg-indigo-500/10"
                                             />
                                         </div>
                                         <div className="space-y-4">
-                                            <UsageItem 
-                                                label="Added" 
-                                                value={stats.usage.added} 
-                                                icon={<Plus className="h-4 w-4" />} 
+                                            <UsageItem
+                                                label="Added"
+                                                value={stats.usage.added}
+                                                icon={<Plus className="h-4 w-4" />}
                                                 color="text-blue-500"
                                                 bg="bg-blue-500/10"
                                             />
-                                            <UsageItem 
-                                                label="Watched" 
-                                                value={stats.usage.watched} 
-                                                icon={<Play className="h-4 w-4" />} 
+                                            <UsageItem
+                                                label="Watched"
+                                                value={stats.usage.watched}
+                                                icon={<Play className="h-4 w-4" />}
                                                 color="text-green-500"
                                                 bg="bg-green-500/10"
                                             />
-                                            <UsageItem 
-                                                label="Favorited" 
-                                                value={stats.usage.favorited} 
-                                                icon={<Star className="h-4 w-4" />} 
+                                            <UsageItem
+                                                label="Favorited"
+                                                value={stats.usage.favorited}
+                                                icon={<Star className="h-4 w-4" />}
                                                 color="text-amber-500"
                                                 bg="bg-amber-500/10"
                                             />
                                         </div>
                                         <div className="space-y-4">
-                                            <UsageItem 
-                                                label="Not Watched" 
-                                                value={stats.usage.unwatched} 
-                                                icon={<RotateCcw className="h-4 w-4" />} 
+                                            <UsageItem
+                                                label="Not Watched"
+                                                value={stats.usage.unwatched}
+                                                icon={<RotateCcw className="h-4 w-4" />}
                                                 color="text-orange-500"
                                                 bg="bg-orange-500/10"
                                             />
-                                            <UsageItem 
-                                                label="Tagged" 
-                                                value={stats.usage.tagged} 
-                                                icon={<TagIcon className="h-4 w-4" />} 
+                                            <UsageItem
+                                                label="Tagged"
+                                                value={stats.usage.tagged}
+                                                icon={<TagIcon className="h-4 w-4" />}
                                                 color="text-purple-500"
                                                 bg="bg-purple-500/10"
                                             />
-                                            <UsageItem 
-                                                label="Removed" 
-                                                value={stats.usage.removed} 
-                                                icon={<Trash2 className="h-4 w-4" />} 
+                                            <UsageItem
+                                                label="Removed"
+                                                value={stats.usage.removed}
+                                                icon={<Trash2 className="h-4 w-4" />}
                                                 color="text-red-500"
                                                 bg="bg-red-500/10"
+                                            />
+                                            <UsageItem
+                                                label="Sent to LabcastARR"
+                                                value={stats.usage.sentToLabcastarr}
+                                                icon={<Mic className="h-4 w-4" />}
+                                                color="text-purple-600"
+                                                bg="bg-purple-600/10"
                                             />
                                         </div>
                                     </div>
@@ -589,8 +597,8 @@ export default function StatsPage() {
                                         <div className="flex items-center gap-3">
                                             {Object.entries(chartConfig).map(([key, config]) => (
                                                 <div key={key} className="flex items-center gap-1.5">
-                                                    <div 
-                                                        className="h-1.5 w-1.5 rounded-full" 
+                                                    <div
+                                                        className="h-1.5 w-1.5 rounded-full"
                                                         style={{ backgroundColor: config.color }}
                                                     />
                                                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
@@ -608,12 +616,12 @@ export default function StatsPage() {
                                             >
                                                 <defs>
                                                     <linearGradient id="fillAdded" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                                                     </linearGradient>
                                                     <linearGradient id="fillWatched" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
-                                                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                                                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                                                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
                                                     </linearGradient>
                                                 </defs>
                                                 <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -638,15 +646,15 @@ export default function StatsPage() {
                                                     fontSize={10}
                                                     stroke="rgba(255,255,255,0.3)"
                                                 />
-                                                <YAxis 
-                                                    hide 
-                                                    domain={[0, 'auto']} 
+                                                <YAxis
+                                                    hide
+                                                    domain={[0, 'auto']}
                                                 />
                                                 <ChartTooltip
                                                     cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
                                                     content={
-                                                        <ChartTooltipContent 
-                                                            indicator="dot" 
+                                                        <ChartTooltipContent
+                                                            indicator="dot"
                                                             className="bg-zinc-950/90 border-zinc-800 backdrop-blur-md shadow-2xl"
                                                         />
                                                     }
@@ -693,8 +701,8 @@ export default function StatsPage() {
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <LineChart data={stats.tagsTimeSeries} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                                                         <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                                                        <XAxis 
-                                                            dataKey="date" 
+                                                        <XAxis
+                                                            dataKey="date"
                                                             tickLine={false}
                                                             axisLine={false}
                                                             tickMargin={8}
@@ -707,16 +715,16 @@ export default function StatsPage() {
                                                             fontSize={10}
                                                             stroke="rgba(255,255,255,0.3)"
                                                         />
-                                                        <YAxis 
+                                                        <YAxis
                                                             tickLine={false}
                                                             axisLine={false}
                                                             tickMargin={8}
                                                             fontSize={10}
                                                             stroke="rgba(255,255,255,0.3)"
                                                         />
-                                                        <Tooltip 
-                                                            contentStyle={{ 
-                                                                backgroundColor: 'rgba(9, 9, 11, 0.9)', 
+                                                        <Tooltip
+                                                            contentStyle={{
+                                                                backgroundColor: 'rgba(9, 9, 11, 0.9)',
                                                                 borderColor: 'rgba(39, 39, 42, 1)',
                                                                 borderRadius: '12px',
                                                                 backdropFilter: 'blur(8px)',
@@ -766,7 +774,7 @@ export default function StatsPage() {
                                                         className="h-7 w-[200px] pl-7 pr-7 text-[10px] bg-muted/20 border-border/50 rounded-md"
                                                     />
                                                     {tagSearchQuery && (
-                                                        <button 
+                                                        <button
                                                             onClick={() => setTagSearchQuery('')}
                                                             className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                                         >
@@ -775,9 +783,9 @@ export default function StatsPage() {
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <Button 
-                                                        variant="outline" 
-                                                        size="sm" 
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
                                                         className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40 gap-1.5"
                                                         onClick={resetTagsToDefaults}
                                                         title="Reset to top 5 tags"
@@ -785,17 +793,17 @@ export default function StatsPage() {
                                                         <RotateCcw className="h-3 w-3" />
                                                         Top 5
                                                     </Button>
-                                                    <Button 
-                                                        variant="outline" 
-                                                        size="sm" 
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
                                                         className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
                                                         onClick={() => setVisibleTags(allAvailableTags)}
                                                     >
                                                         Select All
                                                     </Button>
-                                                    <Button 
-                                                        variant="outline" 
-                                                        size="sm" 
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
                                                         className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
                                                         onClick={() => setVisibleTags([])}
                                                     >
@@ -813,13 +821,13 @@ export default function StatsPage() {
                                                         .filter(tag => tag.toLowerCase().includes(tagSearchQuery.toLowerCase()))
                                                         .map(tag => (
                                                             <div key={tag} className="flex items-center space-x-2 group shrink-0">
-                                                                <Checkbox 
-                                                                    id={`tag-${tag}`} 
+                                                                <Checkbox
+                                                                    id={`tag-${tag}`}
                                                                     checked={visibleTags.includes(tag)}
                                                                     onCheckedChange={() => toggleTagVisibility(tag)}
                                                                     className="border-border/50 data-[state=checked]:bg-primary"
                                                                 />
-                                                                <label 
+                                                                <label
                                                                     htmlFor={`tag-${tag}`}
                                                                     className="text-xs font-semibold leading-none cursor-pointer group-hover:text-primary transition-colors whitespace-nowrap"
                                                                 >
@@ -862,8 +870,8 @@ export default function StatsPage() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page:</span>
-                                                <Select 
-                                                    value={rowsPerPage.toString()} 
+                                                <Select
+                                                    value={rowsPerPage.toString()}
                                                     onValueChange={(v) => setRowsPerPage(Number(v))}
                                                 >
                                                     <SelectTrigger className="w-[100px] bg-muted/20 border-border/50">
@@ -883,7 +891,7 @@ export default function StatsPage() {
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="hover:bg-transparent border-border/50">
-                                                    <TableHead 
+                                                    <TableHead
                                                         className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
                                                         onClick={() => handleSort('title')}
                                                     >
@@ -892,7 +900,7 @@ export default function StatsPage() {
                                                             {getSortIcon('title')}
                                                         </div>
                                                     </TableHead>
-                                                    <TableHead 
+                                                    <TableHead
                                                         className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
                                                         onClick={() => handleSort('type')}
                                                     >
@@ -901,7 +909,7 @@ export default function StatsPage() {
                                                             {getSortIcon('type')}
                                                         </div>
                                                     </TableHead>
-                                                    <TableHead 
+                                                    <TableHead
                                                         className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
                                                         onClick={() => handleSort('event_type')}
                                                     >
@@ -910,7 +918,7 @@ export default function StatsPage() {
                                                             {getSortIcon('event_type')}
                                                         </div>
                                                     </TableHead>
-                                                    <TableHead 
+                                                    <TableHead
                                                         className="font-bold uppercase tracking-wider text-[10px] cursor-pointer hover:text-foreground transition-colors"
                                                         onClick={() => handleSort('tags')}
                                                     >
@@ -919,7 +927,7 @@ export default function StatsPage() {
                                                             {getSortIcon('tags')}
                                                         </div>
                                                     </TableHead>
-                                                    <TableHead 
+                                                    <TableHead
                                                         className="font-bold uppercase tracking-wider text-[10px] text-right cursor-pointer hover:text-foreground transition-colors"
                                                         onClick={() => handleSort('created_at')}
                                                     >
@@ -948,12 +956,11 @@ export default function StatsPage() {
                                                                 </div>
                                                             </TableCell>
                                                             <TableCell>
-                                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${
-                                                                    event.event_type === 'watched' ? 'bg-green-500/10 text-green-500' : 
-                                                                    event.event_type === 'added' ? 'bg-blue-500/10 text-blue-500' :
-                                                                    event.event_type === 'favorited' ? 'bg-amber-500/10 text-amber-500' :
-                                                                    'bg-muted text-muted-foreground'
-                                                                }`}>
+                                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${event.event_type === 'watched' ? 'bg-green-500/10 text-green-500' :
+                                                                        event.event_type === 'added' ? 'bg-blue-500/10 text-blue-500' :
+                                                                            event.event_type === 'favorited' ? 'bg-amber-500/10 text-amber-500' :
+                                                                                'bg-muted text-muted-foreground'
+                                                                    }`}>
                                                                     {event.event_type}
                                                                 </span>
                                                             </TableCell>
@@ -961,10 +968,10 @@ export default function StatsPage() {
                                                                 <div className="flex flex-wrap gap-1">
                                                                     {event.tags && event.tags.length > 0 ? (
                                                                         event.tags.map((tag, idx) => (
-                                                                            <span 
-                                                                                key={idx} 
+                                                                            <span
+                                                                                key={idx}
                                                                                 className="px-1.5 py-0.5 rounded text-[9px] font-bold"
-                                                                                style={{ 
+                                                                                style={{
                                                                                     backgroundColor: tag.color ? `${tag.color}20` : 'rgba(255,255,255,0.1)',
                                                                                     color: tag.color || 'inherit',
                                                                                     border: `1px solid ${tag.color ? `${tag.color}40` : 'rgba(255,255,255,0.2)'}`
@@ -1036,9 +1043,9 @@ export default function StatsPage() {
                                                 <CardTitle className="text-lg font-bold">Videos per Channel</CardTitle>
                                                 <CardDescription>Trends by channel over time ({periodLabels[period]})</CardDescription>
                                             </div>
-                                            
-                                            <RadioGroup 
-                                                value={channelMetric} 
+
+                                            <RadioGroup
+                                                value={channelMetric}
                                                 onValueChange={(v: typeof channelMetric) => setChannelMetric(v)}
                                                 className="flex flex-wrap gap-4 bg-muted/20 p-2 rounded-xl border border-border/50"
                                             >
@@ -1078,8 +1085,8 @@ export default function StatsPage() {
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <LineChart data={stats.channelsTimeSeries[channelMetric]} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                                                         <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                                                        <XAxis 
-                                                            dataKey="date" 
+                                                        <XAxis
+                                                            dataKey="date"
                                                             tickLine={false}
                                                             axisLine={false}
                                                             tickMargin={8}
@@ -1092,16 +1099,16 @@ export default function StatsPage() {
                                                             fontSize={10}
                                                             stroke="rgba(255,255,255,0.3)"
                                                         />
-                                                        <YAxis 
+                                                        <YAxis
                                                             tickLine={false}
                                                             axisLine={false}
                                                             tickMargin={8}
                                                             fontSize={10}
                                                             stroke="rgba(255,255,255,0.3)"
                                                         />
-                                                        <Tooltip 
-                                                            contentStyle={{ 
-                                                                backgroundColor: 'rgba(9, 9, 11, 0.9)', 
+                                                        <Tooltip
+                                                            contentStyle={{
+                                                                backgroundColor: 'rgba(9, 9, 11, 0.9)',
                                                                 borderColor: 'rgba(39, 39, 42, 1)',
                                                                 borderRadius: '12px',
                                                                 backdropFilter: 'blur(8px)',
@@ -1151,7 +1158,7 @@ export default function StatsPage() {
                                                         className="h-7 w-[200px] pl-7 pr-7 text-[10px] bg-muted/20 border-border/50 rounded-md"
                                                     />
                                                     {channelSearchQuery && (
-                                                        <button 
+                                                        <button
                                                             onClick={() => setChannelSearchQuery('')}
                                                             className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                                         >
@@ -1160,9 +1167,9 @@ export default function StatsPage() {
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <Button 
-                                                        variant="outline" 
-                                                        size="sm" 
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
                                                         className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40 gap-1.5"
                                                         onClick={resetToDefaults}
                                                         title="Reset to top 5 channels"
@@ -1170,17 +1177,17 @@ export default function StatsPage() {
                                                         <RotateCcw className="h-3 w-3" />
                                                         Top 5
                                                     </Button>
-                                                    <Button 
-                                                        variant="outline" 
-                                                        size="sm" 
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
                                                         className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
                                                         onClick={() => setVisibleChannels(allAvailableChannels)}
                                                     >
                                                         Select All
                                                     </Button>
-                                                    <Button 
-                                                        variant="outline" 
-                                                        size="sm" 
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
                                                         className="h-7 text-[10px] font-bold uppercase tracking-tighter rounded-md bg-muted/20 border-border/50 hover:bg-muted/40"
                                                         onClick={() => setVisibleChannels([])}
                                                     >
@@ -1198,13 +1205,13 @@ export default function StatsPage() {
                                                         .filter(channel => channel.toLowerCase().includes(channelSearchQuery.toLowerCase()))
                                                         .map(channel => (
                                                             <div key={channel} className="flex items-center space-x-2 group shrink-0">
-                                                                <Checkbox 
-                                                                    id={`channel-${channel}`} 
+                                                                <Checkbox
+                                                                    id={`channel-${channel}`}
                                                                     checked={visibleChannels.includes(channel)}
                                                                     onCheckedChange={() => toggleChannelVisibility(channel)}
                                                                     className="border-border/50 data-[state=checked]:bg-primary"
                                                                 />
-                                                                <label 
+                                                                <label
                                                                     htmlFor={`channel-${channel}`}
                                                                     className="text-xs font-semibold leading-none cursor-pointer group-hover:text-primary transition-colors whitespace-nowrap"
                                                                 >

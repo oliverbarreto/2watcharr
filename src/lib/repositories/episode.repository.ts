@@ -92,7 +92,8 @@ export class EpisodeRepository {
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'pending' ORDER BY created_at DESC LIMIT 1) as last_pending_at,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at,
+            (SELECT created_at FROM notifications WHERE episode_id = e.id AND type = 'EPISODE_SENT_TO_LABCASTARR_COMPLETED' ORDER BY created_at DESC LIMIT 1) as sent_to_labcastarr_at
             FROM episodes e 
             LEFT JOIN channels c ON e.channel_id = c.id 
             WHERE e.id = ?
@@ -143,7 +144,8 @@ export class EpisodeRepository {
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'watched' ORDER BY created_at DESC LIMIT 1) as last_watched_at,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'pending' ORDER BY created_at DESC LIMIT 1) as last_pending_at,
             (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'favorited' ORDER BY created_at DESC LIMIT 1) as last_favorited_at,
-            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at
+            (SELECT created_at FROM media_events WHERE episode_id = e.id AND event_type = 'removed' ORDER BY created_at DESC LIMIT 1) as last_removed_at,
+            (SELECT created_at FROM notifications WHERE episode_id = e.id AND type = 'EPISODE_SENT_TO_LABCASTARR_COMPLETED' ORDER BY created_at DESC LIMIT 1) as sent_to_labcastarr_at
             FROM episodes e
         `;
         query += ' LEFT JOIN channels c ON e.channel_id = c.id';
@@ -763,6 +765,7 @@ export class EpisodeRepository {
             lastPendingAt: (row.last_pending_at as number) || undefined,
             lastFavoritedAt: (row.last_favorited_at as number) || undefined,
             lastRemovedAt: (row.last_removed_at as number) || undefined,
+            sentToLabcastarrAt: (row.sent_to_labcastarr_at as number) || undefined,
         };
     }
 }

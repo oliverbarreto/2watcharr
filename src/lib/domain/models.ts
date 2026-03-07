@@ -95,6 +95,7 @@ export interface MediaEpisode {
     lastPendingAt?: number;
     lastFavoritedAt?: number;
     lastRemovedAt?: number;
+    sentToLabcastarrAt?: number;
 }
 
 export interface Channel {
