@@ -22,14 +22,16 @@ A Media "Watch Later" management application that allows you to save, organize, 
 
 ## Features
 
-- 📝 **Save YouTube Videos**: Add videos via URL with automatic metadata extraction
-- 📝 **Save Podcasts**: Add podcasts via URL with automatic metadata extraction
+- 📝 **Save YouTube Videos**: Add videos via URL with automatic metadata extraction creating your own playlists
+- 📝 **Save Podcasts**: Add podcasts via URL with automatic metadata extraction creating your own playlists.
 - 🏷️ **Tag Organization**: Categorize videos with custom tags
-- ⭐ **Favorites & Priorities**: Mark videos as favorites and set priority levels
+- ⭐ **Favorites & Priorities**: Mark videos and channels as favorites and set priority to create your own "watch/listen next" playlist.
 - ✅ **Watch Status**: Track which videos you've watched
 - 🔍 **Search & Filter**: Find videos by title, description, channel, or tags
-- 📱 **iOS Integration**: Add videos directly from iOS via Shortcuts app
+- 🔔 **Notifications**: Real-time notifications for new episodes and system events
 - 🎨 **Modern UI**: Beautiful, responsive interface built with shadcn/ui
+- 📱 **iOS Integration**: Add videos directly from iOS via Shortcuts app
+- 🔗 **Integrations**: Integrate with LabcastARR and publish in your own Podcast Channels.
 - 🐳 **Docker Ready**: Production-ready Docker Compose setup
 
 ## Tech Stack
