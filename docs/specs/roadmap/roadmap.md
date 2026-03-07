@@ -52,6 +52,11 @@ Things & Ideas to investigate:
 
 ## Implemented Features
 
+2026-03-07 - Release 0.6.5:
+- [x] Added visual indicator on episode cards/list rows for episodes sent to LabcastARR.
+- [x] Updated favicon with new MediARR Suite logo.
+- [x] Fixed notification errors when adding episodes async and sending to LabcastARR.
+
 2026-03-06 - Release 0.6.4:
 - [x] Added ability to favorite channels with star icon.
 - [x] Implemented favorite filter for channels.

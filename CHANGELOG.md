@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.5] - 2026-03-07
+
+### Added
+- **LabcastARR Integration**: Added visual indicator on episode cards and list rows showing when episodes have been successfully sent to LabcastARR.
+- **UI**: Updated favicon with new MediARR Suite logo.
+
+### Fixed
+- **Notifications**: Fixed errors with notifications when adding episodes asynchronously and sending to LabcastARR.
+
 ## [0.6.4] - 2026-03-06
 
 ### Added

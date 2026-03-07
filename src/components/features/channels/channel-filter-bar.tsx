@@ -58,7 +58,6 @@ export function ChannelFilterBar({ onFilterChange, initialFilters }: ChannelFilt
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setSearch(initialFilters.search || '');
 
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTypeFilter(() => {
                 if (!initialFilters.types || (initialFilters.types.includes('video') && initialFilters.types.includes('podcast'))) {
                     return 'all';
