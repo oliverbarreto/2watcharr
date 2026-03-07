@@ -8,6 +8,8 @@ import { z } from 'zod';
 const sendSchema = z.object({
     integrationId: z.string().min(1),
     videoUrl: z.string().url(),
+    episodeId: z.string().optional(),
+    channelName: z.string().optional(),
 });
 
 /**
@@ -33,7 +35,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Integration not found or unauthorized' }, { status: 404 });
         }
 
-        await integrationService.sendById(data.integrationId, data.videoUrl);
+        await integrationService.sendById(
+            data.integrationId,
+            data.videoUrl,
+            userId,
+            data.episodeId,
+            data.channelName
+        );
 
         return NextResponse.json({ success: true });
     } catch (error) {

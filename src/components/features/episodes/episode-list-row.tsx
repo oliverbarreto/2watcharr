@@ -346,7 +346,9 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     integrationId,
-                    videoUrl: episode.url
+                    videoUrl: episode.url,
+                    episodeId: episode.id,
+                    channelName: episode.channelName || '',
                 }),
             });
 
@@ -355,7 +357,15 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                 throw new Error(data.error || 'Failed to send to LabcastARR');
             }
 
-            toast.success('Successfully sent to LabcastARR');
+            toast.success('Sent to LabcastARR', {
+                description: episode.title,
+                action: {
+                    label: 'View',
+                    onClick: () => window.location.href = '/activity'
+                }
+            });
+            // Refresh the notification bell badge immediately
+            window.dispatchEvent(new CustomEvent('notification-updated'));
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Error sending to LabcastARR');
         }
@@ -1041,59 +1051,55 @@ export function EpisodeListRow({ episode, onUpdate, onDelete, isDraggable = true
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
-                <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
-                    <CommandDialog
-                        open={isTagPopoverOpen}
-                        onOpenChange={setIsTagPopoverOpen}
-                        title="Manage Tags"
-                        description="Search or create tags for this episode"
-                    >
-                        <CommandInput
-                            placeholder="Search or create tag..."
-                            value={searchQuery}
-                            onValueChange={setSearchQuery}
-                        />
-                        <CommandList>
-                            <CommandEmpty>
-                                {searchQuery.trim() && (
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full justify-start text-xs h-8"
-                                        onClick={() => handleCreateTag(searchQuery)}
-                                        disabled={isUpdatingTags}
-                                    >
-                                        <Plus className="h-3 w-3 mr-2" />
-                                        Create &quot;{searchQuery}&quot;
-                                    </Button>
-                                )}
-                                {!searchQuery.trim() && "No tags found."}
-                            </CommandEmpty>
-                            <CommandGroup heading="Recent Tags">
-                                {availableTags.map((tag) => {
-                                    const isSelected = episode.tags?.some(t => t.id === tag.id);
-                                    return (
-                                        <CommandItem
-                                            key={tag.id}
-                                            onSelect={() => handleToggleTag(tag.id)}
-                                            className="flex items-center justify-between pointer-events-auto cursor-pointer"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <div
-                                                    className="w-2 h-2 rounded-full"
-                                                    style={{ backgroundColor: tag.color || '#94a3b8' }}
-                                                />
-                                                <span>{tag.name}</span>
-                                            </div>
-                                            {isSelected && <Check className="h-3 w-3" />}
-                                        </CommandItem>
-                                    );
-                                })}
-                            </CommandGroup>
-                        </CommandList>
-                    </CommandDialog>
-                </DialogContent>
-            </Dialog>
+            <CommandDialog
+                open={isTagPopoverOpen}
+                onOpenChange={setIsTagPopoverOpen}
+                title="Manage Tags"
+                description="Search or create tags for this episode"
+            >
+                <CommandInput
+                    placeholder="Search or create tag..."
+                    value={searchQuery}
+                    onValueChange={setSearchQuery}
+                />
+                <CommandList>
+                    <CommandEmpty>
+                        {searchQuery.trim() && (
+                            <Button
+                                variant="ghost"
+                                className="w-full justify-start text-xs h-8"
+                                onClick={() => handleCreateTag(searchQuery)}
+                                disabled={isUpdatingTags}
+                            >
+                                <Plus className="h-3 w-3 mr-2" />
+                                Create &quot;{searchQuery}&quot;
+                            </Button>
+                        )}
+                        {!searchQuery.trim() && "No tags found."}
+                    </CommandEmpty>
+                    <CommandGroup heading="Recent Tags">
+                        {availableTags.map((tag) => {
+                            const isSelected = episode.tags?.some(t => t.id === tag.id);
+                            return (
+                                <CommandItem
+                                    key={tag.id}
+                                    onSelect={() => handleToggleTag(tag.id)}
+                                    className="flex items-center justify-between pointer-events-auto cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div
+                                            className="w-2 h-2 rounded-full"
+                                            style={{ backgroundColor: tag.color || '#94a3b8' }}
+                                        />
+                                        <span>{tag.name}</span>
+                                    </div>
+                                    {isSelected && <Check className="h-3 w-3" />}
+                                </CommandItem>
+                            );
+                        })}
+                    </CommandGroup>
+                </CommandList>
+            </CommandDialog>
         </div>
     );
 }

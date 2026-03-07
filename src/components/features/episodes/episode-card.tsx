@@ -366,7 +366,9 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     integrationId,
-                    videoUrl: episode.url
+                    videoUrl: episode.url,
+                    episodeId: episode.id,
+                    channelName: episode.channelName || '',
                 }),
             });
 
@@ -375,7 +377,15 @@ export function EpisodeCard({ episode, onUpdate, onDelete, isDraggable = true, s
                 throw new Error(data.error || 'Failed to send to LabcastARR');
             }
 
-            toast.success('Successfully sent to LabcastARR');
+            toast.success('Sent to LabcastARR', {
+                description: episode.title,
+                action: {
+                    label: 'View',
+                    onClick: () => window.location.href = '/activity'
+                }
+            });
+            // Refresh the notification bell badge immediately
+            window.dispatchEvent(new CustomEvent('notification-updated'));
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Error sending to LabcastARR');
         }

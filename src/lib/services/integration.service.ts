@@ -122,14 +122,48 @@ export class IntegrationService {
 
 
     /**
-     * Send a video to LabcastARR
+     * Send a video to LabcastARR manually (with notification logging)
      */
-    async sendById(integrationId: string, videoUrl: string): Promise<void> {
+    async sendById(integrationId: string, videoUrl: string, userId?: string, episodeId?: string, channelName?: string): Promise<void> {
         const integration = await this.integrationRepo.findById(integrationId);
         if (!integration || !integration.enabled) {
             throw new Error('Integration not found or disabled');
         }
-        await this.sendToLabcastARR(integration, videoUrl);
+
+        if (userId && episodeId) {
+            // Log initiation
+            await this.notificationService.logLabcastARRInitiated(
+                userId,
+                channelName || '',
+                `Sending episode to LabcastARR: ${videoUrl}`,
+                episodeId
+            );
+        }
+
+        try {
+            await this.sendToLabcastARR(integration, videoUrl);
+
+            if (userId && episodeId) {
+                // Log success
+                await this.notificationService.logLabcastARRSuccess(
+                    userId,
+                    channelName || '',
+                    `Episode successfully sent to LabcastARR: ${videoUrl}`,
+                    episodeId
+                );
+            }
+        } catch (error) {
+            if (userId && episodeId) {
+                // Log failure
+                await this.notificationService.logLabcastARRFailed(
+                    userId,
+                    channelName || '',
+                    `Error sending to LabcastARR: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    episodeId
+                );
+            }
+            throw error;
+        }
     }
 
     private async sendToLabcastARR(integration: LabcastARRIntegration, videoUrl: string): Promise<void> {

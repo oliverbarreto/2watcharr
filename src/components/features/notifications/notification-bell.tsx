@@ -8,9 +8,33 @@ import { toast } from 'sonner';
 import { Notification, NotificationType } from '@/lib/domain/models';
 import { getNotificationTypeLabel } from '@/lib/utils/notification-helpers';
 
+const SHOWN_TOAST_IDS_KEY = 'shownNotificationToastIds';
+const MAX_STORED_IDS = 100; // Prevent localStorage bloat
+
+function getShownToastIds(): Set<string> {
+    try {
+        const stored = localStorage.getItem(SHOWN_TOAST_IDS_KEY);
+        if (stored) return new Set(JSON.parse(stored));
+    } catch {
+        // Ignore
+    }
+    return new Set();
+}
+
+function addShownToastId(id: string): void {
+    try {
+        const ids = getShownToastIds();
+        ids.add(id);
+        // Keep only the most recent IDs to prevent bloat
+        const trimmed = Array.from(ids).slice(-MAX_STORED_IDS);
+        localStorage.setItem(SHOWN_TOAST_IDS_KEY, JSON.stringify(trimmed));
+    } catch {
+        // Ignore
+    }
+}
+
 export function NotificationBell() {
     const [unreadCount, setUnreadCount] = useState(0);
-    const [lastNotificationId, setLastNotificationId] = useState<string | null>(null);
     const isInitialMount = useRef(true);
     const router = useRouter();
 
@@ -70,13 +94,17 @@ export function NotificationBell() {
             if (data.items && data.items.length > 0) {
                 const latest = data.items[0] as Notification;
 
-                // If this is a new notification and not the one we saw last
-                if (latest.id !== lastNotificationId) {
-                    // Don't toast on initial mount to avoid spam
-                    if (!isInitialMount.current) {
+                // Check against localStorage-persisted IDs to survive page navigations
+                if (!isInitialMount.current) {
+                    const shownIds = getShownToastIds();
+                    if (!shownIds.has(latest.id)) {
                         triggerToast(latest);
+                        addShownToastId(latest.id);
                     }
-                    setLastNotificationId(latest.id);
+                } else {
+                    // On initial mount, mark all unread notifications as "already seen"
+                    // to avoid showing stale toasts when the user navigates to a new page.
+                    addShownToastId(latest.id);
                 }
             }
 
@@ -84,25 +112,30 @@ export function NotificationBell() {
         } catch (error) {
             console.error('Error fetching notifications for bell:', error);
         }
-    }, [lastNotificationId, triggerToast]);
+    }, [triggerToast]);
 
     useEffect(() => {
         // Initial fetch
         fetchUnreadCount();
 
-
-        // Listen for episode-added event for immediate update
-        const handleEpisodeAdded = () => {
+        // Listen for episode-added and notification-updated events for immediate update
+        const handleUpdate = () => {
+            // Allow the next poll to show toasts for new notifications
+            isInitialMount.current = false;
             fetchUnreadCount();
         };
 
-        window.addEventListener('episode-added', handleEpisodeAdded);
-        return () => window.removeEventListener('episode-added', handleEpisodeAdded);
+        window.addEventListener('episode-added', handleUpdate);
+        window.addEventListener('notification-updated', handleUpdate);
+        return () => {
+            window.removeEventListener('episode-added', handleUpdate);
+            window.removeEventListener('notification-updated', handleUpdate);
+        };
     }, [fetchUnreadCount]);
 
 
     useEffect(() => {
-        // Set up polling interval (every 5 seconds for V2)
+        // Set up polling interval (every 5 seconds)
         const intervalId = setInterval(fetchUnreadCount, 5000);
         return () => clearInterval(intervalId);
     }, [fetchUnreadCount]);
